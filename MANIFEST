@@ -1,0 +1,9 @@
+Build.PL
+lib/Term/Menus.pm
+MANIFEST
+ChangeLog
+README
+META.yml
+LICENSE
+Makefile.PL
+SIGNATURE    Added here by Module::Build

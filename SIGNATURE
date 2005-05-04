@@ -1,0 +1,31 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.44.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 c790a584d5527e2bbc0cf768df67cb1b0d0b0806 Build.PL
+SHA1 3283f06167c230d72815de972f284124b3ffa6cc ChangeLog
+SHA1 a74125560a260a18a646ef0b3702e1b77a45b931 LICENSE
+SHA1 255b3ab906b7f75c8299d8a336cd299a4dc4a713 MANIFEST
+SHA1 ec040255d9ac4d1e3656a18fe336d67acd1bc030 META.yml
+SHA1 f66acde86158aa6f0acaea3454b97faeedd21d74 Makefile.PL
+SHA1 626ddb199d39fc3b55df49f3050bec8be10604e3 README
+SHA1 e8ecd91125f8439eeb83c286d757fb92024a3777 lib/Term/Menus.pm
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.0 (Cygwin)
+
+iD8DBQFCeR4/m9P/2BC89ZsRAn1gAJ4y+XE3eXVULE5fq/cAwOQRvzE9VQCgiizQ
+eeDMtWNzBIxjTrHhob3trPY=
+=NrQY
+-----END PGP SIGNATURE-----
