@@ -1,4 +1,4 @@
-package Term::Menus;
+package tmp;
  
 #    Menus.pm
 #
@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.04;
+$VERSION = 1.05;
 
 
 BEGIN {
@@ -276,7 +276,7 @@ sub Menu
    my %Items=();my %exclude=();my %result=();
    my %convey=();my %chosen=();
    my $picks=[];my $banner='';
-   my $display_this_many_items=0;
+   my $display_this_many_items=10;
    my $master_substituted='';my $convey='';
    my $num=0;my @convey=();
    foreach my $key (keys %{$MenuUnit_hash_ref}) {
@@ -410,7 +410,8 @@ sub Menu
    $banner=${$_[0]}{Banner}
       if exists ${$_[0]}{Banner};
    $display_this_many_items=${$_[0]}{Display}
-      if exists ${$_[0]}{Select};
+      if exists ${$_[0]}{Display};
+
 
    ############################################
    # End MenuUnit Breakdown
@@ -869,7 +870,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       return $FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu;
 
    };
-              
    while (1) {
       if ($num_pick-$start<=$display_this_many_items) {
          $choose_num=$num_pick-$start;
@@ -877,7 +877,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       $numbor=$start+$choose_num+1;my $done=0;my $savechk=0;
       while ($numbor<=$start || $start+$choose_num < $numbor) {
          my $menu_text='';
-         $menu_text.="$banner" if defined $banner;
+         $menu_text.=$banner if defined $banner;
          $menu_text.="\n\n";
          #$menu_text=~s/\n*$/\n\n/;
          my $picknum=$start+1;
