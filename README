@@ -48,7 +48,7 @@ DESCRIPTION
 
          (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --< 2 >-<ENTER>----------------------------------
 
@@ -86,7 +86,7 @@ DESCRIPTION
 
          OR "u" to scroll upward  (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --<ENTER>--------------------------------------
 
@@ -109,7 +109,7 @@ DESCRIPTION
 
          OR "u" to scroll upward  (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --< 14 >-<ENTER>----------------------------------
 
@@ -152,7 +152,9 @@ DESCRIPTION
             8.        /bin Utility - chmod
             9.        /bin Utility - chown
             10.       /bin Utility - cp
-            f.        Finish selection.
+
+         a.  Select All.   c.  Clear All.
+         f.  Finish.
 
          93 Total Choices
 
@@ -160,7 +162,7 @@ DESCRIPTION
 
          OR "u" to scroll upward  (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --< 3 >-<ENTER>----------------------------------
 
@@ -180,8 +182,9 @@ DESCRIPTION
             8.        /bin Utility - chmod
             9.        /bin Utility - chown
             10.       /bin Utility - cp
-            c.        Clear all selections.
-            f.        Finish selection.
+
+         a.  Select All.   c.  Clear All.
+         f.  Finish.
 
          93 Total Choices
 
@@ -189,7 +192,7 @@ DESCRIPTION
 
          OR "u" to scroll upward  (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --< f >-<ENTER>----------------------------------
 
@@ -250,7 +253,9 @@ DESCRIPTION
             8.        /bin Utility - chmod
             9.        /bin Utility - chown
             10.       /bin Utility - cp
-            f.        Finish selection.
+
+         a.  Select All.   c.  Clear All.
+         f.  Finish.
 
          93 Total Choices
 
@@ -258,7 +263,7 @@ DESCRIPTION
 
          OR "u" to scroll upward  (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --< 5 >-<ENTER>----------------------------------
 
@@ -269,7 +274,7 @@ DESCRIPTION
 
          (Press "q" to quit)
 
-         PLEASE ENTER A NUMBER:
+         PLEASE ENTER A CHOICE:
 
       --< 1 >-<ENTER>----------------------------------
 
@@ -470,6 +475,79 @@ METHODS
 
              Convey => [ `ls -1` ] ,
 
+    *   Default => 'Char String' --or-- Perl regular expression - qr/.../
+
+    *
+
+        * The *Default* element provides a means to pre-select certain
+          elements, as if the items were selected by the user. This can be
+          done with two constructs - simple string or pre-compiled regular
+          expression. Note: The "Default" element is available only when the
+          "Select" element is set to 'Many' - "Select =" 'Many',>
+
+             Default => 'base|chown',
+
+             Default => qr/base|chown/i,
+
+          The user sees ==>
+
+             Choose a /bin Utility :
+
+                1.        /bin Utility - arch
+                2.        /bin Utility - ash
+                3.        /bin Utility - awk
+             *  4.        /bin Utility - basename
+                5.        /bin Utility - bash
+                6.        /bin Utility - cat
+                7.        /bin Utility - chgrp
+                8.        /bin Utility - chmod
+             *  9.        /bin Utility - chown
+                10.       /bin Utility - cp
+
+             a.  Select All.   c.  Clear All.
+             f.  Finish.
+
+             93 Total Choices
+
+             Press ENTER (or "d") to scroll downward
+
+             OR "u" to scroll upward  (Press "q" to quit)
+
+             PLEASE ENTER A CHOICE:
+
+    *   Exclude => 'Char String' --or-- Perl regular expression - qr/.../
+
+    *
+
+        * The *Exclude* element provides a means to remove matching elements
+          from the Menu seen by the user. This element is useful only when
+          the "]Convey[" macro is used to populate items. This can be done
+          with two constructs - simple string or pre-compiled regular
+          expression.
+
+             Exclude => 'base|chown',
+
+             Exclude => qr/base|chown/i,
+
+    *   Include => 'Char String' --or-- Perl regular expression - qr/.../
+
+    *
+
+        * The *Include* element provides a means to create items filtered
+          from a larger list of potential items available via the "]Convey["
+          macro. This element is useful only when the "]Convey[" macro is
+          used to populate items. The "Exclude" element can be used in
+          conjunction with "Include" to further refine the final list of
+          items used to construct the menu. The "Include" element - when
+          used - always takes presidence, and the "Exclude" will be used
+          only on the "Include" filtered results. This element can be used
+          with two value constructs - simple string or pre-compiled regular
+          expression.
+
+             Include => 'base|chown',
+
+             Include => qr/base|chown/i,
+
     *   Result => \%Menu_2 --or -- "&any_method()",
 
     *
@@ -564,7 +642,9 @@ METHODS
                 8.        /bin Utility - chmod
                 9.        /bin Utility - chown
                 10.       /bin Utility - cp
-                f.        Finish selection.
+
+             a.  Select All.   c.  Clear All.
+             f.  Finish.
 
              93 Total Choices
 
@@ -572,7 +652,7 @@ METHODS
 
              OR "u" to scroll upward  (Press "q" to quit)
 
-             PLEASE ENTER A NUMBER:
+             PLEASE ENTER A CHOICE:
 
           NOTE: "]C[" can be used as a shorthand for "]Convey[".
 
@@ -633,7 +713,9 @@ METHODS
                 8.        /bin Utility - chmod
                 9.        /bin Utility - chown
                 10.       /bin Utility - cp
-                f.        Finish selection.
+
+             a.  Select All.   c.  Clear All.
+             f.  Finish.
 
              93 Total Choices
 
@@ -641,7 +723,7 @@ METHODS
 
              OR "u" to scroll upward  (Press "q" to quit)
 
-             PLEASE ENTER A NUMBER:
+             PLEASE ENTER A CHOICE:
 
           --< 5 >-<ENTER>----------------------------------
 
@@ -652,7 +734,7 @@ METHODS
 
              (Press "q" to quit)
 
-             PLEASE ENTER A NUMBER:
+             PLEASE ENTER A CHOICE:
 
           --< 1 >-<ENTER>----------------------------------
 
@@ -727,7 +809,9 @@ USAGE and NAVIGATION
               8.        /bin Utility - chmod
               9.        /bin Utility - chown
               10.       /bin Utility - cp
-              f.        Finish selection.
+
+           a.  Select All.   c.  Clear All.
+           f.  Finish.
 
            93 Total Choices
 
@@ -735,7 +819,7 @@ USAGE and NAVIGATION
 
            OR "u" to scroll upward  (Press "q" to quit)
 
-           PLEASE ENTER A NUMBER:
+           PLEASE ENTER A CHOICE:
 
         --< 5 >-<ENTER>----------------------------------
 
@@ -748,7 +832,7 @@ USAGE and NAVIGATION
 
            (Press "q" to quit)
 
-           PLEASE ENTER A NUMBER:
+           PLEASE ENTER A CHOICE:
 
     In the above example, suppose that the user "fat-fingered" his/her
     choice, and really didn't want to "bash" bash, but wanted to bash awk
@@ -770,7 +854,7 @@ USAGE and NAVIGATION
 
        (Press "q" to quit)
 
-       PLEASE ENTER A NUMBER:
+       PLEASE ENTER A CHOICE:
 
      --<  >  >-<ENTER>-----------------------------
 
@@ -788,7 +872,9 @@ USAGE and NAVIGATION
           8.        /bin Utility - chmod
           9.        /bin Utility - chown
           10.       /bin Utility - cp
-          f.        Finish selection.
+
+       a.  Select All.   c.  Clear All.
+       f.  Finish.
 
        93 Total Choices
 
@@ -796,7 +882,7 @@ USAGE and NAVIGATION
 
        OR "u" to scroll upward  (Press "q" to quit)
 
-       PLEASE ENTER A NUMBER:
+       PLEASE ENTER A CHOICE:
 
     Note in the above example the Dash ' - ' in front of item 5. This
     informs the user that s/he had previously selected this item. To clear
@@ -824,7 +910,9 @@ USAGE and NAVIGATION
           8.        /bin Utility - chmod
           9.        /bin Utility - chown
           10.       /bin Utility - cp
-          f.        Finish selection.
+
+       a.  Select All.   c.  Clear All.
+       f.  Finish.
 
        93 Total Choices
 
@@ -832,7 +920,7 @@ USAGE and NAVIGATION
 
        OR "u" to scroll upward  (Press "q" to quit)
 
-       PLEASE ENTER A NUMBER:
+       PLEASE ENTER A CHOICE:
 
 EXAMPLES
 AUTHOR

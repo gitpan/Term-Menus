@@ -6,4 +6,5 @@ README
 META.yml
 LICENSE
 Makefile.PL
+t/test.pl
 SIGNATURE    Added here by Module::Build
