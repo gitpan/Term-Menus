@@ -23,5 +23,6 @@ Module::Build->new(
    sign => 1,
    create_readme => 1,
    create_packlist => 1,
+   test_files => [ 't/test.t' ],
 )->create_build_script;
 

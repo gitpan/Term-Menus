@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.06;
+$VERSION = 1.07;
 
 
 BEGIN {
@@ -433,11 +433,8 @@ sub Menu
    # End MenuUnit Breakdown
    ############################################
 
-#print "SAVENEXT=",keys %{$SaveNext},"\n";
-#print "SAVELAST=",keys %{$SaveLast},"\n";<STDIN>;
    my $cl_def=0;
    foreach my $key (keys %{$SaveNext}) {
-#print "WHAGT THE DFUDD=${$FullMenu}{$key}[5]<==\n";<STDIN>;
       if (${$FullMenu}{$key}[5] eq 'ERASE') {
          ${$FullMenu}{$key}[5]='' if !exists ${$SaveLast}{$key};
          $cl_def=1;
@@ -572,15 +569,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    my $choose_num='';
    my $convey='';
    my $menu_output='';
+   my $hidedefaults=0;
    my $start=0;
 
    sub delete_Selected
    {
-#print "DSCALL=",caller,"\n";<STDIN>;
       my $Selected=$_[2];
       my $SavePick=$_[3];
       my $SaveNext=$_[4];
-#print "WHAT IS ZEORRROO=$_[0] and ONE=$_[1]\n";<STDIN>;
       if ($_[1]) {
          my $result=${$Selected}{$_[0]}{$_[1]};
          delete ${$Selected}{$_[0]}{$_[1]};
@@ -603,10 +599,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                delete ${$SaveNext}{$_[0]};
             }
          } 
-      }
-#print "KEYSSSSSSSS=",keys %{$SaveNext}," and ZERO=$_[0]\n";<STDIN>;
- delete ${$SaveNext}{$_[0]};
-#print "KEYSSSSSSSS=",keys %{$SaveNext}," and ZERO=$_[0]\n";<STDIN>;
+      } delete ${$SaveNext}{$_[0]};
       return $SaveNext;
 
    } 
@@ -975,7 +968,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   }
                }
             } else { $mark=' ' }
-            if (${$FullMenu}{$MenuUnit_hash_ref}[5]
+            if (!$hidedefaults && ${$FullMenu}{$MenuUnit_hash_ref}[5]
                   {$pickone[$picknum-1]} && (${$FullMenu}
                   {$MenuUnit_hash_ref}[5]{$pickone[$picknum-1]}
                   eq '*' || $pickone[$picknum-1]=~
@@ -989,7 +982,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
             $numlist--;
          } %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
-         ${$FullMenu}{$MenuUnit_hash_ref}[5]='';
+         $hidedefaults=1;
+         #${$FullMenu}{$MenuUnit_hash_ref}[5]='';
          print $blanklines;
          if ($OS ne 'cygwin') {
             if ($clear) {
@@ -1089,8 +1083,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $MenuUnit_hash_ref}-1]}}[0];
             } else { $convey=$pickone[${$SaveLast}{
                   $MenuUnit_hash_ref}-1] }
-            #${$SaveLast}{$MenuUnit_hash_ref}=
-            #   ${$SaveNext}{$MenuUnit_hash_ref};
             ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
                $SaveLast,$SaveNext)=&Menu(${$FullMenu}
                {$MenuUnit_hash_ref}[2]
@@ -1175,12 +1167,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      delete $items{$pick};
                   }
                }
-            }
+            } ${$FullMenu}{$MenuUnit_hash_ref}[5]='';
          }
          if ($numbor=~/^()$/ || $numbor=~/^\n/ || $numbor=~/^d$/i) {
             if ($display_this_many_items<$num_pick-$start) {
                $start=$start+$display_this_many_items;
             } else { $start=0 }
+            $hidedefaults=0;
             $numbor=$start+$choose_num+1;
             last;
          } elsif ($numbor=~/^u$/i) {
@@ -1232,13 +1225,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $negate{$numbor}=
                         ${${$FullMenu}{$MenuUnit_hash_ref}[1]}
                         {$pickone[$numbor-1]};
-                     #($FullMenu,$Conveyed,$SaveNext,$Selected,
-                     #   $convey,$parent_menu)
-                     #   =$get_result->($MenuUnit_hash_ref,
-                     #   \@pickone,$numbor,$picks_from_parent,
-                     #   $FullMenu,$Conveyed,$Selected,
-                     #   $SaveNext,$parent_menu,$menu_cfg_file,
-                     #   $Convey_contents);
                      %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                      ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
                   }
@@ -1256,6 +1242,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   chomp($numbor);
                   if (exists $picks{$numbor}) {
                      ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
+                     $hidedefaults=0;
                      $SaveNext=$SaveLast;
                      if ($picks{$numbor} eq '*') {
                         delete $picks{$numbor};
@@ -1266,11 +1253,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            $Selected,$SavePick,$SaveNext);
                         delete $picks{$numbor};
                         delete $items{$numbor};
-#print "YOWDY and MENU=$MenuUnit_hash_ref\n";<STDIN>;
-                     } #last;
+                     }
                   }
                   if ($prev_menu && $prev_menu!=$numbor) {
                      ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
+                     $hidedefaults=0;
                      $SaveNext=$SaveLast;
                      &delete_Selected($MenuUnit_hash_ref,$prev_menu,
                         $Selected,$SavePick,$SaveNext);
