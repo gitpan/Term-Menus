@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.07;
+$VERSION = 1.08;
 
 
 BEGIN {
@@ -141,25 +141,6 @@ foreach my $dir (@INC) {
    }
 }
 
-{
-   no strict 'refs';
-   foreach my $symname (keys %Menus::) {
-      if (eval "\\%$symname") {
-         my $hashref=eval "\\%$symname";
-         HF: foreach my $key (keys %{$hashref}) {
-            if (ref ${$hashref}{$key} eq 'HASH') {
-               foreach my $ky (keys %{${$hashref}{$key}}) {
-                  if (lc($ky) eq 'text') {
-                     $LookUpMenuName{$hashref}="$symname";
-                     last HF;
-                  }
-               }
-            }
-         }
-      }
-   }
-}
-
 sub fa_login
 {
 
@@ -260,9 +241,9 @@ sub Menu
 {
 #print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
-   $LookUpMenuName={};
+   #$LookUpMenuName={};
    if (exists ${$MenuUnit_hash_ref}{'Label'}) {
-      ${$LookUpMenuName}{$MenuUnit_hash_ref}
+      $LookUpMenuName{$MenuUnit_hash_ref}
          =${$MenuUnit_hash_ref}{'Label'};
    } else { die "No Menu Label Defined\n" }
    my $picks_from_parent=$_[1];
@@ -631,7 +612,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $Selected=$_[0];
       my @subs=();
       foreach my $key (keys %{$Selected}) {
-         foreach my $item (keys %{${$Selected}{"$key"}}) {
+         foreach my $item (keys %{${$Selected}{$key}}) {
             if (substr(${$Selected}{$key}{$item},0,1) eq '&') {
                push @subs, ${$Selected}{$key}{$item};
             }
@@ -671,76 +652,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             $convey='SKIP' if $convey eq '';
          }
          if (exists ${$_[0]}{${$FullMenu}{$_[0]}
-                            [4]{${$_[1]}[$_[2]-1]}}{Convey}) {
-            if (ref ${$FullMenu}{$_[0]}[2]
-                   {${$_[1]}[$_[2]-1]} eq 'HASH') {
-               if (exists ${${$FullMenu}{$_[0]}[2]
-                   {${$_[1]}[$_[2]-1]}}{'Label'}) {
-                  if (unpack('x1 a1',
-                        ${$_[0]}{${$FullMenu}{$_[0]}
-                        [4]{${$_[1]}[$_[2]-1]}}{'Result'})
-                        eq '&') {
-                     if (exists ${$LookUpMenuName}{$_[0]}) {
-                        ${$Conveyed}{${$LookUpMenuName}{$_[0]}}=$convey;
-                        $parent_menu=${$LookUpMenuName}{$_[0]};
-                     } else {
-                        $die="One of the Defined MENU Hash BLOCKS\n"
-                            ."              called from the Parent Menu \""
-                            ."\%$parent_menu\"\n              defined in the "
-                            ."$menus_cfg_file file\n              DOES NOT "
-                            ."EXIST or is NOT EXPORTED\n\n       "
-                            ."Hint: Make sure the Names of all\n       "
-                            ."      Menu Hash Blocks in the\n       "
-                            ."      $menus_cfg_file file are\n       "
-                            ."      listed in the \@EXPORT list\n       "
-                            ."      found at the beginning of\n       "
-                            ."      the file $menus_cfg_file\n\n       "
-                            ."\@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-                        &FA_lib::handle_error($die) if $fullauto;
-                        die $die;
-                     }
-                  } elsif (ref ${$_[0]}{${$FullMenu}{$_[0]}
-                        [4]{${$_[1]}[$_[2]-1]}}{'Result'} eq 'HASH') {
-                     if (exists ${$_[0]}{${$FullMenu}{$_[0]}
-                           [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'}) {
-                        ${LookUpMenuName}{${$_[0]}{${$FullMenu}{$_[0]}
-                           [4]{${$_[1]}[$_[2]-1]}}{'Result'}}=
-                           ${$_[0]}{${$FullMenu}{$_[0]}
-                           [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'};
-                        $parent_menu=${$LookUpMenuName}{$_[0]};
-                     } else {
-                        die "NO LABEL IN MENU BLOCK\n";
-                     }
-                  } elsif (exists ${$LookUpMenuName}{$_[0]}) {
-                     $parent_menu=${$LookUpMenuName}{$_[0]};
-                     ${$Conveyed}{${$LookUpMenuName}{$_[0]}}=
-                        ${${$FullMenu}{$_[0]}[3]{${$_[1]}[$_[2]-1]}}[0];
-                  } else {
-                     my $die="One of the Defined MENU Hash BLOCKS\n";
-                     $die.="\t\tcalled from the Parent Menu \"\%$parent_menu\"";
-                     $die.="\n\t\tdefined in the $menus_cfg_file file\n";
-                     $die.="\t\tDOES NOT EXIST or is NOT EXPORTED\n\n\t";
-                     $die.="Hint: Make sure the Names of all\n\t";
-                     $die.="      Menu Hash Blocks in the\n\t";
-                     $die.="      $menus_cfg_file file are\n\t";
-                     $die.="      listed in the \@EXPORT list\n\t";
-                     $die.="      found at the beginning of\n\t";
-                     $die.="      the file $menus_cfg_file\n\n\t";
-                     $die.="our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-                     &FA_lib::handle_error($die) if $fullauto;
-                     die $die;
-                  }
+               [4]{${$_[1]}[$_[2]-1]}}{Convey}) {
+            ${$Conveyed}{${$LookUpMenuName}{$_[0]}}=$convey;
+            $parent_menu=${$LookUpMenuName}{$_[0]};
+            if (ref ${$_[0]}{${$FullMenu}{$_[0]}
+                  [4]{${$_[1]}[$_[2]-1]}}{'Result'} eq 'HASH') {
+               if (exists ${$_[0]}{${$FullMenu}{$_[0]}
+                     [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'}) {
+                  $LookUpMenuName{${$_[0]}{${$FullMenu}{$_[0]}
+                     [4]{${$_[1]}[$_[2]-1]}}{'Result'}}=
+                     ${$_[0]}{${$FullMenu}{$_[0]}
+                     [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'};
+                  $parent_menu=$LookUpMenuName{$_[0]};
                } else {
-                  my $die="One of the Defined MENU Hash BLOCKS\n";
-                  $die.="\t\tcalled from the Parent Menu \"\%$parent_menu\"";
-                  #$die.="\n\t\tdefined in the $menus_cfg_file file\n";
-                  $die.="\t\tDOES NOT HAVE A 'Label' ELEMENT\n\n\t";
-                  $die.="Hint: Make sure all Menu Hash Blocks\n\t";
-                  #$die.="      in the $menus_cfg_file file\n\t";
-                  $die.="      have a 'Label' element defined.\n";
-                  &FA_lib::handle_error($die) if $fullauto;
-                  die $die;
+                  die "NO LABEL IN MENU BLOCK\n"; 
                }
+            } elsif (unpack('a1',
+                  ${$_[0]}{${$FullMenu}{$_[0]}
+                  [4]{${$_[1]}[$_[2]-1]}}{'Result'})
+                  ne '&') {
             }
          }
       } else { $convey=$_[3] }
@@ -816,9 +746,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   my $esc_one=$one;
                   $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
                   while ($result=~m/$esc_one\{[^}]+\}/) {
+                     my $convey_ed=${$Conveyed}{$1};
                      $result=~s/$esc_one\{([^}]+)\}/${$Conveyed}{$1}/e;
-                  }
-                  $result=~s/$esc_one/$picks_from_parent/g;
+                  } my $pp=$picks_from_parent;
+                  $pp="\"$pp\"" if $pp=~/\s/s;
+                  $result=~s/$esc_one/$pp/g;
                } $one='';
                while ($result=~m/($con_regex)/g) {
                   next if $1 eq $one;

@@ -1,3 +1,10 @@
+2005-05-29  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.08 released.
+
+        * Repaired code related to dynamic menu building.
+          The construct ]Previous[{Menu_1} now works properly.
+
 2005-05-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.06 released.
