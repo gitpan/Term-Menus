@@ -1,3 +1,10 @@
+2005-06-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.09 released.
+
+        * The package name was incorrect - needs to be Term::Menus
+          - 'not' Menus (my bad)
+
 2005-05-29  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.08 released.
