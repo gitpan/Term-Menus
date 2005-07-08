@@ -34,13 +34,13 @@ DESCRIPTION
          use Term::Menus;
 
          my @list=('First Item','Second Item','Third Item');
-         my $banner="   Please pick an item:";
+         my $banner="  Please Pick an Item:";
          my $selection=&pick(\@list,$banner);
          print "SELECTION = $selection\n";
 
       The user sees ==>
 
-         Please pick an item:
+         Please Pick an Item:
 
             1.        First Item
             2.        Second Item
@@ -61,13 +61,13 @@ DESCRIPTION
          use Term::Menus;
 
          my @list=`ls -1 /bin`;
-         my $banner="   Please pick an item:";
+         my $banner="   Please Pick an Item:";
          my $selection=&pick(\@list,$banner);
          print "SELECTION = $selection\n";
 
       The user sees ==>
 
-         Please pick an item:
+         Please Pick an Item:
 
             1.        arch
             2.        ash
@@ -90,7 +90,7 @@ DESCRIPTION
 
       --<ENTER>--------------------------------------
 
-         Please pick an item:
+         Please Pick an Item:
 
             11.       cpio
             12.       csh
@@ -921,6 +921,63 @@ USAGE and NAVIGATION
        OR "u" to scroll upward  (Press "q" to quit)
 
        PLEASE ENTER A CHOICE:
+
+   View Summary of Selected Items ' * '
+    When working with numerous items in a single menu, it is desirable to
+    see the set of choices made before leaving the menu and committing to a
+    non-returnable forward (perhaps even critical) process. Term::Menus
+    provides this feature with the *Star* ' * ' key. Assume we have the
+    following menu with 93 Total Choices. Assume further that we have
+    selected items 1,3,9 & 11. Note that we cannot see Item 11 on the first
+    screen since this menu is configured to show only 10 Items at a time.
+
+        The user sees ==>
+
+           Choose a /bin Utility :
+
+           *  1.        /bin Utility - arch
+              2.        /bin Utility - ash
+           *  3.        /bin Utility - awk
+              4.        /bin Utility - basename
+              5.        /bin Utility - bash
+              6.        /bin Utility - cat
+              7.        /bin Utility - chgrp
+              8.        /bin Utility - chmod
+           *  9.        /bin Utility - chown
+              10.       /bin Utility - cp
+
+           a.  Select All.   c.  Clear All.
+           f.  Finish.
+
+           93 Total Choices
+
+           Press ENTER (or "d") to scroll downward
+
+           OR "u" to scroll upward  (Press "q" to quit)
+
+           PLEASE ENTER A CHOICE: 
+
+        --< * >-<ENTER>----------------------------------
+
+        The user sees ==>
+
+           Choose a /bin Utility :
+
+           *  1.        /bin Utility - arch
+           *  3.        /bin Utility - awk
+           *  9.        /bin Utility - chown
+           *  11.       /bin Utility - cpio
+
+           (Press "q" to quit)
+
+           PLEASE ENTER A CHOICE:
+
+        This submenu of selections works just like any other menu. The user
+        can deselect an item, clear all items, re-choose all items, etc. The
+        choices made here are preserved when-or-if the user navigates back
+        to the original (parent) menu. In other words, if Item 1. is
+        deselected in the summary menu, Item 1. will also be deselected in
+        the parent menu above.
 
 EXAMPLES
 AUTHOR
