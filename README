@@ -922,6 +922,105 @@ USAGE and NAVIGATION
 
        PLEASE ENTER A CHOICE:
 
+   View Sorted Items ' % '
+    When working with numerous items in a single menu, it may be desirable
+    to see the set of choices organized in either descending or reverse
+    acscii order. Term::Menus provides this feature with the *Percent* ' % '
+    key. Simply type ' % ' and the items will be sorted in descending ascii
+    order. Type ' % ' again, and you will see the items reverse sorted.
+    Assume that we have the following menus.
+
+        The user sees ==>
+
+           Please select all files for immediate transfer:
+
+           *  1.        addr2name.awk has  **NOT**  been transferred
+           *  2.        awk.exe has  **NOT**  been transferred
+              3.        gawk-3.1.4.exe has  **NOT**  been transferred
+           *  4.        gawk.exe has  **NOT**  been transferred
+              5.        igawk has  **NOT**  been transferred
+              6.        pgawk-3.1.4.exe has  **NOT**  been transferred
+              7.        pgawk.exe has  **NOT**  been transferred
+           *  8.        822-date has been transferred
+              9.        DllPlugInTester.exe has been transferred
+           *  10.       ELFDump.exe has been transferred
+
+           a.  Select All.   c.  Clear All.
+           f.  Finish.
+
+           929 Total Choices
+
+           Press ENTER (or "d") to scroll downward
+
+           OR "u" to scroll upward  (Press "q" to quit)
+
+           PLEASE ENTER A CHOICE:
+
+        --< % >-<ENTER>----------------------------------
+
+        The user sees ==>
+
+           Please select all files for immediate transfer:
+
+           *  8.        822-date has been transferred
+              9.        DllPlugInTester.exe has been transferred
+           *  10.       ELFDump.exe has been transferred
+              11.       GraphicsMagick++-config has been transferred
+              12.       GraphicsMagick-config has been transferred
+              13.       X11 has been transferred
+              14.       [.exe has been transferred
+              15.       a2p.exe has been transferred
+              16.       aclocal has been transferred
+              17.       aclocal-1.4 has been transferred
+
+           a.  Select All.   c.  Clear All.
+           f.  Finish.
+
+           929 Total Choices
+
+           Press ENTER (or "d") to scroll downward
+
+           OR "u" to scroll upward  (Press "q" to quit)
+
+           PLEASE ENTER A CHOICE:
+
+        And if we choose to enter ' % ' *again*
+
+        --< % >-<ENTER>----------------------------------
+
+        The user sees ==>
+
+           Please select all files for immediate transfer:
+
+              929.      znew has been transferred
+              928.      zmore has been transferred
+              927.      zless has been transferred
+              926.      zipsplit.exe has been transferred
+              925.      zipnote.exe has been transferred
+              924.      zipinfo has been transferred
+              923.      zipgrep has been transferred
+              922.      zipcloak.exe has been transferred
+              921.      zip.exe has been transferred
+              920.      zgrep has been transferred
+
+           a.  Select All.   c.  Clear All.
+           f.  Finish.
+
+           929 Total Choices
+
+           Press ENTER (or "d") to scroll downward
+
+           OR "u" to scroll upward  (Press "q" to quit)
+
+           PLEASE ENTER A CHOICE:
+
+        This submenu of selections works just like any other menu. The user
+        can deselect an item, clear all items, re-choose all items, etc. The
+        choices made here are preserved when-or-if the user navigates back
+        to the original (parent) menu. In other words, if Item 1. is
+        deselected in the sorted menu, Item 1. will also be deselected in
+        the parent menu above.
+
    View Summary of Selected Items ' * '
     When working with numerous items in a single menu, it is desirable to
     see the set of choices made before leaving the menu and committing to a
