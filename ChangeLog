@@ -1,3 +1,11 @@
+2006-06-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.12 released.
+
+	* Added Support for unreleased FullAuto utility
+
+	* Fixed "my" scoping bug for $cnt variable
+
 2005-08-12  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.11 released.

@@ -23,14 +23,15 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.11;
+$VERSION = 1.12;
 
 
 BEGIN {
    our $menu_cfg_file='';
    our $fullauto=0;
-   if (caller() ne 'main') {
+   if (caller(2) eq 'FullAuto') {
       require menu_cfg;
+      import menu_cfg;
       $menu_cfg_file='menu_cfg.pm';
       $fullauto=1;
    }
@@ -54,8 +55,9 @@ BEGIN {
 
 BEGIN {
    our $sub_module='';
-   if (caller() ne 'main') {
+   if (caller(2) eq 'FullAuto') {
       require user_sub;
+      import user_sub;
       $sub_module='user_sub.pm';
    }
 }
@@ -135,6 +137,25 @@ foreach my $dir (@INC) {
                   &FA_lib::handle_error($die,'__cleanup__');
                } else { die $die }
                #print $die;exit;
+            }
+         }
+      }
+   }
+}
+
+if ($fullauto) {
+   no strict 'refs';
+   foreach my $symname (keys %Term::Menus::) {
+      if (eval "\\%$symname") {
+         my $hashref=eval "\\%$symname";
+         HF: foreach my $key (keys %{$hashref}) {
+            if (ref ${$hashref}{$key} eq 'HASH') {
+               foreach my $ky (keys %{${$hashref}{$key}}) {
+                  if (lc($ky) eq 'text') {
+                     $LookUpMenuName{$hashref}="$symname";
+                     last HF;
+                  }
+               }
             }
          }
       }
@@ -241,11 +262,6 @@ sub Menu
 {
 #print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
-   #$LookUpMenuName={};
-   if (exists ${$MenuUnit_hash_ref}{'Label'}) {
-      $LookUpMenuName{$MenuUnit_hash_ref}
-         =${$MenuUnit_hash_ref}{'Label'};
-   } else { die "No Menu Label Defined\n" }
    my $picks_from_parent=$_[1];
    my $recurse= (defined $_[2]) ? $_[2] : 0;
    my $FullMenu= (defined $_[3]) ? $_[3] : {};
@@ -813,7 +829,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          } else {
             my $die="\n       FATAL ERROR! - The \"Result =>\" Setting"
                    ."\n              -> " . ${$FullMenu}{$_[0]}
-                                      [2]{${$_[1]}[$_[2]-1]}
+                                            [2]{${$_[1]}[$_[2]-1]}
                    ."\n              Found in the Menu Unit -> "
                    ."$_[0]\n              is not a Menu Unit\,"
                    ." and Because it Does Not Have\n              "
@@ -1056,7 +1072,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      ne '_ZERO_') {
                   $sort{$line}=${$FullMenu}{$MenuUnit_hash_ref}[6]{$line};
                } else { $sort{$line}=$cnt }
-            } my $cnt=0;my $chose_n='';
+            } $cnt=0;my $chose_n='';
             my %chosen=();
             if (!$sorted) {
                %chosen=(
@@ -1239,7 +1255,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                Label  => 'chosen',
                Select => 'Many',
                Banner => ${$MenuUnit_hash_ref}{Banner},
-            ); my $cnt=0;
+            ); $cnt=0;
             foreach my $text (@spl) {
                my $num=$splice[$cnt];
                $cnt++;
@@ -1471,7 +1487,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "ARE WE HERE and PN=$pn and NUMBOR=$numbor and SUM=$sum_menu\n";<STDIN>;%pn=();
             my $callertest=__PACKAGE__."::Menu";
             if (wantarray && !$no_wantarray) {
-#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and keys=",(join "\n",keys %{${$SavePick}{$parent_menu}})," and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
+#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and
+keys=",(join "\n",keys %{${$SavePick}{$parent_menu}}),"
+and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                if (exists $picks{$numbor}) {
 #print "ARE WE HERE??? and ${$SavePick}{$parent_menu}{$numbor}<==\n";
                   if ($picks{$numbor} eq '*') {
@@ -1480,7 +1498,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      delete ${$Selected}{$MenuUnit_hash_ref}{$numbor};
                      delete ${$SavePick}{$parent_menu}{$numbor}
                         if $sum_menu || $filtered_menu;
-#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and keys=",(join "\n",keys %{${$SavePick}{$parent_menu}})," and NUMBOR=$numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
+#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and
+keys=",(join "\n",keys %{${$SavePick}{$parent_menu}}),"
+and NUMBOR=$numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                   } else {
                      &delete_Selected($MenuUnit_hash_ref,$numbor,
                          $Selected,$SavePick,$SaveNext);
@@ -2080,7 +2100,8 @@ if you find any bugs or have suggestions for improvements.
 =item *
 
 There are two methods available with Term::Menus - &pick() and &Menu().
-C<&Menu()> uses C<&pick()> - you can get the same results using only
+C<&Menu()> uses C<&pick()> - you can get the same results using
+only
 C<&Menu()>. However, if you need to simply pick one item from a single
 list - use C<&pick()>. The syntax is simpler, and you'll write less code.
 ;-)
@@ -2170,7 +2191,8 @@ C<%Menu_1>:
 Each Menu Configuration Hash Structure consists of elements that define
 and control it's behavior, appearance, constitution and purpose. An
 element's syntax is as you would expect it to be in perl - a key string
-pointing to an assocaited value: C<key =E<gt> value>. The following items
+pointing to an assocaited value: C<key =E<gt> value>. The following
+items
 list supported key names and ther associated value types:
 
 =over 4
@@ -2185,7 +2207,8 @@ B<Display> => 'Integer'
 
 =item
 
-The I<Display> key is an I<optional> key that determines the number of Menu
+The I<Display> key is an I<optional> key that determines the number 
+of Menu
 Items that will be displayed on each screen. This is useful when the items
 are multi-lined, or the screen size is bigger or smaller than the default
 number utilizes in the most practical fashion. The default number is 10.
@@ -2214,7 +2237,8 @@ unique Label element> Otherwise C<&Menu()> will throw an error.
 
 =item 
 
-B<Item_E<lt>intE<gt>> => { Item Configuration Hash Structure }
+B<Item_E<lt>intE<gt>> => { Item Configuration Hash
+Structure }
 
 =item
 
@@ -2222,11 +2246,13 @@ B<Item_E<lt>intE<gt>> => { Item Configuration Hash Structure }
 
 =item
 
-The I<Item_E<lt>intE<gt>> elements define customized menu items. There are
+The I<Item_E<lt>intE<gt>> elements define customized menu items.
+There are
 essentially two methods for creating menu items: The I<Item_E<lt>intE<gt>>
 elements, and the C<]Convey[> macro (described later). The difference being
 that the C<]Convey[> macro turns an Item Conguration Hash into an Item
-I<Template> -> a B<powerful> way to I<Item>-ize large lists or quantities
+I<Template> -> a B<powerful> way to I<Item>-ize large lists
+or quantities
 of data that would otherwise be difficult - even impossible - to anticipate
 and cope with manually.
 
@@ -2247,7 +2273,8 @@ They all share the same C<Result> element.
 
 =back
 
-The syntax and usage of I<Item_E<lt>intE<gt>> elements is important and
+The syntax and usage of I<Item_E<lt>intE<gt>> elements is important
+and
 extensive enough warrant it's own section. See B<I<Item Configuration Hash
 Structures>> below.
 
@@ -2299,7 +2326,7 @@ Each Menu Item can have an independant configurtion. Each Menu Configuration
 Hash Structure consists of elements that define and control it's behavior, 
 appearance, constitution and purpose. An element's syntax is as you would 
 expect it to be in perl - a key string pointing to an assocaited value: key 
-=> value. The following items list supported key names and ther associated 
+=> value. The following items list supported key names and ther associated
 value types:
 
 =over 4
@@ -2341,7 +2368,7 @@ resulting I<Convey> string - B<I<NOT>> the the Item C<Text> value or string,
 is conveyed to child menus. When the C<Convey> element is not used, the 
 full Item C<Text> value B<is> conveyed to the children - if any. However, the 
 full contents of the C<Text> element is I<returned> as the I<Result> of the
-operation when the user completes all menu activity. See the I<Macro> section 
+operation when the user completes all menu activity. See the I<Macro> section
 below for more information.
 
    Convey => [ `ls -1` ] ,
@@ -2464,7 +2491,8 @@ For selecting the child menu next in the chain of operation and conveyance,
 
 =item *
 
-For building customized method arguements using C<&Menu()>'s built-in macros.
+For building customized method arguements using C<&Menu()>'s built-in 
+macros.
 
 =item
 
@@ -2718,10 +2746,11 @@ deems necessary and/or helpful in the customizable C<Banner> (as described
 above). There is however, one important feature about using C<&Menu()> with
 sub-menus that's important to know about.
 
-=head3 Forward  ' B<E<gt>> ' and  Backward  ' B<E<lt>> ' Navigation
+=head3 Forward  ' B<E<gt>> ' and  Backward  ' B<E<lt>>
+' Navigation
 
 When working with more than one C<&Menu()> screen, it's valuable to know how
-to navigate back and forth between the different C<&Menu()> levels/layers. For
+to navigate back and forth between the different C<&Menu()> levels/layers.  For
 example, above was illustrated the output for two layers of menus - a parent
 and a child:
 
@@ -2823,7 +2852,8 @@ the user that s/he had previously selected this item. To clear the selection,
 the user would simply choose item B<5> again. This effectively deletes the
 previous choice and restores the menu for a new selection. If the user was
 satisfied with the choice, and was simply double checking thier selection, they
-simply repeat the navigation process by typing ' B<E<gt>> ' - then <ENTER> -
+simply repeat the navigation process by typing ' B<E<gt>> ' - then <ENTER>
+-
 and returning to the child menu they left.
 
 If the child menu was a I<multiple-selection> menu, and the user had made some
@@ -2859,7 +2889,7 @@ made in the child menu.
 
 When working with numerous items in a single menu, it may be desirable to see
 the set of choices organized in either descending or reverse acscii order.
-Term::Menus provides this feature with the I<Percent> ' B<%> ' key. Simply
+Term::Menus provides this feature with the I<Percent> ' B<%> ' key.  Simply
 type ' B<%> ' and the items will be sorted in descending ascii order. Type
 ' B<%> ' again, and you will see the items reverse sorted. Assume that we have
 the following menus.
@@ -2964,7 +2994,7 @@ When working with numerous items in a single menu, it is desirable to see the
 set of choices made before leaving the menu and committing to a non-returnable 
 forward (perhaps even critical) process. Term::Menus provides this feature 
 with the I<Star> ' B<*> ' key. Assume we have the following menu with 93 Total 
-Choices. Assume further that we have selected items 1,3,9 & 11. Note that we 
+Choices. Assume further that we have selected items 1,3,9 & 11. Note that we
 cannot see Item 11 on the first screen since this menu is configured to show 
 only 10 Items at a time.
 
