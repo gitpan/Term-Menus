@@ -789,8 +789,7 @@ USAGE and NAVIGATION
     important feature about using "&Menu()" with sub-menus that's important
     to know about.
 
-   Forward  ' > ' and  Backward  ' <
-' Navigation
+   Forward  ' > ' and  Backward  ' < ' Navigation
     When working with more than one "&Menu()" screen, it's valuable to know
     how to navigate back and forth between the different "&Menu()"
     levels/layers. For example, above was illustrated the output for two

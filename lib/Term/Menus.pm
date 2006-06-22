@@ -2,7 +2,7 @@ package Term::Menus;
  
 #    Menus.pm
 #
-#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005,
+#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
 #    You may distribute under the terms of the GNU General
@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.12;
+$VERSION = 1.13;
 
 
 BEGIN {
@@ -1487,9 +1487,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "ARE WE HERE and PN=$pn and NUMBOR=$numbor and SUM=$sum_menu\n";<STDIN>;%pn=();
             my $callertest=__PACKAGE__."::Menu";
             if (wantarray && !$no_wantarray) {
-#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and
-keys=",(join "\n",keys %{${$SavePick}{$parent_menu}}),"
-and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
+#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and keys=",(join "\n",keys %{${$SavePick}{$parent_menu}})," and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                if (exists $picks{$numbor}) {
 #print "ARE WE HERE??? and ${$SavePick}{$parent_menu}{$numbor}<==\n";
                   if ($picks{$numbor} eq '*') {
@@ -1498,9 +1496,7 @@ and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                      delete ${$Selected}{$MenuUnit_hash_ref}{$numbor};
                      delete ${$SavePick}{$parent_menu}{$numbor}
                         if $sum_menu || $filtered_menu;
-#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and
-keys=",(join "\n",keys %{${$SavePick}{$parent_menu}}),"
-and NUMBOR=$numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
+#print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and keys=",(join "\n",keys %{${$SavePick}{$parent_menu}})," and NUMBOR=$numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                   } else {
                      &delete_Selected($MenuUnit_hash_ref,$numbor,
                          $Selected,$SavePick,$SaveNext);
@@ -2746,8 +2742,7 @@ deems necessary and/or helpful in the customizable C<Banner> (as described
 above). There is however, one important feature about using C<&Menu()> with
 sub-menus that's important to know about.
 
-=head3 Forward  ' B<E<gt>> ' and  Backward  ' B<E<lt>>
-' Navigation
+=head3 Forward  ' B<E<gt>> ' and  Backward  ' B<E<lt>> ' Navigation
 
 When working with more than one C<&Menu()> screen, it's valuable to know how
 to navigate back and forth between the different C<&Menu()> levels/layers.  For

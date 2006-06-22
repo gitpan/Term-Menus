@@ -1,5 +1,11 @@
 2006-06-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.13 released.
+
+        * Version 1.12 distribution was broken due to improperly wrapped lines
+
+2006-06-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.12 released.
 
 	* Added Support for unreleased FullAuto utility
