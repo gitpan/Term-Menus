@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.13;
+$VERSION = 1.14;
 
 
 BEGIN {
@@ -452,16 +452,9 @@ sub Menu
    %default=() if defined ${$FullMenu}{$MenuUnit_hash_ref}[5]
       && !$cl_def;
    my $nm_=(keys %num__)?\%num__:'_ZERO_';
-   #if ($nm_ ne '_) {
-      ${$FullMenu}{$MenuUnit_hash_ref}=[ $MenuUnit_hash_ref,
-         \%negate,\%result,\%convey,\%chosen,\%default,$nm_,
-         $filtered,$picks ];
-   #} else {
-   #   ${$FullMenu}{$MenuUnit_hash_ref}=[ $MenuUnit_hash_ref,
-   #      \%negate,\%result,\%convey,\%chosen,\%default,'_ZERO_',
-   #      $filtered ];
-   #}
-
+   ${$FullMenu}{$MenuUnit_hash_ref}=[ $MenuUnit_hash_ref,
+      \%negate,\%result,\%convey,\%chosen,\%default,$nm_,
+      $filtered,$picks ];
    if (exists ${$MenuUnit_hash_ref}{Select} &&
          ${$MenuUnit_hash_ref}{Select} eq 'Many') {
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
@@ -575,9 +568,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    }
    my $num_pick=$#pickone+1;
    my $caller=(caller(1))[3];
-   if (!$clear) {
-      print $blanklines;
-      $clear=`clear`."\n" if $OS ne 'cygwin';
+   print $blanklines;
+   if ($OS ne 'cygwin') {
+      if ($clear) {
+         print $clear;
+      } elsif ($OS eq 'MSWin32') {
+         system("cmd /c cls");
+         print "\n";
+      } else {
+         print `clear`."\n";
+      }
    }
    my $numbor=0;                    # Number of Item Selected
    my $return_from_child_menu=0;
@@ -730,7 +730,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*a*(l+l)*\[/xi;
             my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
                   *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
-            if (ref $result eq 'HASH' &&
+            if ($fullauto && ref $result eq 'HASH' &&
                     !exists ${$LookUpMenuName}{$result}) {
                my $die="The \"Result =>\" Setting".
                        "\n\t\tFound in the Menu Unit -> ".
@@ -850,14 +850,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       } ${$Selected}{$_[0]}{$_[2]}=$result;
       if (ref ${$_[0]}{${$FullMenu}{$_[0]}
             [4]{${$_[1]}[$_[2]-1]}}{'Result'} eq 'HASH') {
-         if (exists ${$_[0]}{${$FullMenu}{$_[0]}
-               [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'}) {
-            ${$SaveNext}{$_[0]}=
-               ${${$FullMenu}{$_[0]}[2]}
-               {${$_[1]}[$_[2]-1]};
-         } else {
-            die "NO MENU LABEL DEFINED\n";
-         }
+         ${$SaveNext}{$_[0]}=
+            ${${$FullMenu}{$_[0]}[2]}
+            {${$_[1]}[$_[2]-1]};
       }
       return $FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu;
 
@@ -994,7 +989,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          print"\n   PLEASE ENTER A CHOICE: ";
          $numbor=<STDIN>;$pn=$numbor;chomp $pn;
          if ($numbor=~/^f$/i && wantarray && !$no_wantarray) {
-#print "OK GOOD\n";<STDIN>;
             my $choice='';my @keys=();
             @keys=keys %picks;
             if (-1==$#keys) {
@@ -1548,101 +1542,98 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
             } elsif (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]
                          {$pickone[$numbor-1]} eq 'HASH') {
-               if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                         {$pickone[$numbor-1]}{'Label'}) {
-                  chomp($numbor);
-                  if (exists $picks{$numbor}) {
-                     ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
-                     $hidedefaults=0;
-                     $SaveNext=$SaveLast;
-                     if ($picks{$numbor} eq '*') {
-                        delete $picks{$numbor};
-                        delete $items{$numbor};
-                        delete ${$Selected}{$MenuUnit_hash_ref}{$numbor};
-                     } elsif ($picks{$numbor} ne ' ') {
-                        &delete_Selected($MenuUnit_hash_ref,$numbor,
-                           $Selected,$SavePick,$SaveNext);
-                        delete $picks{$numbor};
-                        delete $items{$numbor};
-                     }
-                  }
-                  if ($prev_menu && $prev_menu!=$numbor) {
-                     ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
-                     $hidedefaults=0;
-                     $SaveNext=$SaveLast;
-                     &delete_Selected($MenuUnit_hash_ref,$prev_menu,
+               chomp($numbor);
+               if (exists $picks{$numbor}) {
+                  ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
+                  $hidedefaults=0;
+                  $SaveNext=$SaveLast;
+                  if ($picks{$numbor} eq '*') {
+                     delete $picks{$numbor};
+                     delete $items{$numbor};
+                     delete ${$Selected}{$MenuUnit_hash_ref}{$numbor};
+                  } elsif ($picks{$numbor} ne ' ') {
+                     &delete_Selected($MenuUnit_hash_ref,$numbor,
                         $Selected,$SavePick,$SaveNext);
-                     delete $picks{$prev_menu};
-                     delete $items{$prev_menu};
+                     delete $picks{$numbor};
+                     delete $items{$numbor};
                   }
-                  ($FullMenu,$Conveyed,$SaveNext,$Selected,
-                     $convey,$parent_menu)
-                     =$get_result->($MenuUnit_hash_ref,
-                     \@pickone,$numbor,$picks_from_parent,
-                     $FullMenu,$Conveyed,$Selected,
-                     $SaveNext,$parent_menu,$menu_cfg_file,
-                     $Convey_contents);
-                  $picks{$numbor}='*';
-                  %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
-                  ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
-                  ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                     $SaveLast,$SaveNext,$parent_menu)=&Menu(${$FullMenu}
-                     {$MenuUnit_hash_ref}[2]
-                     {$pickone[$numbor-1]},$convey,
-                     $recurse_level,$FullMenu,
-                     $Selected,$Conveyed,$SavePick,
-                     $SaveLast,$SaveNext,$MenuUnit_hash_ref);
-                  chomp($menu_output) if !(ref $menu_output);
-                  if ($menu_output eq '-') {
-                     $return_from_child_menu='-';
-                  } elsif ($menu_output eq '+') {
-                     $return_from_child_menu='+';
-                  } elsif ($menu_output eq 'DONE_SUB') {
-                     return 'DONE_SUB';
-                  } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
-                     return 'DONE';
-                  } elsif ($menu_output) {
-                     return $menu_output;
-                  } else {
-                     my $subfile=substr($sub_module,0,-3).'::';
-                     foreach my $sub (&get_subs_from_menu($Selected)) {
-                        $sub=unpack('x1 a*',$sub);
-                        eval { 
-                           unless (defined eval "$subfile$sub") {
-                              if ($@) {
-                                 &FA_lib::handle_error($@) if $fullauto;
-                                 die $die;
-                              }
-                              #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
+               }
+               if ($prev_menu && $prev_menu!=$numbor) {
+                  ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
+                  $hidedefaults=0;
+                  $SaveNext=$SaveLast;
+                  &delete_Selected($MenuUnit_hash_ref,$prev_menu,
+                     $Selected,$SavePick,$SaveNext);
+                  delete $picks{$prev_menu};
+                  delete $items{$prev_menu};
+               }
+               ($FullMenu,$Conveyed,$SaveNext,$Selected,
+                  $convey,$parent_menu)
+                  =$get_result->($MenuUnit_hash_ref,
+                  \@pickone,$numbor,$picks_from_parent,
+                  $FullMenu,$Conveyed,$Selected,
+                  $SaveNext,$parent_menu,$menu_cfg_file,
+                  $Convey_contents);
+               $picks{$numbor}='*';
+               %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
+               ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
+               ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$parent_menu)=&Menu(${$FullMenu}
+                  {$MenuUnit_hash_ref}[2]
+                  {$pickone[$numbor-1]},$convey,
+                  $recurse_level,$FullMenu,
+                  $Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$MenuUnit_hash_ref);
+               chomp($menu_output) if !(ref $menu_output);
+               if ($menu_output eq '-') {
+                  $return_from_child_menu='-';
+               } elsif ($menu_output eq '+') {
+                  $return_from_child_menu='+';
+               } elsif ($menu_output eq 'DONE_SUB') {
+                  return 'DONE_SUB';
+               } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
+                  return 'DONE';
+               } elsif ($menu_output) {
+                  return $menu_output;
+               } else {
+                  my $subfile=substr($sub_module,0,-3).'::';
+                  foreach my $sub (&get_subs_from_menu($Selected)) {
+                     $sub=unpack('x1 a*',$sub);
+                     eval { 
+                        unless (defined eval "$subfile$sub") {
+                           if ($@) {
+                              &FA_lib::handle_error($@) if $fullauto;
+                              die $die;
                            }
-                        };
-                        if ($@) {
-                           if (unpack('a11',$@) eq 'FATAL ERROR') {
-                              if (wantarray && !$no_wantarray) {
-                                 return '',$@;
-                              } elsif ($fullauto) {
-                                 &FA_lib::handle_error($@,'-10');
-                              } else { die $die }
-                           } else {
-                              my $die="\n       FATAL ERROR! - The Local "
-                                     ."System $local_hostname Conveyed\n"
-                                     ."              the Following "
-                                     ."Unrecoverable Error Condition :\n\n"
-                                     ."       $@";
-                              if (defined $log_handle &&
-                                    -1<index $log_handle,'*') {
-                                 print $log_handle $die;
-                                 close($log_handle);
-                              }
-                              if (wantarray && !$no_wantarray) {
-                                 return '',$die;
-                              } elsif ($fullauto) {
-                                 &FA_lib::handle_error($die,'-28');
-                              } else { die $die }
-                           }
+                           #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
                         }
-                     } return 'DONE_SUB';
-                  }
+                     };
+                     if ($@) {
+                        if (unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (wantarray && !$no_wantarray) {
+                              return '',$@;
+                           } elsif ($fullauto) {
+                              &FA_lib::handle_error($@,'-10');
+                           } else { die $die }
+                        } else {
+                           my $die="\n       FATAL ERROR! - The Local "
+                                  ."System $local_hostname Conveyed\n"
+                                  ."              the Following "
+                                  ."Unrecoverable Error Condition :\n\n"
+                                  ."       $@";
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
+                           }
+                           if (wantarray && !$no_wantarray) {
+                              return '',$die;
+                           } elsif ($fullauto) {
+                              &FA_lib::handle_error($die,'-28');
+                           } else { die $die }
+                        }
+                     }
+                  } return 'DONE_SUB';
                }
             } elsif ($FullMenu && $caller eq $callertest) {
                chomp($numbor);
@@ -1659,17 +1650,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      delete $items{$numbor};
                   } last;
                }
-               if (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) { 
+               if (0 && keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) { 
                   if (substr(${$FullMenu}{$MenuUnit_hash_ref}
                         [2]{$pickone[$numbor-1]},0,1) ne '&') {
-                     my $die="The \"Result =>\" Setting";
-                     $die.="\n\t\t-> " . ${$FullMenu}{$MenuUnit_hash_ref}
-                                                [2]{$pickone[$numbor-1]};
-                     $die.="\n\t\tFound in the Menu Unit -> ";
-                     $die.="$MenuUnit_hash_ref\n\t\tis not a Menu Unit\,";
-                     $die.=" and Because it Does Not Have\n\t\tan \"&\" as";
-                     $die.=" the Lead Character, $0\n\t\tCannot Determine ";
-                     $die.="if it is a Valid SubRoutine.\n\n";
+                     my $die="The \"Result =>\" Setting\n\t\t-> "
+                            .${$FullMenu}{$MenuUnit_hash_ref}
+                             [2]{$pickone[$numbor-1]}
+                            ."\n\t\tFound in the Menu Unit -> "
+                            ."$MenuUnit_hash_ref\n\t\tis not a Menu Unit\,"
+                            ." and Because it Does Not Have\n\t\tan \"&\" as"
+                            ." the Lead Character, $0\n\t\tCannot Determine "
+                            ."if it is a Valid SubRoutine.\n\n";
                      if (defined $log_handle &&
                            -1<index $log_handle,'*') {
                         print $log_handle $die;
