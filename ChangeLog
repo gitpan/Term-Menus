@@ -1,3 +1,8 @@
+2006-07-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Fixed more inconsistent behavior between 'One' and 'Many' Selection
+          setting when using sub-menus on one or more items
+
 2006-07-27  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.14 released.
