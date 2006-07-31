@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.15;
+$VERSION = 1.16;
 
 
 BEGIN {
@@ -306,10 +306,10 @@ sub Menu
          &FA_lib::handle_error($die) if $fullauto;
          die $die;
       }
+      my $pmsi_regex=qr/\]p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+         *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+      my $con_regex=qr/\]c(o+nvey)*\[/i;
       if (exists ${$Items{$num}}{Convey}) {
-         my $pmsi_regex=qr/\]p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
-            *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
-         my $con_regex=qr/\]c(o+nvey)*\[/i;
          if (ref ${$Items{$num}}{Convey} eq 'ARRAY') {
             #@convey=@{${$Items{$num}}{Convey}};
             foreach my $line (@{${$Items{$num}}{Convey}}) {
@@ -398,8 +398,37 @@ sub Menu
             $chosen{$text}="Item_$num";
          }
       } else {
+         my $text=${$Items{$num}}{Text};
+         if ($text=~/$pmsi_regex\{([^}]+)\}/) {
+            my $parse_text=${$Items{$num}}{Text};
+            while ($parse_text=~m/($pmsi_regex)\{([^}]+)\}/g) {
+               my @nums=();my $one=$1;
+               my $two=$2;
+               my $menubasename=substr($two,0,(index $two,'_'));
+               if (-1<index $two,'|') {
+                  my $nums=substr($two,(index $two,'_')+1);
+                  foreach my $num (split /\s*\|\s*/, $nums) {
+                     push @nums, $num;
+                  }
+                  $two=~s/\|/\\\|/g;
+               } else {
+                  push @nums, substr($two,(index $two,'_')+1);
+               } $one=~s/\]/\\\]/;$one=~s/\[/\\\[/;
+               foreach my $num (@nums) {
+                  if (exists ${$Conveyed}{"${menubasename}_$num"}) {
+                     ${$Items{$num}}{Text}=~
+                     s/$one\{$two\}/${$Conveyed}{"${menubasename}_$num"}/eg;
+                     last;
+                  }
+               }
+               $text=~s/$pmsi_regex/$picks_from_parent/g
+                  if $picks_from_parent;
+            }
+         } elsif (defined $picks_from_parent) {
+            $text=~s/$pmsi_regex/$picks_from_parent/g;
+         }
          if (-1<index ${$Items{$num}}{Text},"__Master_${$}__") {
-            ${$Items{$num}}{Text}=~
+            $text=~
                s/__Master_${$}__/Local-Host: $local_hostname/sg;
             $master_substituted=
                              "Local-Host: $local_hostname";
@@ -408,12 +437,13 @@ sub Menu
             if (${$Items{$num}}{Text}=~/${$Items{$num}}{Include}/) {
                next if exists ${$Items{$num}}{Exclude} &&
                      ${$Items{$num}}{Text}=~/${$Items{$num}}{Exclude}/;
-               push @{$picks}, ${$Items{$num}}{Text};
+            
+               push @{$picks}, $text;
             } else { next }
          } elsif (exists ${$Items{$num}}{Exclude} &&
             ${$Items{$num}}{Text}=~/${$Items{$num}}{Exclude}/) {
             next;
-         } else { push @{$picks}, ${$Items{$num}}{Text} }
+         } else { push @{$picks}, $text }
          $convey{${$Items{$num}}{Text}}=['',${$Items{$num}}{Convey}]
             if exists ${$Items{$num}}{Convey};
          $default{${$Items{$num}}{Text}}=${$Items{$num}}{Default}
@@ -471,7 +501,7 @@ sub Menu
 			$SaveLast,$SaveNext,
 		        \%LookUpMenuName,\@convey,
                         $no_wantarray);
-      if ($master_substituted) {
+      if ($fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
       }
       if ($pick eq ']quit[') {
@@ -495,7 +525,7 @@ sub Menu
 		       $SaveLast,$SaveNext,
 	               \%LookUpMenuName,\@convey,
                        $no_wantarray))[0];
-      if ($master_substituted) {
+      if ($fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
       }
       if ($pick eq ']quit[') {
@@ -1059,11 +1089,26 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                #if ($filtered_menu || $sorted) {
                if (${${$FullMenu}{$parent_menu}[8]}[$pk-1] &&
                      !${$_[0]}[$pk-1]) {
-                  push @pickd, ${${$FullMenu}{$parent_menu}[8]}[$pk-1];
+                  my $txt=${${$FullMenu}{$parent_menu}[8]}[$pk-1];
+                  if (-1<index $txt,"__Master_${$}__") {
+                     $txt=~
+                        s/__Master_${$}__/Local-Host: $local_hostname/sg;
+                  }
+                  push @pickd, $txt;
                } elsif (${$_[0]}[$pk-1]) {
-                  push @pickd, ${$_[0]}[$pk-1];
+                  my $txt=${$_[0]}[$pk-1];
+                  if (-1<index $txt,"__Master_${$}__") {
+                     $txt=~
+                        s/__Master_${$}__/Local-Host: $local_hostname/sg;
+                  }
+                  push @pickd, $txt;
                } elsif ($pickone[$picknum-1]) {
-                  push @pickd, $pickone[$picknum-1];
+                  my $txt=$pickone[$picknum-1];
+                  if (-1<index $txt,"__Master_${$}__") {
+                     $txt=~
+                        s/__Master_${$}__/Local-Host: $local_hostname/sg;
+                  }
+                  push @pickd, $txt;
                }
             }
             #print "RETURNING4 and PICKD=@pickd\n";<STDIN>;
