@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.16;
+$VERSION = 1.17;
 
 
 BEGIN {
@@ -446,18 +446,32 @@ sub Menu
          } else { push @{$picks}, $text }
          $convey{${$Items{$num}}{Text}}=['',${$Items{$num}}{Convey}]
             if exists ${$Items{$num}}{Convey};
-         $default{${$Items{$num}}{Text}}=${$Items{$num}}{Default}
+         $default{$text}=${$Items{$num}}{Default}
             if exists ${$Items{$num}}{Default};
-         $negate{${$Items{$num}}{Text}}=${$Items{$num}}{Negate}
+         $negate{$text}=${$Items{$num}}{Negate}
             if exists ${$Items{$num}}{Negate};
-         $result{${$Items{$num}}{Text}}=${$Items{$num}}{Result}
+         $result{$text}=${$Items{$num}}{Result}
             if exists ${$Items{$num}}{Result};
-         $chosen{${$Items{$num}}{Text}}="Item_$num";
-         $num__{${$Items{$num}}{Text}}=${$Items{$num}}{__NUM__}
-            if exists ${$Items{$num}}{__NUM__};
          $filtered=1 if exists ${$Items{$num}}{Filter};
          $sorted=${$Items{$num}}{Sort}
-            if exists ${$Items{$num}}{Sort}; 
+            if exists ${$Items{$num}}{Sort};
+         $chosen{$text}="Item_$num";
+         $num__{$text}=${$Items{$num}}{__NUM__}
+            if exists ${$Items{$num}}{__NUM__};
+
+         #$default{${$Items{$num}}{Text}}=${$Items{$num}}{Default}
+         #   if exists ${$Items{$num}}{Default};
+         #$negate{${$Items{$num}}{Text}}=${$Items{$num}}{Negate}
+         #   if exists ${$Items{$num}}{Negate};
+         #$result{${$Items{$num}}{Text}}=${$Items{$num}}{Result}
+         #   if exists ${$Items{$num}}{Result};
+         #$chosen{${$Items{$num}}{Text}}="Item_$num";
+         #$num__{${$Items{$num}}{Text}}=${$Items{$num}}{__NUM__}
+         #   if exists ${$Items{$num}}{__NUM__};
+         #$filtered=1 if exists ${$Items{$num}}{Filter};
+         #$sorted=${$Items{$num}}{Sort}
+         #   if exists ${$Items{$num}}{Sort}; 
+
       } $banner='';
    }
 
