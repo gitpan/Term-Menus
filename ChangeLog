@@ -1,3 +1,16 @@
+2006-08-25  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.18 released.
+
+        * Added ability to call custom subroutine to create Text Items
+          and customized Banners. When using sub menus, previous selections
+          from parent menus are available for use in dynamically constructing
+          the current menu. Documentation was updated to explain this new
+          feature
+
+        * Also, sub-menus now seem to work fairly reliably - so the caveat
+          against their aggressive use has been removed from the documentation
+
 2006-08-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.17 released.

@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.17;
+$VERSION = 1.18;
 
 
 BEGIN {
@@ -276,6 +276,8 @@ sub Menu
          ((caller)[0] ne __PACKAGE__ && !wantarray)) {
       $no_wantarray=1;
    }
+   my $pmsi_regex=qr/\]p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+      *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
    my %Items=();my %negate=();my %result=();
    my %convey=();my %chosen=();my %default=();
    my $picks=[];my $banner='';my $num__='';
@@ -306,8 +308,6 @@ sub Menu
          &FA_lib::handle_error($die) if $fullauto;
          die $die;
       }
-      my $pmsi_regex=qr/\]p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
-         *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
       my $con_regex=qr/\]c(o+nvey)*\[/i;
       if (exists ${$Items{$num}}{Convey}) {
          if (ref ${$Items{$num}}{Convey} eq 'ARRAY') {
@@ -458,20 +458,6 @@ sub Menu
          $chosen{$text}="Item_$num";
          $num__{$text}=${$Items{$num}}{__NUM__}
             if exists ${$Items{$num}}{__NUM__};
-
-         #$default{${$Items{$num}}{Text}}=${$Items{$num}}{Default}
-         #   if exists ${$Items{$num}}{Default};
-         #$negate{${$Items{$num}}{Text}}=${$Items{$num}}{Negate}
-         #   if exists ${$Items{$num}}{Negate};
-         #$result{${$Items{$num}}{Text}}=${$Items{$num}}{Result}
-         #   if exists ${$Items{$num}}{Result};
-         #$chosen{${$Items{$num}}{Text}}="Item_$num";
-         #$num__{${$Items{$num}}{Text}}=${$Items{$num}}{__NUM__}
-         #   if exists ${$Items{$num}}{__NUM__};
-         #$filtered=1 if exists ${$Items{$num}}{Filter};
-         #$sorted=${$Items{$num}}{Sort}
-         #   if exists ${$Items{$num}}{Sort}; 
-
       } $banner='';
    }
 
@@ -481,6 +467,14 @@ sub Menu
 
    $banner=${$_[0]}{Banner}
       if exists ${$_[0]}{Banner};
+   if ($banner && unpack('a1',$banner) eq '&' &&
+         defined $picks_from_parent &&
+         !ref $picks_from_parent) {
+      $banner=~s/\s?$//s;
+      $banner=~s/$pmsi_regex/$picks_from_parent/;
+      @banner=eval $banner;
+      $banner=join '',@banner;
+   }
    $display_this_many_items=${$_[0]}{Display}
       if exists ${$_[0]}{Display};
 
@@ -2104,11 +2098,6 @@ The user sees ==>
 
 You need sub-menus:
 
-(Note: Only one level of sub-menus are supported in Version 1.0 -
-       more *may* work - but thorough testing has not been done -
-       proceed at your own risk!)
-
-
    use Term::Menus;
 
    my %Menu_2=(
@@ -2171,6 +2160,138 @@ The user sees ==>
 --< 5 >-<ENTER>----------------------------------
 
    Choose an Answer :
+
+      1.        bash is a Good Utility
+      2.        bash is a Bad Utility
+
+   (Press "q" to quit)
+
+   PLEASE ENTER A CHOICE:
+
+--< 1 >-<ENTER>----------------------------------
+
+The user sees ==>
+
+   SELECTIONS = bash is a Good Utility
+
+=item *
+
+You want to use a perl subroutine to create the text items or banner:
+
+(Note: READ THE COMMENTS embedded in the Menu_2 sample following.
+       The syntax is a bit tricky and MUST be created exactly as
+       described - otherwise it will NOT work!)
+
+   package current_package_name; # Qualify subroutine calls with
+                                 # &main:: if not using
+                                 # a package architechture
+
+   use Term::Menus;
+
+   sub create_items {
+    
+      my $previous=shift;
+      my @textlines=();
+      push @textlines, "$previous is a Good Utility";
+      push @textlines, "$previous is a Bad Utility";
+      return @testlines;
+             ## return value must NOT be an array
+             ## not an array reference
+
+   }
+
+   sub create_banner {
+
+      my $previous=shift;
+      return "\n   Choose an Answer for $previous :"
+             ## return value MUST be a string for banner
+
+   }
+
+   my %Menu_2=(
+
+      Label  => 'Menu_2',
+      Item_1 => {
+
+         Text   => "]Convey[",
+         Convey => "&current_package_name::create_items(\"]Previous[\")",
+
+                   # IMPORTANT! '&' *must* be used to denote subroutine
+                   #            as the first character
+             
+                   #      &current_package_name:: qualifier or &main::
+                   #      quaifiler MUST be used - otherwise
+                   #      Term::Menus cannot locate it
+
+                   #      embedded quote characters must be escaped
+ 
+                   #      enclosing double quotes MUST be used - this is
+                   #      a STRING being passed to Term::Menus that will
+                   #      then be internally eval-ed during runtime
+                   #      after the macro ]Previous[ is substituted
+
+                   #      other macros and values can be passed as
+                   #      arguments as follows:
+
+                   #      (\"]Previous[\",\"AnyString\")
+
+      },
+
+      Select => 'One',
+      Banner => "&current_package_name::create_banner(\"]Previous[\")",
+
+                ## or "&main::create_banner(\"]Previous[\")",
+                ## if using in top level script (file does NOT
+                ## have .pm extension)
+   );
+
+   my %Menu_1=(
+
+      Label  => 'Menu_1',
+      Item_1 => {
+
+         Text   => "/bin/Utility - ]Convey[",
+         Convey => [ `ls -1 /bin` ],
+         Result => \%Menu_2,
+
+      },
+
+      Select => 'One',
+      Banner => "\n   Choose a /bin Utility :"
+   );
+
+   my @selections=&Menu(\%Menu_1);
+   print "SELECTIONS=@selections\n";
+
+The user sees ==>
+
+   Choose a /bin Utility :
+
+      1.        /bin Utility - arch
+      2.        /bin Utility - ash
+      3.        /bin Utility - awk
+      4.        /bin Utility - basename
+      5.        /bin Utility - bash
+      6.        /bin Utility - cat
+      7.        /bin Utility - chgrp
+      8.        /bin Utility - chmod
+      9.        /bin Utility - chown
+      10.       /bin Utility - cp
+
+   a.  Select All.   c.  Clear All.
+   f.  Finish.
+
+   93 Total Choices
+
+   Press ENTER (or "d") to scroll downward
+
+   OR "u" to scroll upward  (Press "q" to quit)
+
+   PLEASE ENTER A CHOICE:
+
+--< 5 >-<ENTER>----------------------------------
+
+   Choose an Answer for bash :
 
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
