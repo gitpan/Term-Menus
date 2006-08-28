@@ -17,6 +17,7 @@
            print WH $_ if !/Build.PL/;
         };
         WriteMakefile(
+           (MM->can('signature_target') ? (SIGN => 1) : ()),
            NAME          => 'Term::Menus',
            VERSION_FROM  => 'lib/Term/Menus.pm',
            dist          => { COMPRESS => "gzip", SUFFIX => "gz" },

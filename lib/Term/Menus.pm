@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.18;
+$VERSION = 1.19;
 
 
 BEGIN {

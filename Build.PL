@@ -9,6 +9,7 @@ use lib File::Spec->catdir('lib');
 use Module::Build;
 
 Module::Build->new(
+   (sign => 1),
    module_name => 'Term::Menus',
    license     => 'gpl',
    requires => { perl => '5.002' },
@@ -16,7 +17,7 @@ Module::Build->new(
                YAML_support =>
                {
                   description => "Can write fully-functional META.yml files",
-                  requires => { YAML => ' >= 0.35, < 0.49 ' },
+                  requires => { YAML => ' >= 0.35 ' },
                },
             },
    dist_author => "Brian Kelly <Brian.Kelly\@fullautosoftware.net>",
