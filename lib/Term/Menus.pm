@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = 1.19;
+$VERSION = '1.20';
 
 
 BEGIN {
@@ -1542,7 +1542,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } else {
                foreach my $pick (keys %picks) {
                   if (exists $picks{$pick}) {
-                     if ($picks{$pick} eq '*') {
+                     if ($picks{$pick} eq '*' || $picks{$pick} eq 'a') {
                         delete $picks{$pick};
                         delete $items{$pick};
                         delete ${$Selected}{$MenuUnit_hash_ref}{$pick};

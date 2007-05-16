@@ -1,3 +1,10 @@
+2007-05-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.19 released.
+
+        * Repaired "Clear All" to actually clear all selections after
+          "Select All" was used.
+
 2006-08-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.19 released.
