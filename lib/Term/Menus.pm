@@ -2,7 +2,7 @@ package Term::Menus;
  
 #    Menus.pm
 #
-#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006
+#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
 #    You may distribute under the terms of the GNU General
@@ -13,7 +13,7 @@ package Term::Menus;
 
 ## See user documentation at the end of this file.  Search for =head
 
-require 5.002;
+use 5.002;
 
 ## Module export.
 use vars qw(@EXPORT);
@@ -23,13 +23,13 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.20';
+$VERSION = '1.21';
 
 
 BEGIN {
    our $menu_cfg_file='';
    our $fullauto=0;
-   if (caller(2) eq 'FullAuto') {
+   if (-1<index caller(2),'FullAuto') {
       require menu_cfg;
       import menu_cfg;
       $menu_cfg_file='menu_cfg.pm';
@@ -44,49 +44,49 @@ BEGIN {
 #  to a name that would facilitate management and
 #  identification of user defined subroutines, then rename
 #  everything between the two double-lines of pound
-#  symbols above and below from the current name ( 'user_sub'
+#  symbols above and below from the current name ( 'usr_code'
 #  was the original default name ) to the new module
 #  name of your choosing. 
 #
-#  Example:  use user_sub;                 --> use sales_sub;
-#            our $sub_module='user_sub.pm' --> our $sub_module='sales_sub.pm';
+#  Example:  use usr_code;                 --> use sales_sub;
+#            our $sub_module='usr_code.pm' --> our $sub_module='sales_sub.pm';
 #
 #      Continue for the remainder of the section ...
 
 BEGIN {
    our $sub_module='';
-   if (caller(2) eq 'FullAuto') {
-      require user_sub;
-      import user_sub;
-      $sub_module='user_sub.pm';
+   if (-1<index caller(2),'FullAuto') {
+      require usr_code;
+      import usr_code;
+      $sub_module='usr_code.pm';
    }
 }
 
 our %email_defaults=();
-if (defined %user_sub::email_defaults
-      && %user_sub::email_defaults) {
-   %email_defaults=%user_sub::email_defaults;
+if (defined %usr_code::email_defaults
+      && %usr_code::email_defaults) {
+   %email_defaults=%usr_code::email_defaults;
 }
 our %email_addresses=();
-if (defined %user_sub::email_addresses
-      && %user_sub::email_addresses) {
-   %email_addresses=%user_sub::email_addresses;
+if (defined %usr_code::email_addresses
+      && %usr_code::email_addresses) {
+   %email_addresses=%usr_code::email_addresses;
 }
 our $passwd_file_loc='';
-if (defined $user_sub::passwd_file_loc && $user_sub::passwd_file_loc) {
-   $passwd_file_loc=$user_sub::passwd_file_loc;
+if (defined $usr_code::passwd_file_loc && $usr_code::passwd_file_loc) {
+   $passwd_file_loc=$usr_code::passwd_file_loc;
 }
 our $test=0;
-if (defined $user_sub::test && $user_sub::test) {
-   $test=$user_sub::test;
+if (defined $usr_code::test && $usr_code::test) {
+   $test=$usr_code::test;
 }
 our $timeout=30;
-if (defined $user_sub::timeout && $user_sub::timeout) {
-   $timeout=$user_sub::timeout; 
+if (defined $usr_code::timeout && $usr_code::timeout) {
+   $timeout=$usr_code::timeout; 
 }
 our $log=0;
-if (defined $user_sub::log && $user_sub::log) {
-   $log=$user_sub::log;
+if (defined $usr_code::log && $usr_code::log) {
+   $log=$usr_code::log;
 }
 
 ##############################################################
@@ -111,8 +111,8 @@ foreach my $dir (@INC) {
                       ."              in the $dir/$menu_cfg_file file.\n\n"
                       ."       Hint:  delete or comment-out all duplicates\n\n";
                if ($fullauto) {
-                  print $die if !$FA_lib::cron;
-                  &FA_lib::handle_error($die,'__cleanup__');
+                  print $die if !$Net::FullAuto::FA_lib::cron;
+                  &Net::FullAuto::FA_lib::handle_error($die,'__cleanup__');
                } else { die $die }
             }
          }
@@ -133,8 +133,8 @@ foreach my $dir (@INC) {
                       ."$sub_module file.\n\n       Hint:  delete "
                       ."or comment-out all duplicates\n\n";
                if ($fullauto) {
-                  print $die if !$FA_lib::cron;
-                  &FA_lib::handle_error($die,'__cleanup__');
+                  print $die if !$Net::FullAuto::FA_lib::cron;
+                  &Net::FullAuto::FA_lib::handle_error($die,'__cleanup__');
                } else { die $die }
                #print $die;exit;
             }
@@ -162,18 +162,34 @@ if ($fullauto) {
    }
 }
 
+{
+   use Sys::Hostname;
+   our $local_hostname=hostname;
+}
+
+# Set clear
+our $clear='';
+$clear=$Net::FullAuto::FA_lib::clear
+       if defined $Net::FullAuto::FA_lib::clear;
+$clear.="\n" if $clear;
+my $count=0;
+our $blanklines='';
+while ($count++!=30) { $blanklines.="\n" }
+our $OS=$^O;
+our $parent_menu='';
+
 sub fa_login
 {
 
-   my $user_sub='';my $menu_args='';$to='';
+   my $usr_code='';my $menu_args='';$to='';
    my $start_menu_ref='';
    eval {
-      ($user_sub,$menu_args,$to)=&FA_lib::fa_login(@_);
+      ($usr_code,$menu_args,$to)=&Net::FullAuto::FA_lib::fa_login(@_);
       $start_menu_ref=$menu_cfg::start_menu_ref;
       $to||=0;
       $timeout=$to if $to;
-      if ($user_sub) {
-         &run_sub($user_sub,$menu_args);
+      if ($usr_code) {
+         &run_sub($usr_code,$menu_args);
       } elsif (ref $start_menu_ref eq 'HASH') {
          if (!exists $LookUpMenuName{$start_menu_ref}) {
             my $die="\n       FATAL ERROR! - The top level menu,"
@@ -185,7 +201,7 @@ sub fa_login
                    ."\n\n\tour \$start_menu_ref=\\%Menu_1\;"
                    ."\n\n       \[ Menu_1 is example - "
                    ."name you choose is optional \]\n";
-            &FA_lib::handle_error($die);
+            &Net::FullAuto::FA_lib::handle_error($die);
          }
          &Menu($start_menu_ref);
       } elsif ($start_menu_ref) {
@@ -201,7 +217,7 @@ sub fa_login
                 ." optional \]\n\n       %Menu_1=\(\n"
                 ."          Item_1 => { ... },\n        "
                 ."...\n       \)\;\n";
-         &FA_lib::handle_error($die);
+         &Net::FullAuto::FA_lib::handle_error($die);
       } else {
          my $die="\n       FATAL ERROR! - The \$start_menu_ref\n"
                 ."              variable in the menu_cfg.pm\n"
@@ -214,49 +230,35 @@ sub fa_login
                 ."name you choose is optional \]\n\n       "
                 ."%Menu_1=\(\n          Item_1 => { ... },\n"
                 ."          ...\n       \)\;\n";
-         &FA_lib::handle_error($die);
+         &Net::FullAuto::FA_lib::handle_error($die);
       }
    };
    if ($@) {
       my $cmdlin=52;
-      $cmdlin=47 if $user_sub;
-      &FA_lib::handle_error($@,"-$cmdlin",'__cleanup__');
+      $cmdlin=47 if $usr_code;
+      &Net::FullAuto::FA_lib::handle_error($@,"-$cmdlin",'__cleanup__');
    }
-   print "\n==> DONE!!!!!!!!!" if !$FA_lib::cron && !$FA_lib::stdio;
-   &FA_lib::cleanup(1);
+   #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_lib::cron &&
+   #      !$Net::FullAuto::FA_lib::stdio;
+   &Net::FullAuto::FA_lib::cleanup(1);
 
 }
 
 sub run_sub
 {
-   my $user_sub=$_[0];
+   my $usr_code=$_[0];
    my $menu_args= (defined $_[1]) ? $_[1] : '';
    my $subfile=substr($sub_module,0,-3).'::';
    my $return=
-      eval "\&$subfile$user_sub\(\@{\$menu_args}\)";
-   &FA_lib::handle_error($@,'-1') if $@;
+      eval "\&$subfile$usr_code\(\@{\$menu_args}\)";
+   &Net::FullAuto::FA_lib::handle_error($@,'-1') if $@;
    return $return;
 }
 
 sub get_all_hosts
 {
-   return FA_lib::get_all_hosts(@_);
+   return Net::FullAuto::FA_lib::get_all_hosts(@_);
 }
-
-{
-   use Sys::Hostname;
-   our $local_hostname=hostname;
-}
-
-# Set clear
-our $clear='';
-$clear=$FA_lib::clear if defined $FA_lib::clear;
-$clear.="\n" if $clear;
-my $count=0;
-our $blanklines='';
-while ($count++!=30) { $blanklines.="\n" }
-our $OS=$^O;
-our $parent_menu='';
 
 sub Menu
 {
@@ -305,7 +307,7 @@ sub Menu
          my $die="Can Only Use \"Negate =>\""
                 ."\n\t\tElement in ".__PACKAGE__.".pm when the"
                 ."\n\t\t\"Select =>\" Element is set to \'Many\'\n\n";
-         &FA_lib::handle_error($die) if $fullauto;
+         &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
          die $die;
       }
       my $con_regex=qr/\]c(o+nvey)*\[/i;
@@ -793,7 +795,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $LookUpMenuName{$result}=${$result}{'Label'};
                } else {
                   my $die="NO MENU LABEL DEFINED\n";
-                  &FA_lib::handle_error($die) if $fullauto;
+                  &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
                   die $die;
                }
             }
@@ -816,7 +818,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            $die.="\n\t\t\"Select =>\" Element is ";
                            $die.="set to\n\t\t\'Many\' in Menu Block ";
                            $die.='%'.${$LookUpMenuName}{$_[0]}."\n\n";
-                           &FA_lib::handle_error($die) if $fullauto;
+                           &Net::FullAuto::FA_lib::handle_error($die)
+                              if $fullauto;
                            die $die;
                         }
                      } else {
@@ -861,7 +864,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      print $log_handle $die;
                      close(log_handle);
                   }
-                  &FA_lib::handle_error($die) if $fullauto;
+                  &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
                   die $die;
                }
             }
@@ -886,8 +889,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                    ."              Cannot Determine "
                   ."if it is a Valid SubRoutine.\n\n";
             if ($fullauto) {
-               print $die if !$FA_lib::cron;
-               &FA_lib::handle_error($die);
+               print $die if !$Net::FullAuto::FA_lib::cron;
+               &Net::FullAuto::FA_lib::handle_error($die);
             } else { die $die }
          }
       }
@@ -964,7 +967,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  unless (defined eval "$subfile$sub") {
                                     if ($@) {
                                        if ($fullauto) {
-                                          &FA_lib::handle_error($@,'-1');
+                                          &Net::FullAuto::FA_lib::handle_error(
+                                             $@,'-1');
                                        } else { die $@ }
                                     }
                                     #### TEST FOR UNDEF SUB - ADD MORE
@@ -972,7 +976,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  }
                               };
                               if ($@) {
-                                 &FA_lib::handle_error($@,'-5')
+                                 &Net::FullAuto::FA_lib::handle_error($@,'-5')
                                     if $fullauto;
                                  die $@;
                               }
@@ -1202,7 +1206,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
                               if ($fullauto) {
-                                 &FA_lib::handle_error($@,'-1');
+                                 &Net::FullAuto::FA_lib::handle_error($@,'-1');
                               } else { die $@ }
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE
@@ -1210,7 +1214,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      };
                      if ($@) {
-                        &FA_lib::handle_error($@,'-5')
+                        &Net::FullAuto::FA_lib::handle_error($@,'-5')
                            if $fullauto;
                         die $@;
                      }
@@ -1296,7 +1300,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
                               if ($fullauto) {
-                                 &FA_lib::handle_error($@,'-1');
+                                 &Net::FullAuto::FA_lib::handle_error($@,'-1');
                               } else { die $@ }
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE
@@ -1304,7 +1308,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      };
                      if ($@) {
-                        &FA_lib::handle_error($@,'-5')
+                        &Net::FullAuto::FA_lib::handle_error($@,'-5')
                            if $fullauto;
                         die $@;
                      }
@@ -1376,7 +1380,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              &FA_lib::handle_error($@) if $fullauto;
+                              &Net::FullAuto::FA_lib::handle_error($@)
+                                 if $fullauto;
                               die $die;
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1387,7 +1392,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '', $@;
                            } elsif ($fullauto) {
-                              &FA_lib::handle_error($@,'-10');
+                              &Net::FullAuto::FA_lib::handle_error($@,'-10');
                            } else { die $@ }
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
@@ -1403,7 +1408,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            } elsif ($@) {
-                              &FA_lib::handle_error($die,'-28') if $fullauto;
+                              &Net::FullAuto::FA_lib::handle_error($die,'-28')
+                                 if $fullauto;
                               die $die;
                            }
                         }
@@ -1464,7 +1470,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              &FA_lib::handle_error($@) if $fullauto;
+                              &Net::FullAuto::FA_lib::handle_error($@)
+                                 if $fullauto;
                               die $die;
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1475,7 +1482,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '', $@;
                            } elsif ($fullauto) {
-                              &FA_lib::handle_error($@,'-10');
+                              &Net::FullAuto::FA_lib::handle_error($@,'-10');
                            } else { die $@ }
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
@@ -1491,7 +1498,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            } elsif ($@) {
-                              &FA_lib::handle_error($die,'-28') if $fullauto;
+                              &Net::FullAuto::FA_lib::handle_error($die,'-28')
+                                 if $fullauto;
                               die $die;
                            }
                         }
@@ -1704,7 +1712,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         eval { 
                            unless (defined eval "$subfile$sub") {
                               if ($@) {
-                                 &FA_lib::handle_error($@) if $fullauto;
+                                 &Net::FullAuto::FA_lib::handle_error($@)
+                                    if $fullauto;
                                  die $die;
                               }
                               #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1715,7 +1724,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               if (wantarray && !$no_wantarray) {
                                  return '',$@;
                               } elsif ($fullauto) {
-                                 &FA_lib::handle_error($@,'-10');
+                                 &Net::FullAuto::FA_lib::handle_error($@,'-10');
                               } else { die $die }
                            } else {
                               my $die="\n       FATAL ERROR! - The Local "
@@ -1731,7 +1740,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               if (wantarray && !$no_wantarray) {
                                  return '',$die;
                               } elsif ($fullauto) {
-                                 &FA_lib::handle_error($die,'-28');
+                                 &Net::FullAuto::FA_lib::handle_error(
+                                    $die,'-28');
                               } else { die $die }
                            }
                         }
@@ -1773,7 +1783,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         print $log_handle $die;
                         close($log_handle);
                      }
-                     &FA_lib::handle_error($die) if $fullauto;
+                     &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
                      die $die;
                   }
                   if (${$FullMenu}{$MenuUnit_hash_ref}[2]
@@ -1794,7 +1804,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              &FA_lib::handle_error($@) if $fullauto;
+                              &Net::FullAuto::FA_lib::handle_error($@)
+                                 if $fullauto;
                               die $die;
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1805,7 +1816,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$@;
                            } elsif ($fullauto) {
-                              &FA_lib::handle_error($@,'-10');
+                              &Net::FullAuto::FA_lib::handle_error($@,'-10');
                            } else { die $die }
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
@@ -1821,7 +1832,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            } elsif ($fullauto) {
-                              &FA_lib::handle_error($die,'-28');
+                              &Net::FullAuto::FA_lib::handle_error($die,'-28');
                            } else { die $die }
                         }
                      }
@@ -1905,8 +1916,8 @@ implementation ( so it's *easy* to install! ;-) )
 
 Term::Menus was initially conceived and designed to work seemlessly
 with the soon-to-be-released perl based Network Automation Utility called
-FullAuto - however, it is not itself dependant on other FullAuto components,
-and will work with *any* perl script/application.
+Net::FullAuto - however, it is not itself dependant on other Net::FullAuto 
+components, and will work with *any* perl script/application.
  
 
 Reasons to use this module are:

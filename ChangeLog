@@ -1,6 +1,17 @@
+2007-08-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.21 released.
+
+        * Added error checking to trap and inform users of possible
+          configuration errors in menu blocks.
+
+        * Made changes in preparation for the release of Net::FullAuto,
+          for which Term::Menus is a required module.
+
+
 2007-05-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
-        * Version 1.19 released.
+        * Version 1.20 released.
 
         * Repaired "Clear All" to actually clear all selections after
           "Select All" was used.
