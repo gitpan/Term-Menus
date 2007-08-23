@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.21';
+$VERSION = '1.22';
 
 
 BEGIN {
@@ -2962,7 +2962,8 @@ C<Result> element method of the current menu:
       Banner => "\n   Choose a /bin Utility :"
    );
 
-   &Menu(\%Menu_1);
+   my @selections=&Menu(\%Menu_1);
+   print "SELECTIONS=@selections\n";
 
 B<NOTE:>     C<]S[>  can be used as a shorthand for  C<]Selected[>.
 

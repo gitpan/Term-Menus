@@ -901,7 +901,8 @@ METHODS
                 Banner => "\n   Choose a /bin Utility :"
              );
 
-             &Menu(\%Menu_1);
+             my @selections=&Menu(\%Menu_1);
+             print "SELECTIONS=@selections\n";
 
           NOTE: "]S[" can be used as a shorthand for "]Selected[".
 

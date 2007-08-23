@@ -1,3 +1,11 @@
+2007-08-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.22 released.
+
+        * Tweaked the POD documentation so that all examples
+          listed will print output to the console. This was
+          a potentially confusing omission.
+
 2007-08-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.21 released.
