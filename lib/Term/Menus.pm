@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.22';
+$VERSION = '1.23';
 
 
 BEGIN {
@@ -1915,9 +1915,9 @@ Term::Menus is a stand-alone - other CPAN modules are not needed for its
 implementation ( so it's *easy* to install! ;-) )
 
 Term::Menus was initially conceived and designed to work seemlessly
-with the soon-to-be-released perl based Network Automation Utility called
-Net::FullAuto - however, it is not itself dependant on other Net::FullAuto 
-components, and will work with *any* perl script/application.
+with the soon-to-be-released perl based Network Process Automation Utility
+Moduel called Net::FullAuto - however, it is not itself dependant on other
+Net::FullAuto components, and will work with *any* perl script/application.
  
 
 Reasons to use this module are:

@@ -21,9 +21,9 @@ DESCRIPTION
     implementation ( so it's *easy* to install! ;-) )
 
     Term::Menus was initially conceived and designed to work seemlessly with
-    the soon-to-be-released perl based Network Automation Utility called
-    FullAuto - however, it is not itself dependant on other FullAuto
-    components, and will work with *any* perl script/application.
+    the soon-to-be-released perl based Network Process Automation Utility
+    Module called Net::FullAuto - however, it is not itself dependant on other
+    Net::FullAuto components, and will work with *any* perl script/application.
 
     Reasons to use this module are:
 

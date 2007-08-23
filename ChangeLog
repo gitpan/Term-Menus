@@ -1,5 +1,12 @@
 2007-08-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.23 released.
+
+        * More POD documentation and README tweaks in preparation
+          for the initial roll-out of Net::FullAuto
+
+2007-08-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.22 released.
 
         * Tweaked the POD documentation so that all examples
