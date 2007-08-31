@@ -23,14 +23,14 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.23';
+$VERSION = '1.24';
 
 
 BEGIN {
    our $menu_cfg_file='';
    our $fullauto=0;
    if (-1<index caller(2),'FullAuto') {
-      require menu_cfg;
+      require 'Net/FullAuto/menu_cfg.pm';
       import menu_cfg;
       $menu_cfg_file='menu_cfg.pm';
       $fullauto=1;
@@ -56,7 +56,7 @@ BEGIN {
 BEGIN {
    our $sub_module='';
    if (-1<index caller(2),'FullAuto') {
-      require usr_code;
+      require 'Net/FullAuto/usr_code.pm';
       import usr_code;
       $sub_module='usr_code.pm';
    }
@@ -3292,7 +3292,7 @@ Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 =head1 COPYRIGHT
 
 Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
-by Brian M. Kelly.  All rights reserved.
+by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License.
