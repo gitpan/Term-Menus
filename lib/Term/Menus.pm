@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.24';
+$VERSION = '1.25';
 
 
 BEGIN {
@@ -716,6 +716,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $parent_menu=$_[8];
       my $menu_cfg_file=$_[9];
       my $Convey_contents=$_[10];
+      ${$LookUpMenuName}{$_[0]}=${$_[0]}{'Label'}
+         unless exists ${$LookUpMenuName}{$_[0]};
       if (exists ${$FullMenu}{$_[0]}[3]{${$_[1]}[$_[2]-1]}) {
          if (exists ${$_[0]}{${$FullMenu}{$_[0]}
                             [4]{${$_[1]}[$_[2]-1]}}{Convey}) {

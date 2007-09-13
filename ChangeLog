@@ -1,3 +1,11 @@
+2007-09-13  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.25 released.
+
+        * Bug Fix - %{$LookUpMenuName} was not being populated properly
+                    when using multiple menus defined in main:: and
+                    not a separate menu_cfg.pm file.
+
 2007-08-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.24 released.
