@@ -23,13 +23,34 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.25';
+$VERSION = '1.26';
 
 
 BEGIN {
    our $menu_cfg_file='';
    our $fullauto=0;
-   if (-1<index caller(2),'FullAuto') {
+   if (defined $main::menu_cfg) {
+      if (-1<index $main::menu_cfg,'/') {
+         require $main::menu_cfg;
+         my $mc=substr($main::menu_cfg,
+                (rindex $main::menu_cfg, '/')+1,-3);
+         import $mc;
+         $menu_cfg_file=$mc.'.pm';
+      } elsif (-1<index caller(2),'FullAuto') {
+         require 'Net/FullAuto/'.$main::menu_cfg;
+         my $mc=substr($main::menu_cfg,
+                (rindex $main::menu_cfg, '/')+1,-3);
+         import $mc;
+         $menu_cfg_file=$mc.'.pm';
+      } else {
+         require $main::menu_cfg;
+         my $mc=substr($main::menu_cfg,0,-3);
+         import $mc;
+         $menu_cfg_file=$main::menu_cfg;
+      }
+      $fullauto=1
+         if -1<index caller(2),'FullAuto';
+   } elsif (-1<index caller(2),'FullAuto') {
       require 'Net/FullAuto/menu_cfg.pm';
       import menu_cfg;
       $menu_cfg_file='menu_cfg.pm';
