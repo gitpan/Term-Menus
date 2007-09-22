@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.27';
+$VERSION = '1.28';
 
 
 BEGIN {
@@ -79,19 +79,19 @@ BEGIN {
    if (defined $main::usr_code) {
       if (-1<index $main::usr_code,'/') {
          require $main::usr_code;
-         my $mc=substr($main::usr_code,
+         my $uc=substr($main::usr_code,
                 (rindex $main::usr_code, '/')+1,-3);
          import $uc;
          $sub_module=$uc.'.pm';
       } elsif (-1<index caller(2),'FullAuto') {
          require 'Net/FullAuto/'.$main::usr_code;
-         my $mc=substr($main::usr_code,
+         my $uc=substr($main::usr_code,
                 (rindex $main::usr_code, '/')+1,-3);
          import $uc;
          $sub_module=$uc.'.pm';
       } else {
          require $main::usr_code;
-         my $mc=substr($main::usr_code,0,-3);
+         my $uc=substr($main::usr_code,0,-3);
          import $uc;
          $sub_module=$main::usr_code;
       }

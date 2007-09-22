@@ -1,8 +1,14 @@
 2007-09-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.28 released.
+
+        * More changes to 'require menu_cfg' to reflect FullAuto architecture
+
+2007-09-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.27 released.
 
-        * More changes 'require menu_cfg' to reflect FullAuto architecture
+        * More changes to 'require menu_cfg' to reflect FullAuto architecture
 
 2007-09-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
