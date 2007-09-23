@@ -23,7 +23,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.28';
+$VERSION = '1.29';
 
 
 BEGIN {
@@ -221,10 +221,11 @@ our $parent_menu='';
 sub fa_login
 {
 
-   my $usr_code='';my $menu_args='';$to='';
+   my $usr_code='';my $menu_args='';$to='';my $die='';
    my $start_menu_ref='';
    eval {
-      ($usr_code,$menu_args,$to)=&Net::FullAuto::FA_lib::fa_login(@_);
+      ($usr_code,$menu_args,$to,$die)=
+         &Net::FullAuto::FA_lib::fa_login(@_);
       $start_menu_ref=$menu_cfg::start_menu_ref;
       $to||=0;
       $timeout=$to if $to;
@@ -303,9 +304,10 @@ sub get_all_hosts
 sub Menu
 {
 #print "MENUCALLER=",(caller)[0]," and ",__PACKAGE__,"\n";<STDIN>;
+#print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
    my $picks_from_parent=$_[1];
-   my $recurse= (defined $_[2]) ? $_[2] : 0;
+   my $recurse = (defined $_[2]) ? $_[2] : 0;
    my $FullMenu= (defined $_[3]) ? $_[3] : {};
    my $Selected= (defined $_[4]) ? $_[4] : {};
    my $Conveyed= (defined $_[5]) ? $_[5] : {};
@@ -318,12 +320,15 @@ sub Menu
          ((caller)[0] ne __PACKAGE__ && !wantarray)) {
       $no_wantarray=1;
    }
+   if (defined $_[11] && $_[11]) {
+      return '','','','','','','','','','',$_[11];
+   }
    my $pmsi_regex=qr/\]p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
       *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
    my %Items=();my %negate=();my %result=();
    my %convey=();my %chosen=();my %default=();
    my $picks=[];my $banner='';my $num__='';
-   my $display_this_many_items=10;
+   my $display_this_many_items=10;my $die_err='';
    my $master_substituted='';my $convey='';
    my $num=0;my @convey=();my $filtered=0;my $sorted='';
    foreach my $key (keys %{$MenuUnit_hash_ref}) {
@@ -622,6 +627,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
              #  (Optional)       no_wantarray_flag )
 {
 
+#print "PICKCALLER=",caller,"\n";<STDIN>;
+
    #  "pick" --> This function presents the user with
    #  with a list of items from which to choose.
 
@@ -787,7 +794,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'};
                   $parent_menu=$LookUpMenuName{$_[0]};
                } else {
-                  die "NO LABEL IN MENU BLOCK\n"; 
+                  my $die="The \"Result =>\" Setting".
+                          "\n\t\tFound in the Menu Unit -> ".
+                          "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
+                          "HASH reference to a Menu Unit\,\n\t\t".
+                          "that does NOT EXIST or is NOT EXPORTED".
+                          "\n\n\tHint: Make sure the Names of all".
+                          "\n\t      Menu Hash Blocks in the\n\t".
+                          "      $menu_cfg_file file are\n\t".
+                          "      listed in the \@EXPORT list\n\t".
+                          "      found at the beginning of\n\t".
+                          "      the $menu_cfg_file file\n\n\t".
+                          "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
+                  die $die; 
                }
             } elsif (unpack('a1',
                   ${$_[0]}{${$FullMenu}{$_[0]}
@@ -819,25 +838,21 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
             if (ref $result eq 'HASH' &&
                     !exists ${$LookUpMenuName}{$result}) {
-            #   my $die="The \"Result =>\" Setting".
-            #           "\n\t\tFound in the Menu Unit -> ".
-            #          "${$LookUpMenuName}{$_[0]}\n\t\tis a ".
-            #           "HASH reference to a Menu Unit\,\n\t\t".
-            #           "that does NOT EXIST or is NOT EXPORTED".
-            #           "\n\n\tHint: Make sure the Names of all".
-            #           "\n\t      Menu Hash Blocks in the\n\t".
-            #           "      $menus_cfg_file file are\n\t".
-            #           "      listed in the \@EXPORT list\n\t".
-            #           "      found at the beginning of\n\t".
-            #           "      the $menus_cfg_file file\n\n\t".
-            #           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-            #   #print $MRLOG $die if -1<index $MRLOG,'*';
-            #   #close($MRLOG) if -1<index $MRLOG,'*';
                if (exists ${$result}{'Label'}) {
                   $LookUpMenuName{$result}=${$result}{'Label'};
                } else {
-                  my $die="NO MENU LABEL DEFINED\n";
-                  &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
+                  my $die="The \"Result =>\" Setting".
+                          "\n\t\tFound in the Menu Unit -> ".
+                          "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
+                          "HASH reference to a Menu Unit\,\n\t\t".
+                          "that does NOT EXIST or is NOT EXPORTED".
+                          "\n\n\tHint: Make sure the Names of all".
+                          "\n\t      Menu Hash Blocks in the\n\t".
+                          "      $menu_cfg_file file are\n\t".
+                          "      listed in the \@EXPORT list\n\t".
+                          "      found at the beginning of\n\t".
+                          "      the $menu_cfg_file file\n\n\t".
+                          "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
                   die $die;
                }
             }
@@ -930,10 +945,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                    ."an \"&\" as the Lead Character, $0\n"
                    ."              Cannot Determine "
                   ."if it is a Valid SubRoutine.\n\n";
-            if ($fullauto) {
-               print $die if !$Net::FullAuto::FA_lib::cron;
-               &Net::FullAuto::FA_lib::handle_error($die);
-            } else { die $die }
+            die $die;
+            #if ($fullauto) {
+            #   print $die if !$Net::FullAuto::FA_lib::cron;
+            #   &Net::FullAuto::FA_lib::handle_error($die);
+            #} else { die $die }
          }
       }
       chomp($_[2]);
@@ -950,7 +966,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                ${${$FullMenu}{$_[0]}[2]}
                {${$_[1]}[$_[2]-1]};
          } else {
-            die "NO MENU LABEL DEFINED\n";
+            my $die="The \"Result =>\" Setting".
+                   "\n\t\tFound in the Menu Unit -> ".
+                   "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
+                   "HASH reference to a Menu Unit\,\n\t\t".
+                   "that does NOT EXIST or is NOT EXPORTED".
+                   "\n\n\tHint: Make sure the Names of all".
+                   "\n\t      Menu Hash Blocks in the\n\t".
+                   "      $menu_cfg_file file are\n\t".
+                   "      listed in the \@EXPORT list\n\t".
+                   "      found at the beginning of\n\t".
+                   "      the $menu_cfg_file file\n\n\t".
+                   "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
+            die $die;
          }
       } return $FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu;
    };
@@ -985,14 +1013,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         $convey=${${$FullMenu}{$MenuUnit_hash_ref}[3]
                                          {$pickone[$picknum-1]}}[0];
                      } else { $convey=$pickone[$picknum-1] }
-                     ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                        $SaveLast,$SaveNext)=&Menu(${$FullMenu}
-                        {$MenuUnit_hash_ref}[2]
-                        {$pickone[$picknum-1]},$convey,
-                        $recurse_level,$FullMenu,
-                        $Selected,$Conveyed,$SavePick,
-                        $SaveLast,$SaveNext,$MenuUnit_hash_ref,
-                        $no_wantarray);
+                     eval {
+                        ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                           $SaveLast,$SaveNext)=&Menu(${$FullMenu}
+                           {$MenuUnit_hash_ref}[2]
+                           {$pickone[$picknum-1]},$convey,
+                           $recurse_level,$FullMenu,
+                           $Selected,$Conveyed,$SavePick,
+                           $SaveLast,$SaveNext,$MenuUnit_hash_ref,
+                           $no_wantarray);
+                     };
+                     die $@ if $@;
                      chomp($menu_output) if !(ref $menu_output);
                      if ($menu_output eq '-') {
                         $picks{$picknum}='-';$mark='-';
@@ -1018,8 +1049,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  }
                               };
                               if ($@) {
-                                 &Net::FullAuto::FA_lib::handle_error($@,'-5')
-                                    if $fullauto;
+                                 #&Net::FullAuto::FA_lib::handle_error($@,'-5')
+                                 #   if $fullauto;
                                  die $@;
                               }
                            } return 'DONE_SUB';
@@ -1225,14 +1256,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                =${$chose_n}{'Label'};
             %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
             ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
-            ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext)=&Menu(
-               $chose_n,$convey,
-               $recurse_level,$FullMenu,
-               $Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext,$MenuUnit_hash_ref,
-               $no_wantarray);
-               chomp($menu_output) if !(ref $menu_output);
+            eval {
+               ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext)=&Menu($chose_n,$convey,
+                  $recurse_level,$FullMenu,
+                  $Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$MenuUnit_hash_ref,
+                  $no_wantarray);
+            };
+            die $@ if $@;
+            chomp($menu_output) if !(ref $menu_output);
             if ($menu_output eq '-') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq '+') {
@@ -1256,8 +1289,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      };
                      if ($@) {
-                        &Net::FullAuto::FA_lib::handle_error($@,'-5')
-                           if $fullauto;
+                        #@&Net::FullAuto::FA_lib::handle_error($@,'-5')
+                        #   if $fullauto;
                         die $@;
                      }
                   } return 'DONE_SUB';
@@ -1319,14 +1352,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                =${$chose_n}{'Label'};
             %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
             ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
-            ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext)=&Menu(
-               $chose_n,$convey,
-               $recurse_level,$FullMenu,
-               $Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext,$MenuUnit_hash_ref,
-               $no_wantarray);
-               chomp($menu_output) if !(ref $menu_output);
+            eval {
+               ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$ignore1,$ignore2,$ignore3,$die_err)
+                  =&Menu($chose_n,$convey,
+                  $recurse_level,$FullMenu,
+                  $Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$MenuUnit_hash_ref,
+                  $no_wantarray);
+            };
+            die $@ if $@;
+            chomp($menu_output) if !(ref $menu_output);
             if ($menu_output eq '-') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq '+') {
@@ -1341,17 +1377,28 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              if ($fullauto) {
-                                 &Net::FullAuto::FA_lib::handle_error($@,'-1');
-                              } else { die $@ }
+                              my $die="The \"Result =>\" Setting"
+                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                 [2]{${$_[1]}[$_[2]-1]}
+                                 ."\n\t\tFound in the Menu Unit -> "
+                                 ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                 ."Specifies a Subroutine\,"
+                                 ." $result that Does NOT Exist"
+                                 ."\n\t\tin the User Subroutines "
+                                 ."File $sub_module\n";
+                                 #&Net::FullAuto::FA_lib::handle_error(
+                                 #   $die,'-1');
+                              die $die;
+                                 #&Net::FullAuto::FA_lib::handle_error($@,'-1');
+                              #} else { die $@ }
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE
                            #### ERROR INFO
                         }
                      };
                      if ($@) {
-                        &Net::FullAuto::FA_lib::handle_error($@,'-5')
-                           if $fullauto;
+                        #&Net::FullAuto::FA_lib::handle_error($@,'-5')
+                        #   if $fullauto;
                         die $@;
                      }
                   } return 'DONE_SUB';
@@ -1400,14 +1447,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                =${$chose_n}{'Label'};
             %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
             ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
-            ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext)=&Menu(
-               $chose_n,$convey,
-               $recurse_level,$FullMenu,
-               $Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext,$MenuUnit_hash_ref,
-               $no_wantarray);
-               chomp($menu_output) if !(ref $menu_output);
+            eval {
+               ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext)=&Menu($chose_n,$convey,
+                  $recurse_level,$FullMenu,
+                  $Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$MenuUnit_hash_ref,
+                  $no_wantarray);
+            };
+            die $@ if $@;
+            chomp($menu_output) if !(ref $menu_output);
             if ($menu_output eq '-') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq '+') {
@@ -1422,8 +1471,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              &Net::FullAuto::FA_lib::handle_error($@)
-                                 if $fullauto;
+                              my $die="The \"Result =>\" Setting"
+                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                 [2]{${$_[1]}[$_[2]-1]}
+                                 ."\n\t\tFound in the Menu Unit -> "
+                                 ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                 ."Specifies a Subroutine\,"
+                                 ." $result that Does NOT Exist"
+                                 ."\n\t\tin the User Subroutines "
+                                 ."File $sub_module\n";
+                                 #&Net::FullAuto::FA_lib::handle_error(
+                                 #   $die,'-1');
+                              #&Net::FullAuto::FA_lib::handle_error($@)
+                              #   if $fullauto;
                               die $die;
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1431,11 +1491,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      };
                      if ($@) {
                         if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (wantarray && !$no_wantarray) {
-                              return '', $@;
-                           } elsif ($fullauto) {
-                              &Net::FullAuto::FA_lib::handle_error($@,'-10');
-                           } else { die $@ }
+                           #if (wantarray && !$no_wantarray) {
+                           #   return '', $@;
+                           #} elsif ($fullauto) {
+                           #   &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                           #} else { die $@ }
+                           die $@;
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
                                   ."System $local_hostname Conveyed\n"
@@ -1492,15 +1553,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $MenuUnit_hash_ref}-1]}}[0];
             } else { $convey=$pickone[${$SaveLast}{
                   $MenuUnit_hash_ref}-1] }
-            ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext)=&Menu(${$FullMenu}
-               {$MenuUnit_hash_ref}[2]
-               {$pickone[${$SaveLast}{
-               $MenuUnit_hash_ref}-1]},$convey,
-               $recurse_level,$FullMenu,
-               $Selected,$Conveyed,$SavePick,
-               $SaveLast,$SaveNext,$MenuUnit_hash_ref,
-               $no_wantarray);
+            eval {
+               ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$ignore1,$ignore2,$ignore3,$die_err)
+                  =&Menu(${$FullMenu}
+                  {$MenuUnit_hash_ref}[2]
+                  {$pickone[${$SaveLast}{
+                  $MenuUnit_hash_ref}-1]},$convey,
+                  $recurse_level,$FullMenu,
+                  $Selected,$Conveyed,$SavePick,
+                  $SaveLast,$SaveNext,$MenuUnit_hash_ref,
+                  $no_wantarray);
+            };
+            die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
             if ($menu_output eq 'DONE_SUB') {
                return 'DONE_SUB';
@@ -1512,8 +1577,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              &Net::FullAuto::FA_lib::handle_error($@)
-                                 if $fullauto;
+                              my $die="The \"Result =>\" Setting"
+                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                 [2]{${$_[1]}[$_[2]-1]}
+                                 ."\n\t\tFound in the Menu Unit -> "
+                                 ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                 ."Specifies a Subroutine\,"
+                                 ." $result that Does NOT Exist"
+                                 ."\n\t\tin the User Subroutines "
+                                 ."File $sub_module\n";
+                                 #&Net::FullAuto::FA_lib::handle_error(
+                                 #   $die,'-1');
+                              #&Net::FullAuto::FA_lib::handle_error($@)
+                              #   if $fullauto;
                               die $die;
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1521,11 +1597,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      };
                      if ($@) {
                         if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (wantarray && !$no_wantarray) {
-                              return '', $@;
-                           } elsif ($fullauto) {
-                              &Net::FullAuto::FA_lib::handle_error($@,'-10');
-                           } else { die $@ }
+                           #if (wantarray && !$no_wantarray) {
+                           #   return '', $@;
+                           #} elsif ($fullauto) {
+                           #   &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                           #} else { die $@ }
+                           die $@;
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
                                   ."System $local_hostname Conveyed\n"
@@ -1540,8 +1617,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            } elsif ($@) {
-                              &Net::FullAuto::FA_lib::handle_error($die,'-28')
-                                 if $fullauto;
+                              #&Net::FullAuto::FA_lib::handle_error($die,'-28')
+                              #   if $fullauto;
                               die $die;
                            }
                         }
@@ -1626,6 +1703,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             last;
          } elsif (exists $pn{$numbor}) {
 #print "ARE WE HERE and PN=$pn and NUMBOR=$numbor and SUM=$sum_menu\n";<STDIN>;%pn=();
+
+#print "ALLLLL=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pickone[$numbor-1]}<==\n";
             my $callertest=__PACKAGE__."::Menu";
             if (wantarray && !$no_wantarray &&
                   (exists ${$MenuUnit_hash_ref}{Select} && 
@@ -1728,14 +1807,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $picks{$numbor}='*';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                   ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
-                  ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                     $SaveLast,$SaveNext,$parent_menu)=&Menu(${$FullMenu}
-                     {$MenuUnit_hash_ref}[2]
-                     {$pickone[$numbor-1]},$convey,
-                     $recurse_level,$FullMenu,
-                     $Selected,$Conveyed,$SavePick,
-                     $SaveLast,$SaveNext,$MenuUnit_hash_ref,
-                     $no_wantarray);
+                  eval {
+                     ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                        $SaveLast,$SaveNext,$parent_menu)=&Menu(${$FullMenu}
+                        {$MenuUnit_hash_ref}[2]
+                        {$pickone[$numbor-1]},$convey,
+                        $recurse_level,$FullMenu,
+                        $Selected,$Conveyed,$SavePick,
+                        $SaveLast,$SaveNext,$MenuUnit_hash_ref,
+                        $no_wantarray);
+                  };
+                  die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
                   if ($menu_output eq '-') {
                      $return_from_child_menu='-';
@@ -1754,8 +1836,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         eval { 
                            unless (defined eval "$subfile$sub") {
                               if ($@) {
-                                 &Net::FullAuto::FA_lib::handle_error($@)
-                                    if $fullauto;
+                                 my $die="The \"Result =>\" Setting"
+                                    ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                    [2]{${$_[1]}[$_[2]-1]}
+                                    ."\n\t\tFound in the Menu Unit -> "
+                                    ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                    ."Specifies a Subroutine\,"
+                                    ." $result that Does NOT Exist"
+                                    ."\n\t\tin the User Subroutines "
+                                    ."File $sub_module\n";
+                                    #&Net::FullAuto::FA_lib::handle_error(
+                                    #   $die,'-1');
+                                 #&Net::FullAuto::FA_lib::handle_error($@)
+                                 #   if $fullauto;
                                  die $die;
                               }
                               #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1763,11 +1856,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         };
                         if ($@) {
                            if (unpack('a11',$@) eq 'FATAL ERROR') {
-                              if (wantarray && !$no_wantarray) {
-                                 return '',$@;
-                              } elsif ($fullauto) {
-                                 &Net::FullAuto::FA_lib::handle_error($@,'-10');
-                              } else { die $die }
+                              #if (wantarray && !$no_wantarray) {
+                              #   return '',$@;
+                              #} elsif ($fullauto) {
+                              #  &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                              #} else { die $die }
+                              die $@;
                            } else {
                               my $die="\n       FATAL ERROR! - The Local "
                                      ."System $local_hostname Conveyed\n"
@@ -1790,7 +1884,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      } return 'DONE_SUB';
                   }
                } else {
-                  die "NO LABEL IN MENU BLOCK\n";
+                  my $die="The \"Result =>\" Setting".
+                          "\n\t\tFound in the Menu Unit -> ".
+                          "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
+                          "HASH reference to a Menu Unit\,\n\t\t".
+                          "that does NOT EXIST or is NOT EXPORTED".
+                          "\n\n\tHint: Make sure the Names of all".
+                          "\n\t      Menu Hash Blocks in the\n\t".
+                          "      $menu_cfg_file file are\n\t".
+                          "      listed in the \@EXPORT list\n\t".
+                          "      found at the beginning of\n\t".
+                          "      the $menu_cfg_file file\n\n\t".
+                          "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
+                  die $die;
                }
             } elsif ($FullMenu && $caller eq $callertest &&
                   (exists ${$MenuUnit_hash_ref}{Select} && 
@@ -1820,12 +1926,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $die.=" and Because it Does Not Have\n\t\tan \"&\" as";
                      $die.=" the Lead Character, $0\n\t\tCannot Determine ";
                      $die.="if it is a Valid SubRoutine.\n\n";
-                     if (defined $log_handle &&
-                           -1<index $log_handle,'*') {
-                        print $log_handle $die;
-                        close($log_handle);
-                     }
-                     &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
+                     #&Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
                      die $die;
                   }
                   if (${$FullMenu}{$MenuUnit_hash_ref}[2]
@@ -1846,8 +1947,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
-                              &Net::FullAuto::FA_lib::handle_error($@)
-                                 if $fullauto;
+                              my $die="The \"Result =>\" Setting"
+                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                 [2]{${$_[1]}[$_[2]-1]}
+                                 ."\n\t\tFound in the Menu Unit -> "
+                                 ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                 ."Specifies a Subroutine\,"
+                                 ." $result that Does NOT Exist"
+                                 ."\n\t\tin the User Subroutines "
+                                 ."File $sub_module\n";
+                                 #&Net::FullAuto::FA_lib::handle_error(
+                                 #   $die,'-1');
+                              #&Net::FullAuto::FA_lib::handle_error($@)
+                              #   if $fullauto;
                               die $die;
                            }
                            #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
@@ -1855,31 +1967,109 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      };
                      if ($@) {
                         if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (wantarray && !$no_wantarray) {
-                              return '',$@;
-                           } elsif ($fullauto) {
-                              &Net::FullAuto::FA_lib::handle_error($@,'-10');
-                           } else { die $die }
+                           #if (wantarray && !$no_wantarray) {
+                           #   return '',$@;
+                           #} elsif ($fullauto) {
+                           #   &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                           #} else { die $die }
+                           die $@;
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
                                   ."System $local_hostname Conveyed\n"
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
                                   ."       $@";
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
-                           } elsif ($fullauto) {
-                              &Net::FullAuto::FA_lib::handle_error($die,'-28');
+                           #} elsif ($fullauto) {
+                           #   &Net::FullAuto::FA_lib::handle_error($die,'-28');
                            } else { die $die }
                         }
                      }
                   }
                } else { $done=1;last }
+               return 'DONE_SUB';
+            } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
+               if (substr(${$FullMenu}{$MenuUnit_hash_ref}
+                     [2]{$pickone[$numbor-1]},0,1) ne '&') {
+                  my $die="The \"Result =>\" Setting";
+                  $die.="\n\t\t-> " . ${$FullMenu}{$MenuUnit_hash_ref}
+                                             [2]{$pickone[$numbor-1]};
+                  $die.="\n\t\tFound in the Menu Unit -> ";
+                  $die.="$MenuUnit_hash_ref\n\t\tis not a Menu Unit\,";
+                  $die.=" and Because it Does Not Have\n\t\tan \"&\" as";
+                  $die.=" the Lead Character, $0\n\t\tCannot Determine ";
+                  $die.="if it is a Valid SubRoutine.\n\n";
+                  #if (defined $log_handle &&
+                  #      -1<index $log_handle,'*') {
+                  #   print $log_handle $die;
+                  #   close($log_handle);
+                  #}
+                  #&Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
+                  die $die;
+               }
+               if (${$FullMenu}{$MenuUnit_hash_ref}[2]
+                                {$pickone[$numbor-1]}) { }
+               ($FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu)
+                  =$get_result->($MenuUnit_hash_ref,
+                  \@pickone,$numbor,$picks_from_parent,
+                  $FullMenu,$Conveyed,$Selected,
+                  $SaveNext,$parent_menu,$menu_cfg_file,
+                  $Convey_contents);
+               ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
+               my %pick=();
+               $pick{$numbor}='*';
+               %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
+               my $subfile=substr($sub_module,0,-3).'::';
+               foreach my $sub (&get_subs_from_menu($Selected)) {
+                  $sub=unpack('x1 a*',$sub);
+                  eval {
+                     unless (defined eval "$subfile$sub") {
+                        if ($@) {
+                           $die="FATAL ERROR! - "
+                               ."The \"Result =>\" Setting"
+                               ."\n\t\t-> " . ${$FullMenu}
+                               {$MenuUnit_hash_ref}[2]
+                               {$pickone[$numbor-1]}
+                               ."\n\t\tFound in the Menu Unit -> "
+                               .${$LookUpMenuName}{$MenuUnit_hash_ref}
+                               ."\n\t\tSpecifies a Subroutine\,"
+                               ." $result that Does NOT Exist"
+                               ."\n\t\tin the User Subroutines "
+                               ."File $sub_module\n";
+                               #return $die;
+                               #&Net::FullAuto::FA_lib::handle_error(
+                               #   $die,'-1');
+                           #}
+                           #&Net::FullAuto::FA_lib::handle_error($@)
+                           #   if $fullauto;
+                           die $die;
+                        }
+                        #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
+                     }
+                  };
+                  if ($@) {
+                     if (unpack('a11',$@) eq 'FATAL ERROR') {
+                        die $die;
+                     } else {
+                        my $die="\n       FATAL ERROR! - The Local "
+                               ."System $local_hostname Conveyed\n"
+                               ."              the Following "
+                               ."Unrecoverable Error Condition :\n\n"
+                               ."       $@";
+                        if (defined $log_handle &&
+                              -1<index $log_handle,'*') {
+                           print $log_handle $die;
+                           close($log_handle);
+                        }
+                        if (wantarray && !$no_wantarray) {
+                           return '',$die;
+                        } elsif ($fullauto) {
+                           &Net::FullAuto::FA_lib::handle_error($die,'-28');
+                        } else { die $die }
+                     }
+                  } else { $done=1;last }
+               }
                return 'DONE_SUB';
             } else { $done=1 }
             last if !$return_from_child_menu;

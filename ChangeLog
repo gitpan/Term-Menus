@@ -1,5 +1,12 @@
 2007-09-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.29 released.
+
+        * Repaired bugs when "Result =>" setting value is
+          the name of a perl subroutine.
+
+2007-09-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.28 released.
 
         * More changes to 'require menu_cfg' to reflect FullAuto architecture
