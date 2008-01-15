@@ -1,8 +1,9 @@
 package Term::Menus;
- 
+
 #    Menus.pm
 #
-#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+#    Copyright (C) 2000, 2001, 2002, 2003, 2004
+#                  2005, 2006, 2007, 2008
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
 #    You may distribute under the terms of the GNU General
@@ -23,7 +24,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.29';
+$VERSION = '1.30';
 
 
 BEGIN {
@@ -67,7 +68,7 @@ BEGIN {
 #  everything between the two double-lines of pound
 #  symbols above and below from the current name ( 'usr_code'
 #  was the original default name ) to the new module
-#  name of your choosing. 
+#  name of your choosing.
 #
 #  Example:  use usr_code;                 --> use sales_sub;
 #            our $sub_module='usr_code.pm' --> our $sub_module='sales_sub.pm';
@@ -122,7 +123,7 @@ if (defined $usr_code::test && $usr_code::test) {
 }
 our $timeout=30;
 if (defined $usr_code::timeout && $usr_code::timeout) {
-   $timeout=$usr_code::timeout; 
+   $timeout=$usr_code::timeout;
 }
 our $log=0;
 if (defined $usr_code::log && $usr_code::log) {
@@ -484,7 +485,7 @@ sub Menu
             if (${$Items{$num}}{Text}=~/${$Items{$num}}{Include}/) {
                next if exists ${$Items{$num}}{Exclude} &&
                      ${$Items{$num}}{Text}=~/${$Items{$num}}{Exclude}/;
-            
+
                push @{$picks}, $text;
             } else { next }
          } elsif (exists ${$Items{$num}}{Exclude} &&
@@ -551,10 +552,10 @@ sub Menu
                         $display_this_many_items,'',
                         $MenuUnit_hash_ref,++$recurse,
                         $picks_from_parent,$parent_menu,
-			$menu_cfg_file,$FullMenu,
-			$Selected,$Conveyed,$SavePick,
-			$SaveLast,$SaveNext,
-		        \%LookUpMenuName,\@convey,
+                        $menu_cfg_file,$FullMenu,
+                        $Selected,$Conveyed,$SavePick,
+                        $SaveLast,$SaveNext,
+                        \%LookUpMenuName,\@convey,
                         $no_wantarray);
       if ($fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
@@ -569,16 +570,17 @@ sub Menu
                        $SavePick,$SaveLast,$SaveNext;
       } elsif (ref $pick eq 'ARRAY' && wantarray
             && 1==$recurse) {
-         return @{$pick}
+         my @choyce=@{$pick};undef @{$pick};undef $pick;
+         return @choyce
       } elsif ($pick) { return $pick }
    } else {
       my $pick=(&pick($picks,$banner,$display_this_many_items,
                        '',$MenuUnit_hash_ref,++$recurse,
                        $picks_from_parent,$parent_menu,
-		       $menu_cfg_file,$FullMenu,
-		       $Selected,$Conveyed,$SavePick,
-		       $SaveLast,$SaveNext,
-	               \%LookUpMenuName,\@convey,
+                       $menu_cfg_file,$FullMenu,
+                       $Selected,$Conveyed,$SavePick,
+                       $SaveLast,$SaveNext,
+                       \%LookUpMenuName,\@convey,
                        $no_wantarray))[0];
       if ($fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
@@ -598,7 +600,8 @@ sub Menu
                        $SavePick,$SaveLast,$SaveNext;
       } elsif (ref $pick eq 'ARRAY' && wantarray
             && 1==$recurse) {
-         return @{$pick}
+         my @choyce=@{$pick};undef @{$pick};undef $pick;
+         return @choyce
       } elsif ($pick) { return $pick }
    }
 
@@ -607,27 +610,27 @@ sub Menu
 sub pick # USAGE: &pick( ref_to_choices_array,
              #  (Optional)       banner_string,
              #  (Optional)       display_this_many_items,
-	     #  (Optional)       log_file_handle,
+             #  (Optional)       log_file_handle,
              #  ----------
              #  For Use With Sub-Menus
              #  ----------
              #  (Optional)       MenuUnit_hash_ref,
              #  (Optional)       recurse_level,
              #  (Optional)       picks_from_parent,
-	     #  (Optional)       parent_menu,
-	     #  (Optional)       menus_cfg_file,
+             #  (Optional)       parent_menu,
+             #  (Optional)       menus_cfg_file,
              #  (Optional)       Full_Menu_data_structure,
              #  (Optional)       Selected_data_structure,
              #  (Optional)       Conveyed_data_structure,
              #  (Optional)       SavePick_data_structure,
-             #  (Optional)       SaveLast_data_structure, 
+             #  (Optional)       SaveLast_data_structure,
              #  (Optional)       SaveNext_data_structure,
-	     #  (Optional)       LookUpMenuName_data_structure,
+             #  (Optional)       LookUpMenuName_data_structure,
              #  (Optional)       convey_item_contents_arrayref_from_menu,
              #  (Optional)       no_wantarray_flag )
 {
 
-#print "PICKCALLER=",caller,"\n";<STDIN>;
+#print "PICKCALLER=",caller," and 6=$_[6]\n";<STDIN>;
 
    #  "pick" --> This function presents the user with
    #  with a list of items from which to choose.
@@ -706,11 +709,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                delete ${$SavePick}{$_[0]}{$key};
                delete ${$SaveNext}{$_[0]};
             }
-         } 
+         }
       } delete ${$SaveNext}{$_[0]};
       return $SaveNext;
 
-   } 
+   }
 
    sub find_Selected
    {
@@ -726,7 +729,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          if (keys %{${$Selected}{$_[0]}}) {
             foreach my $key (keys %{${$Selected}{$_[0]}}) {
                my $result=${$Selected}{$_[0]}{$key};
-               return '+' if substr($result,0,1) eq '&'; 
+               return '+' if substr($result,0,1) eq '&';
                my $output=find_Selected($result,'',$Selected);
                return '+' if $output eq '+';
             }
@@ -806,7 +809,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                           "      found at the beginning of\n\t".
                           "      the $menu_cfg_file file\n\n\t".
                           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-                  die $die; 
+                  die $die;
                }
             } elsif (unpack('a1',
                   ${$_[0]}{${$FullMenu}{$_[0]}
@@ -814,7 +817,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   ne '&') {
             }
          }
-      } else { $convey=$_[3] }
+      } elsif ($_[3]) {
+         $convey=$_[3];
+      } else { $convey=${$_[1]}[$_[2]-1] }
       if (exists ${$FullMenu}{$_[0]}[2]
                                   {${$_[1]}[$_[2]-1]}) {
          my $ret_regex=qr/\]r(e+turn)*\[/i;
@@ -1009,10 +1014,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
                         {$pickone[$picknum-1]}{Item_1}) {
                      if (exists ${$FullMenu}{$MenuUnit_hash_ref}[3]
-                                         {$pickone[$picknum-1]}) {
+                                         {$pn{$picknum}[0]}) {
                         $convey=${${$FullMenu}{$MenuUnit_hash_ref}[3]
-                                         {$pickone[$picknum-1]}}[0];
-                     } else { $convey=$pickone[$picknum-1] }
+                                         {$pn{$picknum}[0]}}[0];
+                     } else { $convey=$pn{$picknum}[0] }
                      eval {
                         ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
                            $SaveLast,$SaveNext)=&Menu(${$FullMenu}
@@ -1083,7 +1088,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $sum_menu=1;
                }
             }
-            $pn{$pn}='';
+            $pn{$pn}=[ $pickone[$picknum-1],$picknum ];
             $menu_text.="   $mark  $pn. \t$pickone[$picknum-1]\n";
             if ($mark eq ' ' || (exists $picks{$picknum} ||
                   exists $picks{$pn})) {
@@ -1112,7 +1117,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
             if ($mark_flg==1) {
                print "   c.  Clear All.";print "\n" if $ch;
-            } 
+            }
             print "   f.  Finish.\n";
          }
          if ($display_this_many_items<$num_pick) {
@@ -1187,8 +1192,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         s/__Master_${$}__/Local-Host: $local_hostname/sg;
                   }
                   push @pickd, $txt;
-               } elsif ($pickone[$picknum-1]) {
-                  my $txt=$pickone[$picknum-1];
+               } elsif ($pn{$picknum}) {
+                  my $txt=$pn{$picknum}[0];
                   if (-1<index $txt,"__Master_${$}__") {
                      $txt=~
                         s/__Master_${$}__/Local-Host: $local_hostname/sg;
@@ -1213,8 +1218,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             foreach my $line (@pickone) {
                $cnt++;
                if (${$FullMenu}{$MenuUnit_hash_ref}[6]
-                     {$pickone[$picknum-1]} && ${$FullMenu}
-                     {$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]}
+                     {$pn{$picknum}[0]} && ${$FullMenu}
+                     {$MenuUnit_hash_ref}[6]{$pn{$picknum}[0]}
                      ne '_ZERO_') {
                   $sort{$line}=${$FullMenu}{$MenuUnit_hash_ref}[6]{$line};
                } else { $sort{$line}=$cnt }
@@ -1300,7 +1305,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } else { %picks=%{${$SavePick}{$MenuUnit_hash_ref}} }
             #print "DO THE SORT\n";<STDIN>;
          } elsif ($numbor=~/^\*\s*$/s) {
-            if (!exists ${$MenuUnit_hash_ref}{Select} || 
+            if (!exists ${$MenuUnit_hash_ref}{Select} ||
                   ${$MenuUnit_hash_ref}{Select} eq 'One') {
                print "\n   ERROR: Cannot Show Multiple Selected Items\n".
                      "          When 'Select' is NOT set to 'Many'\n";
@@ -1423,7 +1428,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             next if $#spl==-1;
             my %chosen=(
                Label  => 'chosen',
-               Select => 'Many',
+               Select => ${$MenuUnit_hash_ref}{Select},
                Banner => ${$MenuUnit_hash_ref}{Banner},
             ); $cnt=0;
             foreach my $text (@spl) {
@@ -1436,10 +1441,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $chosen{'Item_'.$cnt}=
                      { Text => $text,__NUM__=>$num };
                }
-               $chosen{'Item_'.$cnt}{Result}=$result{$text}
-                  if exists $result{$text};
-               $chosen{'Item_'.$cnt}{Convey}=$convey{$text}
-                  if exists $convey{$text};
+               $chosen{'Item_'.$cnt}{Result}=
+                  ${${$MenuUnit_hash_ref}{${${$FullMenu}
+                  {$MenuUnit_hash_ref}[4]}{$text}}}{'Result'}
+                  if exists ${${$MenuUnit_hash_ref}{${${$FullMenu}
+                  {$MenuUnit_hash_ref}[4]}{$text}}}{'Result'};
+#print "WHAT IS THIS NOW=$chosen{'Item_'.$cnt}{Result}\n";
+               #$chosen{'Item_'.$cnt}{Result}=$result{$text}
+               #   if exists $result{$text};
+               #$chosen{'Item_'.$cnt}{Convey}=$convey{$text}
+               #   if exists $convey{$text};
                $chosen{'Item_'.$cnt}{Filter}=1;
             }
             my $chose_n=\%chosen;
@@ -1632,7 +1643,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } elsif ($menu_output) {
                return $menu_output;
             }
-         } elsif ($numbor=~/^q$/i) { 
+         } elsif ($numbor=~/^q$/i) {
             return ']quit['
          } elsif (!keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^a$/i) {
@@ -1704,10 +1715,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          } elsif (exists $pn{$numbor}) {
 #print "ARE WE HERE and PN=$pn and NUMBOR=$numbor and SUM=$sum_menu\n";<STDIN>;%pn=();
 
-#print "ALLLLL=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pickone[$numbor-1]}<==\n";
+#print "ALLLLL=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}<==\n";
             my $callertest=__PACKAGE__."::Menu";
             if (wantarray && !$no_wantarray &&
-                  (exists ${$MenuUnit_hash_ref}{Select} && 
+                  (exists ${$MenuUnit_hash_ref}{Select} &&
                   ${$MenuUnit_hash_ref}{Select} eq 'Many')) {
 #print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and keys=",(join "\n",keys %{${$SavePick}{$parent_menu}})," and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                if (exists $picks{$numbor}) {
@@ -1735,12 +1746,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   delete ${$SavePick}{$parent_menu}{$numbor};
                } else {
                   $items{$numbor}=${$FullMenu}{$MenuUnit_hash_ref}
-                                             [4]{$pickone[$numbor-1]};
+                                             [4]{$pn{$numbor}[0]};
                   ${$SavePick}{$parent_menu}{$numbor}='*'
                      if $sum_menu || $filtered_menu;
                   my $skip=0;
                   foreach my $key (keys %picks) {
-                     if ($picks{$key} ne '-' && 
+                     if ($picks{$key} ne '-' &&
                            (grep { $items{$numbor} eq $_ }
                            @{$negate{$key}})) {
                         my $warn="\n   WARNING! You Cannot Select ";
@@ -1757,7 +1768,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $picks{$numbor}='*';
                      $negate{$numbor}=
                         ${${$FullMenu}{$MenuUnit_hash_ref}[1]}
-                        {$pickone[$picknum-1]};
+                        {$pn{$numbor}[0]};
                      %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                      ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
                   }
@@ -1769,9 +1780,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   delete $items{$prev_menu};
                }
             } elsif (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                         {$pickone[$numbor-1]} eq 'HASH') {
+                         {$pn{$numbor}[0]} eq 'HASH') {
                if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                         {$pickone[$numbor-1]}{'Label'}) {
+                         {$pn{$numbor}[0]}{'Label'}) {
                   chomp($numbor);
                   if (exists $picks{$numbor}) {
                      ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
@@ -1800,7 +1811,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   ($FullMenu,$Conveyed,$SaveNext,$Selected,
                      $convey,$parent_menu)
                      =$get_result->($MenuUnit_hash_ref,
-                     \@pickone,$numbor,$picks_from_parent,
+                     \@pickone,$pn{$pn}[1],$picks_from_parent,
                      $FullMenu,$Conveyed,$Selected,
                      $SaveNext,$parent_menu,$menu_cfg_file,
                      $Convey_contents);
@@ -1811,7 +1822,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
                         $SaveLast,$SaveNext,$parent_menu)=&Menu(${$FullMenu}
                         {$MenuUnit_hash_ref}[2]
-                        {$pickone[$numbor-1]},$convey,
+                        {$pn{$numbor}[0]},$convey,
                         $recurse_level,$FullMenu,
                         $Selected,$Conveyed,$SavePick,
                         $SaveLast,$SaveNext,$MenuUnit_hash_ref,
@@ -1833,7 +1844,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      my $subfile=substr($sub_module,0,-3).'::';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         $sub=unpack('x1 a*',$sub);
-                        eval { 
+                        eval {
                            unless (defined eval "$subfile$sub") {
                               if ($@) {
                                  my $die="The \"Result =>\" Setting"
@@ -1899,7 +1910,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   die $die;
                }
             } elsif ($FullMenu && $caller eq $callertest &&
-                  (exists ${$MenuUnit_hash_ref}{Select} && 
+                  (exists ${$MenuUnit_hash_ref}{Select} &&
                   ${$MenuUnit_hash_ref}{Select} eq 'Many')) {
                chomp($numbor);
                if (exists $picks{$numbor}) {
@@ -1915,12 +1926,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      delete $items{$numbor};
                   } last;
                }
-               if (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) { 
+               if (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
                   if (substr(${$FullMenu}{$MenuUnit_hash_ref}
-                        [2]{$pickone[$numbor-1]},0,1) ne '&') {
+                        [2]{$pn{$numbor}[0]},0,1) ne '&') {
                      my $die="The \"Result =>\" Setting";
                      $die.="\n\t\t-> " . ${$FullMenu}{$MenuUnit_hash_ref}
-                                                [2]{$pickone[$numbor-1]};
+                                                [2]{$pn{$numbor}[0]};
                      $die.="\n\t\tFound in the Menu Unit -> ";
                      $die.="$MenuUnit_hash_ref\n\t\tis not a Menu Unit\,";
                      $die.=" and Because it Does Not Have\n\t\tan \"&\" as";
@@ -1930,7 +1941,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      die $die;
                   }
                   if (${$FullMenu}{$MenuUnit_hash_ref}[2]
-                                   {$pickone[$numbor-1]}) { }
+                                   {$pn{$numbor}[0]}) { }
                   ($FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu)
                      =$get_result->($MenuUnit_hash_ref,
                      \@pickone,$numbor,$picks_from_parent,
@@ -1991,10 +2002,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
                if (substr(${$FullMenu}{$MenuUnit_hash_ref}
-                     [2]{$pickone[$numbor-1]},0,1) ne '&') {
+                     [2]{$pn{$numbor}[0]},0,1) ne '&') {
                   my $die="The \"Result =>\" Setting";
                   $die.="\n\t\t-> " . ${$FullMenu}{$MenuUnit_hash_ref}
-                                             [2]{$pickone[$numbor-1]};
+                                             [2]{$pn{$numbor}[0]};
                   $die.="\n\t\tFound in the Menu Unit -> ";
                   $die.="$MenuUnit_hash_ref\n\t\tis not a Menu Unit\,";
                   $die.=" and Because it Does Not Have\n\t\tan \"&\" as";
@@ -2009,7 +2020,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   die $die;
                }
                if (${$FullMenu}{$MenuUnit_hash_ref}[2]
-                                {$pickone[$numbor-1]}) { }
+                                {$pn{$numbor}[0]}) { }
                ($FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu)
                   =$get_result->($MenuUnit_hash_ref,
                   \@pickone,$numbor,$picks_from_parent,
@@ -2030,7 +2041,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                ."The \"Result =>\" Setting"
                                ."\n\t\t-> " . ${$FullMenu}
                                {$MenuUnit_hash_ref}[2]
-                               {$pickone[$numbor-1]}
+                               {$pn{$numbor}[0]}
                                ."\n\t\tFound in the Menu Unit -> "
                                .${$LookUpMenuName}{$MenuUnit_hash_ref}
                                ."\n\t\tSpecifies a Subroutine\,"
@@ -2082,7 +2093,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my @picks=();
       foreach (keys %picks) {
          my $pik=$pickone[$_-1];
-         push @picks, $pik; 
+         push @picks, $pik;
       } undef @pickone;
       if ($MenuUnit_hash_ref) {
          print $blanklines;
@@ -2150,7 +2161,7 @@ Term::Menus was initially conceived and designed to work seemlessly
 with the soon-to-be-released perl based Network Process Automation Utility
 Moduel called Net::FullAuto - however, it is not itself dependant on other
 Net::FullAuto components, and will work with *any* perl script/application.
- 
+
 
 Reasons to use this module are:
 
@@ -2432,7 +2443,7 @@ You want to use a perl subroutine to create the text items or banner:
    use Term::Menus;
 
    sub create_items {
-    
+
       my $previous=shift;
       my @textlines=();
       push @textlines, "$previous is a Good Utility";
@@ -2461,13 +2472,13 @@ You want to use a perl subroutine to create the text items or banner:
 
                    # IMPORTANT! '&' *must* be used to denote subroutine
                    #            as the first character
-             
+
                    #      &current_package_name:: qualifier or &main::
                    #      quaifiler MUST be used - otherwise
                    #      Term::Menus cannot locate it
 
                    #      embedded quote characters must be escaped
- 
+
                    #      enclosing double quotes MUST be used - this is
                    #      a STRING being passed to Term::Menus that will
                    #      then be internally eval-ed during runtime
@@ -2584,7 +2595,7 @@ come with a standard Perl distribution.
 
 =over 4
 
-=item B<pick> - create a simple menu 
+=item B<pick> - create a simple menu
 
     $pick = &pick ($list|\@list|['list',...],[$Banner]);
 
@@ -2673,7 +2684,7 @@ B<Display> => 'Integer'
 
 =item
 
-The I<Display> key is an I<optional> key that determines the number 
+The I<Display> key is an I<optional> key that determines the number
 of Menu
 Items that will be displayed on each screen. This is useful when the items
 are multi-lined, or the screen size is bigger or smaller than the default
@@ -2701,7 +2712,7 @@ unique Label element> Otherwise C<&Menu()> will throw an error.
 
 =back
 
-=item 
+=item
 
 B<Item_E<lt>intE<gt>> => { Item Configuration Hash
 Structure }
@@ -2780,7 +2791,7 @@ The default is "Please Pick an Item:"
 
    Banner => "The following items are for selection,\n".
              "\tEnjoy the Experience!",
-             
+
 
 =back
 
@@ -2788,10 +2799,10 @@ The default is "Please Pick an Item:"
 
 =head3 Item Congfiguration Hash Structures
 
-Each Menu Item can have an independant configurtion. Each Menu Configuration 
-Hash Structure consists of elements that define and control it's behavior, 
-appearance, constitution and purpose. An element's syntax is as you would 
-expect it to be in perl - a key string pointing to an assocaited value: key 
+Each Menu Item can have an independant configurtion. Each Menu Configuration
+Hash Structure consists of elements that define and control it's behavior,
+appearance, constitution and purpose. An element's syntax is as you would
+expect it to be in perl - a key string pointing to an assocaited value: key
 => value. The following items list supported key names and ther associated
 value types:
 
@@ -2829,10 +2840,10 @@ of the C<]Convey[> macro, and defines or contains the string or result that
 is passed on to child menus - if any. Use of this configuration element is
 I<optional>. If C<Convey> is not a list, then it's value is passed onto child
 menus. If C<Convey> I<is> a list, then the Item selected is passed onto the
-children - if any. It is important to note, I<when used>, that only the 
-resulting I<Convey> string - B<I<NOT>> the the Item C<Text> value or string, 
-is conveyed to child menus. When the C<Convey> element is not used, the 
-full Item C<Text> value B<is> conveyed to the children - if any. However, the 
+children - if any. It is important to note, I<when used>, that only the
+resulting I<Convey> string - B<I<NOT>> the the Item C<Text> value or string,
+is conveyed to child menus. When the C<Convey> element is not used, the
+full Item C<Text> value B<is> conveyed to the children - if any. However, the
 full contents of the C<Text> element is I<returned> as the I<Result> of the
 operation when the user completes all menu activity. See the I<Macro> section
 below for more information.
@@ -2957,7 +2968,7 @@ For selecting the child menu next in the chain of operation and conveyance,
 
 =item *
 
-For building customized method arguements using C<&Menu()>'s built-in 
+For building customized method arguements using C<&Menu()>'s built-in
 macros.
 
 =item
@@ -3011,7 +3022,7 @@ with the C<Convey> element - and replace the C<]Convey[> Macro in the C<Text>
 element value with that list item. The I<Convey> mechanism utilizing the
 C<Convey> Macro is essentially an I<Item multiplier>. The entire contents of
 the list associated with the I<Convey> element will be turned into it's own
-C<Item> when the menu is displayed. 
+C<Item> when the menu is displayed.
 
    use Term::Menus;
 
@@ -3169,13 +3180,13 @@ B<]Selected[>
 =item
 
 C<]Selected[> can only be used in a I<terminal> menu. B<(> I<A terminal menu is
-the last menu in the chain, or the last menu the user sees. It is the menu that 
-defines the> C<Result> I<element with a method> C<Result =E<gt> &any_method()>, 
-I<or does not have a> C<Result> I<element included or defined.> B<)> 
+the last menu in the chain, or the last menu the user sees. It is the menu that
+defines the> C<Result> I<element with a method> C<Result =E<gt> &any_method()>,
+I<or does not have a> C<Result> I<element included or defined.> B<)>
 C<]Selected[> is used to pass the selection of the I<current> menu to the
 C<Result> element method of the current menu:
 
-   use Term::Menus;  
+   use Term::Menus;
 
    sub selected { print "\n   SELECTED ITEM = $_[0]\n" }
 
@@ -3456,12 +3467,12 @@ will also be deselected in the parent menu above.
 
 =head3 View Summary of Selected Items ' B<*> '
 
-When working with numerous items in a single menu, it is desirable to see the 
-set of choices made before leaving the menu and committing to a non-returnable 
-forward (perhaps even critical) process. Term::Menus provides this feature 
-with the I<Star> ' B<*> ' key. Assume we have the following menu with 93 Total 
+When working with numerous items in a single menu, it is desirable to see the
+set of choices made before leaving the menu and committing to a non-returnable
+forward (perhaps even critical) process. Term::Menus provides this feature
+with the I<Star> ' B<*> ' key. Assume we have the following menu with 93 Total
 Choices. Assume further that we have selected items 1,3,9 & 11. Note that we
-cannot see Item 11 on the first screen since this menu is configured to show 
+cannot see Item 11 on the first screen since this menu is configured to show
 only 10 Items at a time.
 
 =over 4
@@ -3490,7 +3501,7 @@ The user sees ==>
 
    OR "u" to scroll upward  (Press "q" to quit)
 
-   PLEASE ENTER A CHOICE: 
+   PLEASE ENTER A CHOICE:
 
 --< * >-<ENTER>----------------------------------
 
@@ -3500,18 +3511,18 @@ The user sees ==>
 
    *  1.        /bin Utility - arch
    *  3.        /bin Utility - awk
-   *  9.	/bin Utility - chown
-   *  11.	/bin Utility - cpio
+   *  9.        /bin Utility - chown
+   *  11.       /bin Utility - cpio
 
    (Press "q" to quit)
 
    PLEASE ENTER A CHOICE:
 
-This submenu of selections works just like any other menu. The user can 
-deselect an item, clear all items, re-choose all items, etc. The choices made 
-here are preserved when-or-if the user navigates back to the original (parent) 
-menu. In other words, if Item 1. is deselected in the summary menu, Item 1. 
-will also be deselected in the parent menu above. 
+This submenu of selections works just like any other menu. The user can
+deselect an item, clear all items, re-choose all items, etc. The choices made
+here are preserved when-or-if the user navigates back to the original (parent)
+menu. In other words, if Item 1. is deselected in the summary menu, Item 1.
+will also be deselected in the parent menu above.
 
 =back
 
@@ -3523,7 +3534,8 @@ Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
+Copyright (C) 2000, 2001, 2002, 2003, 2004,
+              2005, 2006, 2007, 2008
 by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or

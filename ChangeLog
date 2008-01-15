@@ -1,3 +1,10 @@
+2008-01-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.30 released.
+
+        * Repaired bugs impairing the use of subroutines with
+          the ]Convey[ macro in nested menus.
+
 2007-09-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.29 released.

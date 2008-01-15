@@ -22,8 +22,9 @@ DESCRIPTION
 
     Term::Menus was initially conceived and designed to work seemlessly with
     the soon-to-be-released perl based Network Process Automation Utility
-    Module called Net::FullAuto - however, it is not itself dependant on other
-    Net::FullAuto components, and will work with *any* perl script/application.
+    Moduel called Net::FullAuto - however, it is not itself dependant on
+    other Net::FullAuto components, and will work with *any* perl
+    script/application.
 
     Reasons to use this module are:
 
@@ -291,7 +292,7 @@ DESCRIPTION
          use Term::Menus;
 
          sub create_items {
-    
+
             my $previous=shift;
             my @textlines=();
             push @textlines, "$previous is a Good Utility";
@@ -320,13 +321,13 @@ DESCRIPTION
 
                          # IMPORTANT! '&' *must* be used to denote subroutine
                          #            as the first character
-             
+
                          #      &current_package_name:: qualifier or &main::
                          #      quaifiler MUST be used - otherwise
                          #      Term::Menus cannot locate it
 
                          #      embedded quote characters must be escaped
- 
+
                          #      enclosing double quotes MUST be used - this is
                          #      a STRING being passed to Term::Menus that will
                          #      then be internally eval-ed during runtime
@@ -562,7 +563,7 @@ METHODS
 
              Banner => "The following items are for selection,\n".
                        "\tEnjoy the Experience!",
-             
+
    Item Congfiguration Hash Structures
     Each Menu Item can have an independant configurtion. Each Menu
     Configuration Hash Structure consists of elements that define and
@@ -882,7 +883,7 @@ METHODS
           selection of the *current* menu to the "Result" element method of
           the current menu:
 
-             use Term::Menus;  
+             use Term::Menus;
 
              sub selected { print "\n   SELECTED ITEM = $_[0]\n" }
 
@@ -1181,7 +1182,7 @@ USAGE and NAVIGATION
 
            OR "u" to scroll upward  (Press "q" to quit)
 
-           PLEASE ENTER A CHOICE: 
+           PLEASE ENTER A CHOICE:
 
         --< * >-<ENTER>----------------------------------
 
@@ -1210,7 +1211,8 @@ AUTHOR
     Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 
 COPYRIGHT
-    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 by Brian M. Kelly.
+    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by
+    Brian M. Kelly.
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License.
