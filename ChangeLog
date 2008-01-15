@@ -1,5 +1,11 @@
 2008-01-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.31 released.
+
+        * Repair Distribution (bad META.yml).
+
+2008-01-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.30 released.
 
         * Repaired bugs impairing the use of subroutines with
