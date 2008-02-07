@@ -1,3 +1,20 @@
+2008-02-07  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.32 released.
+
+        * Added Macro enhancement ]Previous[{Menu_Label} to POD
+          documentation.
+
+        * Repaired and updated code so that Macros work as advertised
+
+        * Repaired subroutine use with Convey => '&sub()', and
+          Result => '&sub()', elements in Item_<#> hashes in the Menu
+          configuration hash.
+
+        * Repaired full Macro use in Banners
+
+        * Repaired a number of navigation bugs
+
 2008-01-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.31 released.

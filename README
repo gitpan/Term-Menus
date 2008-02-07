@@ -21,10 +21,10 @@ DESCRIPTION
     implementation ( so it's *easy* to install! ;-) )
 
     Term::Menus was initially conceived and designed to work seemlessly with
-    the soon-to-be-released perl based Network Process Automation Utility
-    Moduel called Net::FullAuto - however, it is not itself dependant on
-    other Net::FullAuto components, and will work with *any* perl
-    script/application.
+    the perl based Network Process Automation Utility Module called
+    Net::FullAuto (Available in CPAN :-) - however, it is not itself
+    dependant on other Net::FullAuto components, and will work with *any*
+    perl script/application.
 
     Reasons to use this module are:
 
@@ -564,6 +564,9 @@ METHODS
              Banner => "The following items are for selection,\n".
                        "\tEnjoy the Experience!",
 
+          NOTE: Macros (like "]Previous[" ) *can* be used in Banners! :-) (
+          See Item Configuration Macros below )
+
    Item Congfiguration Hash Structures
     Each Menu Item can have an independant configurtion. Each Menu
     Configuration Hash Structure consists of elements that define and
@@ -793,6 +796,8 @@ METHODS
           element value, and the "Result" element values (when constructing
           method calls):
 
+          The "]Previous[" Macro can also be used in the Banner.
+
              use Term::Menus;
 
              my %Menu_2=(
@@ -870,6 +875,119 @@ METHODS
              SELECTIONS = bash is a Good Utility
 
           NOTE: "]P[" can be used as a shorthand for "]Previous[".
+
+    *   ]Previous[{ <*Menu_Label*> }
+
+    *
+
+        * "]Previous[{Menu_Label}" can be used in child menus. The
+          "]Previous[{Menu_Label}" Macro contains the *Selection* of any
+          preceding menu specified with the "Menu_Label" string. The
+          "]Previous[{Menu_Label}" follows the same conventions as the
+          "]Previous[" Macro - but enables access to the selection of i<any>
+          preceding menu. This is very useful for Menu trees more than two
+          levels deep.
+
+          The "]Previous[{Menu_Label}" Macro can also be used in the Banner.
+
+             use Term::Menus;
+
+             my %Menu_3=(
+
+                Label  => 'Menu_3',
+                Item_1 => {
+
+                   Text   => "]Convey[ said ]P[{Menu_1} is a ]Previous[ Utility!",
+                   Convey => [ 'Bob','Mary' ]
+                },
+
+                Select => 'One',
+                Banner => "\n   Who commented on ]Previous[{Menu_1}? :"
+             );
+
+             my %Menu_2=(
+
+                Label  => 'Menu_2',
+                Item_1 => {
+
+                   Text   => "]Previous[ is a ]C[ Utility",
+                   Convey => [ 'Good','Bad' ],
+                   Result => \%Menu_3,
+                },
+
+                Select => 'One',
+                Banner => "\n   Is ]P[ Good or Bad? :"
+             );
+
+             my %Menu_1=(
+
+                Label  => 'Menu_1',
+                Item_1 => {
+
+                   Text   => "/bin/Utility - ]Convey[",
+                   Convey => [ `ls -1 /bin` ],
+                   Result => \%Menu_2,
+
+                },
+
+                Select => 'One',
+                Banner => "\n   Choose a /bin Utility :"
+             );
+
+             my @selections=&Menu(\%Menu_1);
+             print "SELECTIONS=@selections\n";
+
+          The user sees ==>
+
+             Choose a /bin Utility :
+
+                1.        /bin Utility - arch
+                2.        /bin Utility - ash
+                3.        /bin Utility - awk
+                4.        /bin Utility - basename
+                5.        /bin Utility - bash
+                6.        /bin Utility - cat
+                7.        /bin Utility - chgrp
+                8.        /bin Utility - chmod
+                9.        /bin Utility - chown
+                10.       /bin Utility - cp
+
+             PLEASE ENTER A CHOICE:
+
+          --< 5 >-<ENTER>----------------------------------
+
+             Is bash Good or Bad? :
+
+                1.        bash is a Good Utility
+                2.        bash is a Bad Utility
+
+             (Press "q" to quit)
+
+             PLEASE ENTER A CHOICE:
+
+          --< 1 >-<ENTER>----------------------------------
+
+             Who commented on bash? :
+
+                1.        Bob said bash is a Good Utility!
+                2.        Mary said bash is a Good Utility!
+
+             (Press "q" to quit)
+
+             PLEASE ENTER A CHOICE:
+
+          --< 2 >-<ENTER>----------------------------------
+
+          The user sees ==>
+
+             SELECTIONS = Mary said bash is a Good Utility!
+
+          NOTE: "]P[" can be used as a shorthand for "]Previous[".
+
+          "]P[{Menu_Label}" can be used as a shorthand for
+          "]Previous[{Menu_Label}".
+
+          "]C[" can be used as a shorthand for "]Convey[".
 
     *   ]Selected[
 
