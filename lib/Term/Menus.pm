@@ -3,7 +3,7 @@ package Term::Menus;
 #    Menus.pm
 #
 #    Copyright (C) 2000, 2001, 2002, 2003, 2004
-#                  2005, 2006, 2007, 2008
+#                  2005, 2006, 2007, 2008, 2010
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
 #    You may distribute under the terms of the GNU General
@@ -24,7 +24,8 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.32';
+$VERSION = '1.33';
+
 
 
 BEGIN {
@@ -704,7 +705,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       foreach my $key (keys %{$Selected}) {
          foreach my $item (keys %{${$Selected}{$key}}) {
             if (substr(${$Selected}{$key}{$item},0,1) eq '&') {
-               push @subs, ${$Selected}{$key}{$item};
+               push @subs, escape_quotes(unpack('x1 a*',${$Selected}{$key}{$item}));
             }
          }
       } return @subs;
@@ -883,6 +884,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   }
                   &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
                   die $die;
+               } else {
+                  eval $subname;
                } return 'DONE_SUB';
             }
             if ($result=~/Convey\s*=\>/) {
@@ -998,7 +1001,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  if $sub_module;
                            $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
-                              $sub=unpack('x1 a*',$sub);
+                              #$sub=unpack('x1 a*',$sub);
+                              #$sub=escape_quotes($sub);
                               eval {
                                  unless (defined eval "$subfile$sub") {
                                     if ($@) {
@@ -1249,7 +1253,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if $sub_module;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
-                     $sub=unpack('x1 a*',$sub);
+                     #$sub=unpack('x1 a*',$sub);
+                     #$sub=escape_quotes($sub);
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
@@ -1347,7 +1352,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if $sub_module;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
-                     $sub=unpack('x1 a*',$sub);
+                     #$sub=unpack('x1 a*',$sub);
+                     #$sub=escape_quotes($sub);
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
@@ -1443,7 +1449,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if $sub_module;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
-                     $sub=unpack('x1 a*',$sub);
+                     #$sub=unpack('x1 a*',$sub);
+                     #$sub=escape_quotes($sub);
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
@@ -1555,7 +1562,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if $sub_module;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
-                     $sub=unpack('x1 a*',$sub);
+                     #$sub=unpack('x1 a*',$sub);
+                     #$sub=escape_quotes($sub);
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
@@ -1816,7 +1824,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if $sub_module;
                      $subfile||='';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
-                        $sub=unpack('x1 a*',$sub);
+                        #$sub=unpack('x1 a*',$sub);
+                        #$sub=escape_quotes($sub);
                         eval {
                            unless (defined eval "$subfile$sub") {
                               if ($@) {
@@ -1928,7 +1937,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   my $subfile=substr($sub_module,0,-3).'::' if $sub_module;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
-                     $sub=unpack('x1 a*',$sub);
+                     #$sub=unpack('x1 a*',$sub);
+                     #$sub=escape_quotes($sub);
                      eval {
                         unless (defined eval "$subfile$sub") {
                            if ($@) {
@@ -2008,7 +2018,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                my $subfile=substr($sub_module,0,-3).'::' if $sub_module;
                $subfile||='';
                foreach my $sub (&get_subs_from_menu($Selected)) {
-                  $sub=unpack('x1 a*',$sub);
+                  #$sub=unpack('x1 a*',$sub);
+                  #$sub=escape_quotes($sub);
                   eval {
                      unless (defined eval "$subfile$sub") {
                         if ($@) {
@@ -2094,6 +2105,34 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    }
    my $pick=$pickone[$numbor-1];
    undef @pickone;return $pick;
+
+}
+
+sub escape_quotes {
+
+   my $sub=$_[0];
+   my $routine=substr($sub,0,(index $sub,'(')+1);
+   my $args=substr($sub,(index $sub,'(')+1,-1);
+   $args=~s/[']/!%!'%!%/g;
+   $args=~s/^\s*(["]|!%!)//;$args=~s/(["]|%!%)\s*$//;
+   my @args=split /(?:["]|%!%)\s*,\s*(?:["]|!%!)/, $args;
+   my @newargs=();
+   foreach my $arg (@args) {
+      $arg=~s/(!%!|%!%)//g;
+      if ($arg=~/^[']/) {
+         push @newargs, $arg;
+      } else {
+         $arg=~s/["]/\\"/g;
+         push @newargs, '"'.$arg.'"';
+      }
+   }
+   $sub=$routine;
+   foreach my $arg (@newargs) {
+      $sub.=$arg.",";
+   }
+   chop $sub;
+   $sub.=')';
+   return $sub;
 
 }
 

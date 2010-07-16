@@ -1,14 +1,19 @@
 ---
-name: Term-Menus
-version: 1.32
+abstract: "Create Powerful Terminal, Console and CMD Enviroment Menus\r"
 author:
-  - Brian Kelly <Brian.Kelly@fullautosoftware.net>
-abstract: 'Create Powerful Terminal, Console and CMD Enviroment Menus'
+  - "Brian M. Kelly <Brian.Kelly@fullautosoftware.net>\r"
+configure_requires:
+  Module::Build: 0.36
+generated_by: 'Module::Build version 0.3603'
 license: gpl
-requires:
-  perl: 5.006
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Term-Menus
 provides:
   Term::Menus:
     file: lib/Term/Menus.pm
-    version: 1.32
-generated_by: Module::Build version 0.261
+    version: 1.33
+resources:
+  license: http://opensource.org/licenses/gpl-license.php
+version: 1.33
