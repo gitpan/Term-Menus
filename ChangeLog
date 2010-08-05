@@ -1,3 +1,18 @@
+2010-08-05  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.34 released.
+
+        * Added test for Term::ReadKey and if found use termheight
+          to define whitespace header for screens
+
+        * Fixed bug https://rt.cpan.org/Ticket/Display.html?id=18382
+          where the screen was not properly clearign for Windows
+
+        $ Fixed bug with "Default" setting
+
+        * Changes to repair interactions with FullAuto architecture
+
+
 2010-07-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.33 released.

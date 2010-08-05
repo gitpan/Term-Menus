@@ -24,13 +24,15 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.33';
+$VERSION = '1.34';
 
 
 
 BEGIN {
    our $menu_cfg_file='';
    our $fullauto=0;
+   our $termwidth='';
+   our $termheight='';
    if (defined $main::menu_cfg) {
       if (-1<index $main::menu_cfg,'/') {
          require $main::menu_cfg;
@@ -57,6 +59,12 @@ BEGIN {
       import menu_cfg;
       $menu_cfg_file='menu_cfg.pm';
       $fullauto=1;
+   }
+   eval {
+      require Term::ReadKey;
+   };
+   unless ($@) {
+      ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
    }
 }
 
@@ -218,7 +226,10 @@ $clear=$Net::FullAuto::FA_lib::clear
 $clear.="\n" if $clear;
 my $count=0;
 our $blanklines='';
-while ($count++!=30) { $blanklines.="\n" }
+if ($termheight) {
+   $count=$termheight;
+} else { $count=30 }
+while ($count--) { $blanklines.="\n" }
 our $OS=$^O;
 our $parent_menu='';
 
@@ -625,11 +636,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    print $blanklines;
    if ($OS ne 'cygwin') {
       unless ($noclear) {
-         if ($clear) {
-            print $clear;
-         } elsif ($OS eq 'MSWin32') {
+         if ($OS eq 'MSWin32' || $OS eq 'MSWin64') {
             system("cmd /c cls");
             print "\n";
+         } elsif ($clear) {
+            print $clear;
          } else {
             print `clear`."\n";
          }
@@ -970,8 +981,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                } else { $mark=$picks{$picknum} }
                if ($picks{$picknum} ne '+' && $picks{$picknum} ne '-') {
                   $mark_flg=1;$mark='*';
-                  if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                        {$pickone[$picknum-1]}{Item_1}) {
+                  if ((exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
+                        {$pickone[$picknum-1]}) && (exists
+                        ${$FullMenu}{$MenuUnit_hash_ref}[2]
+                        {$pickone[$picknum-1]}{Item_1})) {
                      if (exists ${$FullMenu}{$MenuUnit_hash_ref}[3]
                                          {$pickone[$picknum-1]}) {
                         $convey=${${$FullMenu}{$MenuUnit_hash_ref}[3]
@@ -1062,11 +1075,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          print $blanklines;
          if ($OS ne 'cygwin') {
             unless ($noclear) {
-               if ($clear) {
-                  print $clear;
-               } elsif ($OS eq 'MSWin32') {
+               if ($OS eq 'MSWin32' || $OS eq 'MSWin64') {
                   system("cmd /c cls");
                   print "\n";
+               } elsif ($clear) {
+                  print $clear;
                } else {
                   print `clear`."\n";
                }
@@ -1103,11 +1116,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   print $blanklines;
                   if ($OS ne 'cygwin') {
                      unless ($noclear) {
-                        if ($clear) {
-                           print $clear;
-                        } elsif ($OS eq 'MSWin32') {
+                        if ($OS eq 'MSWin32' || $OS eq 'MSWin64') {
                            system("cmd /c cls");
                            print "\n";
+                        } elsif ($clear) {
+                           print $clear;
                         } else {
                            print `clear`."\n";
                         }
@@ -1692,8 +1705,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             $numbor=$start+$choose_num+1;
             last;
          } elsif (exists $pn{$numbor}) {
-#print "ARE WE HERE and PN=$pn and NUMBOR=$numbor and SUM=$sum_menu\n";<STDIN>;%pn=();
-
+#print "ARE WE HERE and PN=$pn and NUMBOR=$numbor and SUM=$sum_menu\n";sleep 2;%pn=();
 #print "ALLLLL=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}<==\n";
             my $callertest=__PACKAGE__."::Menu";
             if (wantarray && !$no_wantarray &&
@@ -1760,6 +1772,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
             } elsif (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]
                          {$pn{$numbor}[0]} eq 'HASH') {
+#print "PICKSNUMBER=$numbor<== and keys=",keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}},"\n";sleep 2;
                if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
                          {$pn{$numbor}[0]}{'Label'}) {
                   chomp($numbor);
@@ -2023,6 +2036,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   eval {
                      unless (defined eval "$subfile$sub") {
                         if ($@) {
+#print "WHAT IS THE ACTUAL ERROR=$@<==\n\n";
+### TO DO:  EVALUATE HOW TO HANDLE THIS
                            $die="FATAL ERROR! - "
                                ."The \"Result =>\" Setting"
                                ."\n\t\t-> " . ${$FullMenu}
@@ -2040,9 +2055,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            #}
                            #&Net::FullAuto::FA_lib::handle_error($@)
                            #   if $fullauto;
-                           die $die;
+                           #die $die;
+                           die $@;
                         }
-                        #### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
+### TEST FOR UNDEF SUB - ADD MORE ERROR INFO
                      }
                   };
                   if ($@) {
@@ -2085,11 +2101,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          print $blanklines;
          if ($OS ne 'cygwin') {
             unless ($noclear) {
-               if ($clear) {
-                  print $clear;
-               } elsif ($OS eq 'MSWin32') {
+               if ($OS eq 'MSWin32' || $OS eq 'MSWin64') {
                   system("cmd /c cls");
                   print "\n";
+               } elsif ($clear) {
+                  print $clear;
                } else {
                   print `clear`."\n";
                }
