@@ -1,3 +1,10 @@
+2010-08-08  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.35 released.
+
+        * Added code to implement 'tosspass' condition for Net::FullAuto
+
+
 2010-08-05  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.34 released.

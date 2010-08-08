@@ -24,7 +24,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.34';
+$VERSION = '1.35';
 
 
 
@@ -70,6 +70,11 @@ BEGIN {
 
 ##############################################################
 ##############################################################
+#
+#  THIS BLOCK MARKED BY TWO LINES OF POUND SYMBOLS IS FOR
+#  SETTINGS NEEDED BY THE MODULE Net::FullAuto. IF YOU ARE
+#  USING Term::Menus OUTSIDE OF Net::FullAuto, YOU CAN
+#  SAFELY IGNORE THIS SECTION. (That's 'ignore' - not 'remove')
 #
 #  If you would like to re-name the 'user-subroutine-module-file'
 #  to a name that would facilitate management and
@@ -137,6 +142,10 @@ if (defined $usr_code::timeout && $usr_code::timeout) {
 our $log=0;
 if (defined $usr_code::log && $usr_code::log) {
    $log=$usr_code::log;
+}
+our $tosspass=0;
+if (defined $usr_code::tosspass && $usr_code::tosspass) {
+   $tosspass=$usr_code::tosspass;
 }
 
 ##############################################################
