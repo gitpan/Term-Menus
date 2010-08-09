@@ -24,7 +24,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.36';
+$VERSION = '1.38';
 
 
 
@@ -64,7 +64,12 @@ BEGIN {
       require Term::ReadKey;
    };
    unless ($@) {
-      ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+      eval {
+         ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+      };
+      if ($@) {
+         $termwidth='';$termheight='';
+      }
    }
 }
 
