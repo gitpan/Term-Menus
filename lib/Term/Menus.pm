@@ -24,7 +24,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.38';
+$VERSION = '1.39';
 
 
 
@@ -123,13 +123,11 @@ BEGIN {
 }
 
 our %email_defaults=();
-if (defined %usr_code::email_defaults
-      && %usr_code::email_defaults) {
+if (%usr_code::email_defaults) {
    %email_defaults=%usr_code::email_defaults;
 }
 our %email_addresses=();
-if (defined %usr_code::email_addresses
-      && %usr_code::email_addresses) {
+if (%usr_code::email_addresses) {
    %email_addresses=%usr_code::email_addresses;
 }
 our $passwd_file_loc='';
