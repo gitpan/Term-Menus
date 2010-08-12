@@ -1,5 +1,12 @@
 2010-08-12  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.40 released.
+
+        * Fixed Makefile.PL Term::ReadKey dependency
+
+
+2010-08-12  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.39 released.
 
         * Fixed some deprecated defined(%hash) statements

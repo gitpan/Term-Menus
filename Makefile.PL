@@ -4,6 +4,7 @@ use inc::Module::Install;
 # Define metadata
 name            'Term-Menus';
 all_from        'lib/Term/Menus.pm';
-    
+
+requires        'Term::ReadKey'          => 0;    
 auto_install;
 WriteAll;
