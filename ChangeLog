@@ -1,3 +1,11 @@
+2010-08-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.41 released.
+
+        * More error handling cleanup for iteraction with
+          Net::FullAuto
+
+
 2010-08-12  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.40 released.
