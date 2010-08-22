@@ -24,7 +24,8 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.41';
+$VERSION = '1.42';
+
 
 
 BEGIN {
@@ -1041,15 +1042,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                        my $die='';
                                        if ($fullauto) {
                                           if ($@=~/Undefined subroutine/) {
-                                             $die="The \"Result =>\" Setting"
-                                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                                 [2]{${$_[1]}[$_[2]-1]}
-                                                 ."\n\t\tFound in the Menu Unit -> "
-                                                 ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                                 ."Specifies a Subroutine"
-                                                 ." that Does NOT Exist"
-                                                 ."\n\t\tin the User Code "
-                                                 ."File $sub_module\n";
+                                             if (${$FullMenu}{$_[0]}
+                                                   [2]{${$_[1]}[$_[2]-1]}) {
+                                                $die="The \"Result =>\" Setting"
+                                                    ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                                    [2]{${$_[1]}[$_[2]-1]}
+                                                    ."\n\t\tFound in the Menu Unit -> "
+                                                    ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                                    ."Specifies a Subroutine"
+                                                    ." that Does NOT Exist"
+                                                    ."\n\t\tin the User Code "
+                                                    ."File $sub_module\n";
+                                             } else { $die=$@ }
                                           } else { $die=$@ }
                                           &Net::FullAuto::FA_lib::handle_error($die);
                                        } else { die $@ }
@@ -1296,15 +1300,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               my $die='';
                               if ($fullauto) {
                                  if ($@=~/Undefined subroutine/) {
-                                    $die="The \"Result =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
-                                        ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                        ."Specifies a Subroutine"
-                                        ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $sub_module\n";
+                                    if (${$FullMenu}{$_[0]}
+                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                       $die="The \"Result =>\" Setting"
+                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\tFound in the Menu Unit -> "
+                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                           ."Specifies a Subroutine"
+                                           ." that Does NOT Exist"
+                                           ."\n\t\tin the User Code "
+                                           ."File $sub_module\n";
+                                     } else { $die=$@ }
                                  } else { $die=$@ }
                                  &Net::FullAuto::FA_lib::handle_error($die);
                               } else { die $@ }
@@ -1404,15 +1411,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               my $die='';
                               if ($fullauto) {
                                  if ($@=~/Undefined subroutine/) {
-                                    $die="The \"Result =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
-                                        ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                        ."Specifies a Subroutine"
-                                        ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $sub_module\n";
+                                    if (${$FullMenu}{$_[0]}
+                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                       $die="The \"Result =>\" Setting"
+                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\tFound in the Menu Unit -> "
+                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                           ."Specifies a Subroutine"
+                                           ." that Does NOT Exist"
+                                           ."\n\t\tin the User Code "
+                                           ."File $sub_module\n";
+                                    } else { $die=$@ }
                                  } else { $die=$@ }
                                  &Net::FullAuto::FA_lib::handle_error($die);
                               } else { die $@ }
@@ -1499,15 +1509,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               my $die='';
                               if ($fullauto) {
                                  if ($@=~/Undefined subroutine/) {
-                                    $die="The \"Result =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
-                                        ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                        ."Specifies a Subroutine"
-                                        ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $sub_module\n";
+                                    if (${$FullMenu}{$_[0]}
+                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                       $die="The \"Result =>\" Setting"
+                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\tFound in the Menu Unit -> "
+                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                           ."Specifies a Subroutine"
+                                           ." that Does NOT Exist"
+                                           ."\n\t\tin the User Code "
+                                           ."File $sub_module\n";
+                                    } else { $die=$@ }
                                  } else { $die=$@ }
                                  &Net::FullAuto::FA_lib::handle_error($die);
                               } else { die $@ }
@@ -1611,15 +1624,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               my $die='';
                               if ($fullauto) {
                                  if ($@=~/Undefined subroutine/) {
-                                    $die="The \"Result =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
-                                        ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                        ."Specifies a Subroutine"
-                                        ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $sub_module\n";
+                                    if (${$FullMenu}{$_[0]}
+                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                       $die="The \"Result =>\" Setting"
+                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\tFound in the Menu Unit -> "
+                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                           ."Specifies a Subroutine"
+                                           ." that Does NOT Exist"
+                                           ."\n\t\tin the User Code "
+                                           ."File $sub_module\n";
+                                    } else { $die=$@ }
                                  } else { $die=$@ }
                                  &Net::FullAuto::FA_lib::handle_error($die);
                               } else { die $@ }
@@ -1872,15 +1888,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  my $die='';
                                  if ($fullauto) {
                                     if ($@=~/Undefined subroutine/) {
-                                       $die="The \"Result =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
-                                           ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                           ."Specifies a Subroutine"
-                                           ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $sub_module\n";
+                                       if (${$FullMenu}{$_[0]}
+                                             [2]{${$_[1]}[$_[2]-1]}) {
+                                          $die="The \"Result =>\" Setting"
+                                              ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                              [2]{${$_[1]}[$_[2]-1]}
+                                              ."\n\t\tFound in the Menu Unit -> "
+                                              ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                              ."Specifies a Subroutine"
+                                              ." that Does NOT Exist"
+                                              ."\n\t\tin the User Code "
+                                              ."File $sub_module\n";
+                                       } else { $die=$@ }
                                     } else { $die=$@ }
                                     &Net::FullAuto::FA_lib::handle_error($die);
                                  } else { die $@ }
@@ -1985,15 +2004,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               my $die='';
                               if ($fullauto) {
                                  if ($@=~/Undefined subroutine/) {
-                                    $die="The \"Result =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
-                                        ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                        ."Specifies a Subroutine"
-                                        ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $sub_module\n";
+                                    if (${$FullMenu}{$_[0]}
+                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                       $die="The \"Result =>\" Setting"
+                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\tFound in the Menu Unit -> "
+                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                           ."Specifies a Subroutine"
+                                           ." that Does NOT Exist"
+                                           ."\n\t\tin the User Code "
+                                           ."File $sub_module\n";
+                                    } else { $die=$@ }
                                  } else { $die=$@ }
                                  &Net::FullAuto::FA_lib::handle_error($die);
                               } else { die $@ }
@@ -2061,15 +2083,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            my $die='';
                            if ($fullauto) {
                               if ($@=~/Undefined subroutine/) {
-                                 $die="The \"Result =>\" Setting"
-                                     ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                     [2]{${$_[1]}[$_[2]-1]}
-                                     ."\n\t\tFound in the Menu Unit -> "
-                                     ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                     ."Specifies a Subroutine"
-                                     ." that Does NOT Exist"
-                                     ."\n\t\tin the User Code "
-                                     ."File $sub_module\n";
+                                 if (${$FullMenu}{$_[0]}
+                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                    $die="The \"Result =>\" Setting"
+                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\tFound in the Menu Unit -> "
+                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                        ."Specifies a Subroutine"
+                                        ." that Does NOT Exist"
+                                        ."\n\t\tin the User Code "
+                                        ."File $sub_module\n";
+                                  } else { $die=$@ }
                               } else { $die=$@ }
                               &Net::FullAuto::FA_lib::handle_error($die);
                            } else { die $@ }
@@ -3711,7 +3736,7 @@ Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 =head1 COPYRIGHT
 
 Copyright (C) 2000, 2001, 2002, 2003, 2004,
-              2005, 2006, 2007, 2008, 2010
+              2005, 2006, 2007, 2008
 by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or
