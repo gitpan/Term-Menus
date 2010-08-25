@@ -24,7 +24,7 @@ use Exporter ();
 our @ISA = qw(Exporter);
 
 
-$VERSION = '1.42';
+$VERSION = '1.43';
 
 
 
@@ -41,7 +41,7 @@ BEGIN {
          import $mc;
          $menu_cfg_file=$mc.'.pm';
       } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/'.$main::menu_cfg;
+         require 'Net/FullAuto/Custom/'.$main::menu_cfg;
          my $mc=substr($main::menu_cfg,
                 (rindex $main::menu_cfg, '/')+1,-3);
          import $mc;
@@ -55,7 +55,7 @@ BEGIN {
       $fullauto=1
          if -1<index caller(2),'FullAuto';
    } elsif (-1<index caller(2),'FullAuto') {
-      require 'Net/FullAuto/menu_cfg.pm';
+      require 'Net/FullAuto/Custom/menu_cfg.pm';
       import menu_cfg;
       $menu_cfg_file='menu_cfg.pm';
       $fullauto=1;
@@ -114,7 +114,7 @@ BEGIN {
          import $uc;
          $sub_module=$uc.'.pm';
       } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/'.$main::usr_code;
+         require 'Net/FullAuto/Custom/'.$main::usr_code;
          my $uc=substr($main::usr_code,
                 (rindex $main::usr_code, '/')+1,-3);
          import $uc;
@@ -126,7 +126,7 @@ BEGIN {
          $sub_module=$main::usr_code;
       }
    } elsif (-1<index caller(2),'FullAuto') {
-      require 'Net/FullAuto/usr_code.pm';
+      require 'Net/FullAuto/Custom/usr_code.pm';
       import usr_code;
       $sub_module='usr_code.pm';
    }
