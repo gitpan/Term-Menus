@@ -1,3 +1,12 @@
+2010-08-26  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.43 released.
+
+        * Fixed bug when Selection is set to One
+
+        # Modified to conform to new Net:FullAuto architecture
+
+
 2010-08-25  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.43 released.

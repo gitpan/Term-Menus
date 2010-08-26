@@ -14,6 +14,10 @@ package Term::Menus;
 
 ## See user documentation at the end of this file.  Search for =head
 
+
+$VERSION = '1.44';
+
+
 use 5.006;
 
 ## Module export.
@@ -23,43 +27,147 @@ use vars qw(@EXPORT);
 use Exporter ();
 our @ISA = qw(Exporter);
 
+##############################################################
+##############################################################
+#
+#  THIS BLOCK MARKED BY TWO LINES OF POUND SYMBOLS IS FOR
+#  SETTINGS NEEDED BY THE MODULE   Net::FullAuto.  IF YOU ARE
+#  USING   Term::Menus   OUTSIDE OF   Net::FullAuto,  YOU CAN
+#  SAFELY IGNORE THIS SECTION. (That's 'ignore' - not 'remove')
+#
 
-$VERSION = '1.43';
+BEGIN { ##  Begin  Net::FullAuto  Settings
 
+   #####################################################################
+   ####                                                              ###
+   #### DEFAULT NAME OF  Net::FullAuto  menu_config_module_file IS:  ###
+   ####                                                              ###
+   #### ==> fa_menu.pm <==  If you rename the file, you must change  ###
+   ####                                                              ###
+   #### the setting of $menu_config_module_file as well.             ###
+   ####                                                              ###
+   #####################################################################
+                                                                     ###
+   our $menu_config_module_file='fa_menu.pm';                        ###
+                                                                     ###
+   #####################################################################
 
+   #####################################################################
+   ####                                                              ###
+   #### DEFAULT NAME OF  Net::FullAuto  custom_code_module_file IS:  ###
+   ####                                                              ###
+   #### ==> fa_code.pm <==  If you rename the file, you must change  ###
+   ####                                                              ###
+   #### the setting of $custom_code_module_file as well.             ###
+   ####                                                              ###
+   #####################################################################
+                                                                     ###
+   our $custom_code_module_file='fa_code.pm';                        ###
+                                                                     ###
+   #####################################################################
 
-BEGIN {
-   our $menu_cfg_file='';
    our $fullauto=0;
-   our $termwidth='';
-   our $termheight='';
-   if (defined $main::menu_cfg) {
-      if (-1<index $main::menu_cfg,'/') {
-         require $main::menu_cfg;
-         my $mc=substr($main::menu_cfg,
-                (rindex $main::menu_cfg, '/')+1,-3);
+   if (defined $main::menu_config) {
+
+      if (-1<index $main::menu_config,'/') {
+         require $main::menu_config;
+         my $mc=substr($main::menu_config,
+                (rindex $main::menu_config, '/')+1,-3);
          import $mc;
-         $menu_cfg_file=$mc.'.pm';
+         $menu_config_module_file=$mc.'.pm';
       } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::menu_cfg;
-         my $mc=substr($main::menu_cfg,
-                (rindex $main::menu_cfg, '/')+1,-3);
+         require 'Net/FullAuto/Custom/'.$main::menu_config;
+         my $mc=substr($main::menu_config,
+                (rindex $main::menu_config, '/')+1,-3);
          import $mc;
-         $menu_cfg_file=$mc.'.pm';
+         $menu_config_module_file=$mc.'.pm';
       } else {
-         require $main::menu_cfg;
-         my $mc=substr($main::menu_cfg,0,-3);
+         require $main::menu_config;
+         my $mc=substr($main::menu_config,0,-3);
          import $mc;
-         $menu_cfg_file=$main::menu_cfg;
+         $menu_config_module_file=$main::menu_config;
       }
       $fullauto=1
          if -1<index caller(2),'FullAuto';
+
    } elsif (-1<index caller(2),'FullAuto') {
-      require 'Net/FullAuto/Custom/menu_cfg.pm';
-      import menu_cfg;
-      $menu_cfg_file='menu_cfg.pm';
+
+      require 'Net/FullAuto/Custom/'.$menu_config_module_file;
+      my $mc=substr($menu_config_module_file,0,-3);
+      import $mc;
       $fullauto=1;
+
    }
+
+   if (defined $main::custom_code) {
+
+      if (-1<index $main::custom_code,'/') {
+         require $main::custom_code;
+         my $cc=substr($main::custom_code,
+                (rindex $main::custom_code, '/')+1,-3);
+         import $cc;
+         $custom_code_module_file=$cc.'.pm';
+      } elsif (-1<index caller(2),'FullAuto') {
+         require 'Net/FullAuto/Custom/'.$main::custom_code;
+         my $cc=substr($main::custom_code,
+                (rindex $main::custom_code, '/')+1,-3);
+         import $cc;
+         $custom_code_module_file=$cc.'.pm';
+      } else {
+         require $main::custom_code;
+         my $cc=substr($main::custom_code,0,-3);
+         import $cc;
+         $custom_code_module_file=$main::custom_code;
+      }
+
+   } elsif (-1<index caller(2),'FullAuto') {
+
+      require 'Net/FullAuto/Custom/'.$custom_code_module_file;
+      my $cc=substr($custom_code_module_file,0,-3);
+      import $cc;
+
+   }
+}
+
+our %email_defaults=();
+if (%fa_code::email_defaults) {
+   %email_defaults=%fa_code::email_defaults;
+}
+our %email_addresses=();
+if (%fa_code::email_addresses) {
+   %email_addresses=%fa_code::email_addresses;
+}
+our $passwd_file_loc='';
+if (defined $fa_code::passwd_file_loc && $fa_code::passwd_file_loc) {
+   $passwd_file_loc=$fa_code::passwd_file_loc;
+}
+our $test=0;
+if (defined $fa_code::test && $fa_code::test) {
+   $test=$fa_code::test;
+}
+our $timeout=30;
+if (defined $fa_code::timeout && $fa_code::timeout) {
+   $timeout=$fa_code::timeout;
+}
+our $log=0;
+if (defined $fa_code::log && $fa_code::log) {
+   $log=$fa_code::log;
+}
+our $tosspass=0;
+if (defined $fa_code::tosspass && $fa_code::tosspass) {
+   $tosspass=$fa_code::tosspass;
+}
+
+##  End  Net::FullAuto  Settings
+
+##############################################################
+##############################################################
+
+
+BEGIN { ##  Begin  Term::Menus
+
+   our $termwidth='';
+   our $termheight='';
    eval {
       require Term::ReadKey;
    };
@@ -81,88 +189,8 @@ BEGIN {
          $clearpath='/usr/local/bin/';
       }
    }
-}
 
-##############################################################
-##############################################################
-#
-#  THIS BLOCK MARKED BY TWO LINES OF POUND SYMBOLS IS FOR
-#  SETTINGS NEEDED BY THE MODULE Net::FullAuto. IF YOU ARE
-#  USING Term::Menus OUTSIDE OF Net::FullAuto, YOU CAN
-#  SAFELY IGNORE THIS SECTION. (That's 'ignore' - not 'remove')
-#
-#  If you would like to re-name the 'user-subroutine-module-file'
-#  to a name that would facilitate management and
-#  identification of user defined subroutines, then rename
-#  everything between the two double-lines of pound
-#  symbols above and below from the current name ( 'usr_code'
-#  was the original default name ) to the new module
-#  name of your choosing.
-#
-#  Example:  use usr_code;                 --> use sales_sub;
-#            our $sub_module='usr_code.pm' --> our $sub_module='sales_sub.pm';
-#
-#      Continue for the remainder of the section ...
-
-BEGIN {
-   our $sub_module='';
-   if (defined $main::usr_code) {
-      if (-1<index $main::usr_code,'/') {
-         require $main::usr_code;
-         my $uc=substr($main::usr_code,
-                (rindex $main::usr_code, '/')+1,-3);
-         import $uc;
-         $sub_module=$uc.'.pm';
-      } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::usr_code;
-         my $uc=substr($main::usr_code,
-                (rindex $main::usr_code, '/')+1,-3);
-         import $uc;
-         $sub_module=$uc.'.pm';
-      } else {
-         require $main::usr_code;
-         my $uc=substr($main::usr_code,0,-3);
-         import $uc;
-         $sub_module=$main::usr_code;
-      }
-   } elsif (-1<index caller(2),'FullAuto') {
-      require 'Net/FullAuto/Custom/usr_code.pm';
-      import usr_code;
-      $sub_module='usr_code.pm';
-   }
 }
-
-our %email_defaults=();
-if (%usr_code::email_defaults) {
-   %email_defaults=%usr_code::email_defaults;
-}
-our %email_addresses=();
-if (%usr_code::email_addresses) {
-   %email_addresses=%usr_code::email_addresses;
-}
-our $passwd_file_loc='';
-if (defined $usr_code::passwd_file_loc && $usr_code::passwd_file_loc) {
-   $passwd_file_loc=$usr_code::passwd_file_loc;
-}
-our $test=0;
-if (defined $usr_code::test && $usr_code::test) {
-   $test=$usr_code::test;
-}
-our $timeout=30;
-if (defined $usr_code::timeout && $usr_code::timeout) {
-   $timeout=$usr_code::timeout;
-}
-our $log=0;
-if (defined $usr_code::log && $usr_code::log) {
-   $log=$usr_code::log;
-}
-our $tosspass=0;
-if (defined $usr_code::tosspass && $usr_code::tosspass) {
-   $tosspass=$usr_code::tosspass;
-}
-
-##############################################################
-##############################################################
 
 our %LookUpMenuName=();
 
@@ -171,9 +199,9 @@ our $noclear=1; # set to one to turn off clear for debugging
 my $m_flag=0;
 my $s_flag=0;
 foreach my $dir (@INC) {
-   if (!$m_flag && -f "$dir/$menu_cfg_file") {
+   if (!$m_flag && -f "$dir/$menu_config_module_file") {
       $m_flag=1;
-      open(FH,"<$dir/$menu_cfg_file");
+      open(FH,"<$dir/$menu_config_module_file");
       my $line='';my %menudups=();
       while ($line=<FH>) {
          if ($line=~/^[ \t]*\%(.*)\s*=/) {
@@ -182,19 +210,19 @@ foreach my $dir (@INC) {
             } else {
                my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
                       ."\n              ->  \"%$1\" is defined more than once\n"
-                      ."              in the $dir/$menu_cfg_file file.\n\n"
+                      ."              in the $dir/$menu_config_module_file file.\n\n"
                       ."       Hint:  delete or comment-out all duplicates\n\n";
                if ($fullauto) {
-                  print $die if !$Net::FullAuto::FA_lib::cron;
-                  &Net::FullAuto::FA_lib::handle_error($die,'__cleanup__');
+                  print $die if !$Net::FullAuto::FA_Core::cron;
+                  &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
                } else { die $die }
             }
          }
       }
    }
-   if (!$s_flag && -f "$dir/$sub_module") {
+   if (!$s_flag && -f "$dir/$custom_code_module_file") {
       $s_flag=1;
-      open(FH,"<$dir/$sub_module");
+      open(FH,"<$dir/$custom_code_module_file");
       my $line='';my %dups=();
       while ($line=<FH>) {
          if ($line=~/^[ \t]*\%(.*)\s*=/) {
@@ -204,11 +232,11 @@ foreach my $dir (@INC) {
                my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
                       ."\n              ->  \"%$1\" is defined more "
                       ."than once\n              in the $dir/"
-                      ."$sub_module file.\n\n       Hint:  delete "
+                      ."$custom_code_module_file file.\n\n       Hint:  delete "
                       ."or comment-out all duplicates\n\n";
                if ($fullauto) {
-                  print $die if !$Net::FullAuto::FA_lib::cron;
-                  &Net::FullAuto::FA_lib::handle_error($die,'__cleanup__');
+                  print $die if !$Net::FullAuto::FA_Core::cron;
+                  &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
                } else { die $die }
                #print $die;exit;
             }
@@ -252,35 +280,35 @@ our $parent_menu='';
 sub fa_login
 {
 
-   my $usr_code='';my $menu_args='';$to='';my $die='';
+   my $fa_code='';my $menu_args='';$to='';my $die='';
    my $start_menu_ref='';
    eval {
-      ($usr_code,$menu_args,$to,$die)=
-         &Net::FullAuto::FA_lib::fa_login(@_);
-      $start_menu_ref=$menu_cfg::start_menu_ref;
+      ($fa_code,$menu_args,$to,$die)=
+         &Net::FullAuto::FA_Core::fa_login(@_);
+      $start_menu_ref=eval '$'.substr($menu_config_module_file,0,-3).'::start_menu_ref';
       $to||=0;
       $timeout=$to if $to;
-      if ($usr_code) {
-         &run_sub($usr_code,$menu_args);
+      if ($fa_code) {
+         &run_sub($fa_code,$menu_args);
       } elsif (ref $start_menu_ref eq 'HASH') {
          if (!exists $LookUpMenuName{$start_menu_ref}) {
             my $die="\n       FATAL ERROR! - The top level menu,"
                    ." indicated\n              by the "
                    ."\$start_menu_ref variable in\n       "
-                   ."       the menu_cfg.pm file, is NOT\n"
+                   ."       the $menu_config_module_file file, is NOT\n"
                    ."              EXPORTED\n\n       Hint: "
                    ."\@EXPORT = qw( %Menu_1 %Menu_2 ... )\;"
                    ."\n\n\tour \$start_menu_ref=\\%Menu_1\;"
                    ."\n\n       \[ Menu_1 is example - "
                    ."name you choose is optional \]\n";
-            &Net::FullAuto::FA_lib::handle_error($die);
+            &Net::FullAuto::FA_Core::handle_error($die);
          }
          &Menu($start_menu_ref);
       } elsif ($start_menu_ref) {
          my $die="\n       FATAL ERROR! - The top level menu "
                 ."block indicated\n              by the "
                 ."\$start_menu_ref variable in the\n       "
-                ."       menu_cfg.pm file, does not exist as"
+                ."       $menu_config_module_file file, does not exist as"
                 ."\n              a properly constructed and"
                 ."\\or named hash\n              block in the"
                 ." ".__PACKAGE__.".pm file\n\n       Hint:  "
@@ -289,10 +317,10 @@ sub fa_login
                 ." optional \]\n\n       %Menu_1=\(\n"
                 ."          Item_1 => { ... },\n        "
                 ."...\n       \)\;\n";
-         &Net::FullAuto::FA_lib::handle_error($die);
+         &Net::FullAuto::FA_Core::handle_error($die);
       } else {
          my $die="\n       FATAL ERROR! - The \$start_menu_ref\n"
-                ."              variable in the menu_cfg.pm\n"
+                ."              variable in the $menu_config_module_file\n"
                 ."              file, is not defined or properly"
                 ."\n              initialized with the name of "
                 ."the\n              menu hash block designated"
@@ -302,35 +330,35 @@ sub fa_login
                 ."name you choose is optional \]\n\n       "
                 ."%Menu_1=\(\n          Item_1 => { ... },\n"
                 ."          ...\n       \)\;\n";
-         &Net::FullAuto::FA_lib::handle_error($die);
+         &Net::FullAuto::FA_Core::handle_error($die);
       }
    };
    if ($@) {
       my $cmdlin=52;
-      $cmdlin=47 if $usr_code;
-      &Net::FullAuto::FA_lib::handle_error($@,"-$cmdlin",'__cleanup__');
+      $cmdlin=47 if $fa_code;
+      &Net::FullAuto::FA_Core::handle_error($@,"-$cmdlin",'__cleanup__');
    }
-   #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_lib::cron &&
-   #      !$Net::FullAuto::FA_lib::stdio;
-   &Net::FullAuto::FA_lib::cleanup(1);
+   #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_Core::cron &&
+   #      !$Net::FullAuto::FA_Core::stdio;
+   &Net::FullAuto::FA_Core::cleanup(1);
 
 }
 
 sub run_sub
 {
-   my $usr_code=$_[0];
+   my $fa_code=$_[0];
    my $menu_args= (defined $_[1]) ? $_[1] : '';
-   my $subfile=substr($sub_module,0,-3).'::' if $sub_module;
+   my $subfile=substr($custom_code_module_file,0,-3).'::' if $custom_code_module_file;
    $subfile||='';
    my $return=
-      eval "\&$subfile$usr_code\(\@{\$menu_args}\)";
-   &Net::FullAuto::FA_lib::handle_error($@,'-1') if $@;
+      eval "\&$subfile$fa_code\(\@{\$menu_args}\)";
+   &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
    return $return;
 }
 
 sub get_all_hosts
 {
-   return Net::FullAuto::FA_lib::get_all_hosts(@_);
+   return Net::FullAuto::FA_Core::get_all_hosts(@_);
 }
 
 sub Menu
@@ -384,7 +412,7 @@ sub Menu
          my $die="Can Only Use \"Negate =>\""
                 ."\n\t\tElement in ".__PACKAGE__.".pm when the"
                 ."\n\t\t\"Select =>\" Element is set to \'Many\'\n\n";
-         &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
+         &Net::FullAuto::FA_Core::handle_error($die) if $fullauto;
          die $die;
       }
       my $con_regex=qr/\]c(o+nvey)*\[/i;
@@ -521,7 +549,7 @@ sub Menu
                         $display_this_many_items,'',
                         $MenuUnit_hash_ref,++$recurse,
                         $picks_from_parent,$parent_menu,
-                        $menu_cfg_file,$FullMenu,
+                        $menu_config_module_file,$FullMenu,
                         $Selected,$Conveyed,$SavePick,
                         $SaveLast,$SaveNext,
                         \%LookUpMenuName,\@convey,
@@ -548,7 +576,7 @@ sub Menu
               =&pick($picks,$banner,$display_this_many_items,
                        '',$MenuUnit_hash_ref,++$recurse,
                        $picks_from_parent,$parent_menu,
-                       $menu_cfg_file,$FullMenu,
+                       $menu_config_module_file,$FullMenu,
                        $Selected,$Conveyed,$SavePick,
                        $SaveLast,$SaveNext,
                        \%LookUpMenuName,\@convey,
@@ -556,8 +584,8 @@ sub Menu
 #print "WAHT IS ALL=$pick and FULL=$FullMenu and SEL=$Selected and CON=$Conveyed and SAVE=$SavePick and LAST=$SaveLast and NEXT=$SaveNext and PARENT=$parent_menu and ERROR=$error<==\n";
       if ($error) {
          if (wantarray && $fullauto) {
-            &Net::FullAuto::FA_lib::handle_error($die);
-print "RETURNING ERROR=$error\n";
+            &Net::FullAuto::FA_Core::handle_error($die);
+#print "RETURNING ERROR=$error\n";
          } else {
             die $error;
          }
@@ -641,7 +669,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    my $recurse_level= (defined $_[5]) ? $_[5] : 1;
    my $picks_from_parent= (defined $_[6]) ? $_[6] : '';
    my $parent_menu= (defined $_[7]) ? $_[7] : '';
-   my $menu_cfg_file= (defined $_[8]) ? $_[8] : '';
+   my $menu_config_module_file= (defined $_[8]) ? $_[8] : '';
    my $FullMenu= (defined $_[9]) ? $_[9] : {};
    my $Selected= (defined $_[10]) ? $_[10] : {};
    my $Conveyed= (defined $_[11]) ? $_[11] : {};
@@ -760,7 +788,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $Selected=$_[6];
       my $SaveNext=$_[7];
       my $parent_menu=$_[8];
-      my $menu_cfg_file=$_[9];
+      my $menu_config_module_file=$_[9];
       my $Convey_contents=$_[10];
       ${$LookUpMenuName}{$_[0]}=${$_[0]}{'Label'}
          unless exists ${$LookUpMenuName}{$_[0]};
@@ -801,10 +829,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                           "that does NOT EXIST or is NOT EXPORTED".
                           "\n\n\tHint: Make sure the Names of all".
                           "\n\t      Menu Hash Blocks in the\n\t".
-                          "      $menu_cfg_file file are\n\t".
+                          "      $menu_config_module_file file are\n\t".
                           "      listed in the \@EXPORT list\n\t".
                           "      found at the beginning of\n\t".
-                          "      the $menu_cfg_file file\n\n\t".
+                          "      the $menu_config_module_file file\n\n\t".
                           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
                   die $die;
                }
@@ -854,10 +882,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                           "that does NOT EXIST or is NOT EXPORTED".
                           "\n\n\tHint: Make sure the Names of all".
                           "\n\t      Menu Hash Blocks in the\n\t".
-                          "      $menu_cfg_file file are\n\t".
+                          "      $menu_config_module_file file are\n\t".
                           "      listed in the \@EXPORT list\n\t".
                           "      found at the beginning of\n\t".
-                          "      the $menu_cfg_file file\n\n\t".
+                          "      the $menu_config_module_file file\n\n\t".
                           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
                   die $die;
                }
@@ -881,7 +909,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            $die.="\n\t\t\"Select =>\" Element is ";
                            $die.="set to\n\t\t\'Many\' in Menu Block ";
                            $die.='%'.${$LookUpMenuName}{$_[0]}."\n\n";
-                           &Net::FullAuto::FA_lib::handle_error($die)
+                           &Net::FullAuto::FA_Core::handle_error($die)
                               if $fullauto;
                            die $die;
                         }
@@ -900,7 +928,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $result=~s/\"$esc_one\"/$Convey_contents/g;
                }
             } elsif (substr($result,0,1) eq '&') {
-               my $subname='&'.substr($sub_module,0,-3)
+               my $subname='&'.substr($custom_code_module_file,0,-3)
                            .'::'.substr($result,1);
                if (!eval "defined $subname") {
                   my $die="The \"Result =>\" Setting";
@@ -910,14 +938,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $die.="${$LookUpMenuName}{$_[0]}\n\t\t";
                   $die.="Specifies a Subroutine";
                   $die.=" that Does NOT Exist\n\t\tin the ";
-                  $die.=" User Code File $sub_module";
+                  $die.=" User Code File $custom_code_module_file";
                   $die.=".\n";
                   if (defined $log_handle &&
                         -1<index $log_handle,'*') {
                      print $log_handle $die;
                      close(log_handle);
                   }
-                  &Net::FullAuto::FA_lib::handle_error($die) if $fullauto;
+                  &Net::FullAuto::FA_Core::handle_error($die) if $fullauto;
                   die $die;
                } else {
                   eval $subname;
@@ -968,14 +996,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                    "that does NOT EXIST or is NOT EXPORTED".
                    "\n\n\tHint: Make sure the Names of all".
                    "\n\t      Menu Hash Blocks in the\n\t".
-                   "      $menu_cfg_file file are\n\t".
+                   "      $menu_config_module_file file are\n\t".
                    "      listed in the \@EXPORT list\n\t".
                    "      found at the beginning of\n\t".
-                   "      the $menu_cfg_file file\n\n\t".
+                   "      the $menu_config_module_file file\n\n\t".
                    "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
             die $die;
          }
-      } return $FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu;
+      }
+#print "ARE WE HERE\n";
+ return $FullMenu,$Conveyed,$SaveNext,$Selected,$convey,$parent_menu;
    };
 
    my $sum_menu=0;my $filtered_menu=0;
@@ -1023,6 +1053,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      };
                      die $@ if $@;
                      chomp($menu_output) if !(ref $menu_output);
+#print "WHAT IS MENU1=$menu_output\n";
                      if ($menu_output eq '-') {
                         $picks{$picknum}='-';$mark='-';
                      } elsif ($menu_output eq '+') {
@@ -1031,8 +1062,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
-                           my $subfile=substr($sub_module,0,-3).'::'
-                                 if $sub_module;
+                           my $subfile=substr($custom_code_module_file,0,-3).'::'
+                                 if $custom_code_module_file;
                            $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
                               eval {
@@ -1052,22 +1083,23 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                                     ."Specifies a Subroutine"
                                                     ." that Does NOT Exist"
                                                     ."\n\t\tin the User Code "
-                                                    ."File $sub_module\n";
+                                                    ."File $custom_code_module_file\n";
                                              } else { $die=$@ }
                                           } else { $die=$@ }
-                                          &Net::FullAuto::FA_lib::handle_error($die);
+                                          &Net::FullAuto::FA_Core::handle_error($die);
                                        } else { die $@ }
                                     }
                                  }
                               };
                               if ($@) {
-                                 #&Net::FullAuto::FA_lib::handle_error($@,'-5')
+                                 #&Net::FullAuto::FA_Core::handle_error($@,'-5')
                                  #   if $fullauto;
                                  die $@;
                               }
                            } return 'DONE_SUB';
                         } else { return 'DONE' }
                      } elsif ($menu_output) {
+#print "WHAT IS MENU3=$menu_output\n";
                         return $menu_output;
                      } else { $picks{$picknum}='+';$mark='+' }
                   } else {
@@ -1207,7 +1239,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   push @pickd, $txt;
                }
             }
-            #print "RETURNING4 and PICKD=@pickd\n";<STDIN>;
+#print "RETURNING4 and PICKD=@pickd\n";<STDIN>;
             return \@pickd if $return_values;
             return 'DONE';
          } elsif ($numbor=~/^\s*%(.*)/s) {
@@ -1281,6 +1313,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             };
             die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
+#print "WHAT IS MENU4=$menu_output\n";
             if ($menu_output eq '-') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq '+') {
@@ -1289,8 +1322,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($sub_module,0,-3).'::'
-                        if $sub_module;
+                  my $subfile=substr($custom_code_module_file,0,-3).'::'
+                        if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      eval {
@@ -1310,22 +1343,23 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
                                            ."\n\t\tin the User Code "
-                                           ."File $sub_module\n";
+                                           ."File $custom_code_module_file\n";
                                      } else { $die=$@ }
                                  } else { $die=$@ }
-                                 &Net::FullAuto::FA_lib::handle_error($die);
+                                 &Net::FullAuto::FA_Core::handle_error($die);
                               } else { die $@ }
                            }
                         }
                      };
                      if ($@) {
-                        #@&Net::FullAuto::FA_lib::handle_error($@,'-5')
+                        #@&Net::FullAuto::FA_Core::handle_error($@,'-5')
                         #   if $fullauto;
                         die $@;
                      }
                   } return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
+#print "WHAT IS MENU5=$menu_output\n";
                return $menu_output;
             } else { %picks=%{${$SavePick}{$MenuUnit_hash_ref}} }
             #print "DO THE SORT\n";<STDIN>;
@@ -1391,6 +1425,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $no_wantarray);
             };
             die $@ if $@;
+#print "WHAT IS MENU6=$menu_output\n";
             chomp($menu_output) if !(ref $menu_output);
             if ($menu_output eq '-') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
@@ -1400,8 +1435,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($sub_module,0,-3).'::'
-                        if $sub_module;
+                  my $subfile=substr($custom_code_module_file,0,-3).'::'
+                        if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      eval {
@@ -1421,22 +1456,23 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
                                            ."\n\t\tin the User Code "
-                                           ."File $sub_module\n";
+                                           ."File $custom_code_module_file\n";
                                     } else { $die=$@ }
                                  } else { $die=$@ }
-                                 &Net::FullAuto::FA_lib::handle_error($die);
+                                 &Net::FullAuto::FA_Core::handle_error($die);
                               } else { die $@ }
                            }
                         }
                      };
                      if ($@) {
-                        #&Net::FullAuto::FA_lib::handle_error($@,'-5')
+                        #&Net::FullAuto::FA_Core::handle_error($@,'-5')
                         #   if $fullauto;
                         die $@;
                      }
                   } return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
+#print "WHAT IS MENU7=$menu_output\n";
                return $menu_output;
             } else { %picks=%{${$SavePick}{$MenuUnit_hash_ref}} }
          } elsif ($numbor=~/^\s*\/(.+)$/s) {
@@ -1490,6 +1526,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             };
             die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
+#print "WHAT IS MENU8=$menu_output\n";
             if ($menu_output eq '-') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq '+') {
@@ -1498,8 +1535,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($sub_module,0,-3).'::'
-                        if $sub_module;
+                  my $subfile=substr($custom_code_module_file,0,-3).'::'
+                        if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      eval {
@@ -1519,10 +1556,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
                                            ."\n\t\tin the User Code "
-                                           ."File $sub_module\n";
+                                           ."File $custom_code_module_file\n";
                                     } else { $die=$@ }
                                  } else { $die=$@ }
-                                 &Net::FullAuto::FA_lib::handle_error($die);
+                                 &Net::FullAuto::FA_Core::handle_error($die);
                               } else { die $@ }
                            }
                         }
@@ -1532,7 +1569,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            #if (wantarray && !$no_wantarray) {
                            #   return '', $@;
                            #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                           #   &Net::FullAuto::FA_Core::handle_error($@,'-10');
                            #} else { die $@ }
                            die $@;
                         } else {
@@ -1549,7 +1586,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            } elsif ($@) {
-                              &Net::FullAuto::FA_lib::handle_error($die,'-28')
+                              &Net::FullAuto::FA_Core::handle_error($die,'-28')
                                  if $fullauto;
                               die $die;
                            }
@@ -1562,6 +1599,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } elsif ($menu_output eq '+') {
                $return_from_child_menu='+';
             } elsif ($menu_output) {
+#print "WHAT IS MENU9=$menu_output\n";
                return $menu_output;
             }
          } elsif ($numbor=~/^\</ && $FullMenu) {
@@ -1609,12 +1647,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             };
             die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
+#print "WHAT IS MENU10=$menu_output\n";
             if ($menu_output eq 'DONE_SUB') {
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($sub_module,0,-3).'::'
-                        if $sub_module;
+                  my $subfile=substr($custom_code_module_file,0,-3).'::'
+                        if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      eval {
@@ -1634,10 +1673,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
                                            ."\n\t\tin the User Code "
-                                           ."File $sub_module\n";
+                                           ."File $custom_code_module_file\n";
                                     } else { $die=$@ }
                                  } else { $die=$@ }
-                                 &Net::FullAuto::FA_lib::handle_error($die);
+                                 &Net::FullAuto::FA_Core::handle_error($die);
                               } else { die $@ }
                            }
                         }
@@ -1647,7 +1686,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            #if (wantarray && !$no_wantarray) {
                            #   return '', $@;
                            #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                           #   &Net::FullAuto::FA_Core::handle_error($@,'-10');
                            #} else { die $@ }
                            die $@;
                         } else {
@@ -1664,7 +1703,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            } elsif ($@) {
-                              #&Net::FullAuto::FA_lib::handle_error($die,'-28')
+                              #&Net::FullAuto::FA_Core::handle_error($die,'-28')
                               #   if $fullauto;
                               die $die;
                            }
@@ -1677,6 +1716,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } elsif ($menu_output eq '+') {
                $return_from_child_menu='+';
             } elsif ($menu_output) {
+#print "WHAT IS MENU11=$menu_output\n";
                return $menu_output;
             }
          } elsif ($numbor=~/^q$/i) {
@@ -1757,7 +1797,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   ${$MenuUnit_hash_ref}{Select} eq 'Many')) {
 #print "WHAT IS PNXXXX=$pn and THIS=$picks{$picknum-1} and keys=",(join "\n",keys %{${$SavePick}{$parent_menu}})," and $numbor and SUMMENU=$sum_menu<==\n";<STDIN>;
                if (exists $picks{$numbor}) {
-#print "ARE WE HERE??? and ${$SavePick}{$parent_menu}{$numbor}<==\n";
                   if ($picks{$numbor} eq '*') {
                      delete $picks{$numbor};
                      delete $items{$numbor};
@@ -1849,7 +1888,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      =$get_result->($MenuUnit_hash_ref,
                      \@pickone,$pn{$pn}[1],$picks_from_parent,
                      $FullMenu,$Conveyed,$Selected,
-                     $SaveNext,$parent_menu,$menu_cfg_file,
+                     $SaveNext,$parent_menu,$menu_config_module_file,
                      $Convey_contents);
                   $picks{$numbor}='-';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
@@ -1866,6 +1905,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   };
                   die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
+#print "WHAT IS MENU12=$menu_output\n";
                   if ($menu_output eq '-') {
                      $return_from_child_menu='-';
                   } elsif ($menu_output eq '+') {
@@ -1877,8 +1917,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   } elsif ($menu_output) {
                      return $menu_output;
                   } else {
-                     my $subfile=substr($sub_module,0,-3).'::'
-                           if $sub_module;
+                     my $subfile=substr($custom_code_module_file,0,-3).'::'
+                           if $custom_code_module_file;
                      $subfile||='';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         eval {
@@ -1898,10 +1938,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                               ."Specifies a Subroutine"
                                               ." that Does NOT Exist"
                                               ."\n\t\tin the User Code "
-                                              ."File $sub_module\n";
+                                              ."File $custom_code_module_file\n";
                                        } else { $die=$@ }
                                     } else { $die=$@ }
-                                    &Net::FullAuto::FA_lib::handle_error($die);
+                                    &Net::FullAuto::FA_Core::handle_error($die);
                                  } else { die $@ }
                               }
                            }
@@ -1911,7 +1951,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               #if (wantarray && !$no_wantarray) {
                               #   return '',$@;
                               #} elsif ($fullauto) {
-                              #  &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                              #  &Net::FullAuto::FA_Core::handle_error($@,'-10');
                               #} else { die $die }
                               die $@;
                            } else {
@@ -1928,7 +1968,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               if (wantarray && !$no_wantarray) {
                                  return '',$die;
                               } elsif ($fullauto) {
-                                 &Net::FullAuto::FA_lib::handle_error(
+                                 &Net::FullAuto::FA_Core::handle_error(
                                     $die,'-28');
                               } else { die $die }
                            }
@@ -1943,10 +1983,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                           "that does NOT EXIST or is NOT EXPORTED".
                           "\n\n\tHint: Make sure the Names of all".
                           "\n\t      Menu Hash Blocks in the\n\t".
-                          "      $menu_cfg_file file are\n\t".
+                          "      $menu_config_module_file file are\n\t".
                           "      listed in the \@EXPORT list\n\t".
                           "      found at the beginning of\n\t".
-                          "      the $menu_cfg_file file\n\n\t".
+                          "      the $menu_config_module_file file\n\n\t".
                           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
                   die $die;
                }
@@ -1988,13 +2028,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      =$get_result->($MenuUnit_hash_ref,
                      \@pickone,$pn{$pn}[1],$picks_from_parent,
                      $FullMenu,$Conveyed,$Selected,
-                     $SaveNext,$parent_menu,$menu_cfg_file,
+                     $SaveNext,$parent_menu,$menu_config_module_file,
                      $Convey_contents);
                   ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
                   my %pick=();
                   $pick{$numbor}='*';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
-                  my $subfile=substr($sub_module,0,-3).'::' if $sub_module;
+                  my $subfile=substr($custom_code_module_file,0,-3).'::'
+                        if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      eval {
@@ -2014,10 +2055,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
                                            ."\n\t\tin the User Code "
-                                           ."File $sub_module\n";
+                                           ."File $custom_code_module_file\n";
                                     } else { $die=$@ }
                                  } else { $die=$@ }
-                                 &Net::FullAuto::FA_lib::handle_error($die);
+                                 &Net::FullAuto::FA_Core::handle_error($die);
                               } else { die $@ }
                            }
                         }
@@ -2027,7 +2068,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            #if (wantarray && !$no_wantarray) {
                            #   return '',$@;
                            #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_lib::handle_error($@,'-10');
+                           #   &Net::FullAuto::FA_Core::handle_error($@,'-10');
                            #} else { die $die }
                            die $@;
                         } else {
@@ -2039,7 +2080,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return '',$die;
                            #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_lib::handle_error($die,'-28');
+                           #   &Net::FullAuto::FA_Core::handle_error($die,'-28');
                            } else { die $die }
                         }
                      }
@@ -2067,13 +2108,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   =$get_result->($MenuUnit_hash_ref,
                   \@pickone,$pn{$pn}[1],$picks_from_parent,
                   $FullMenu,$Conveyed,$Selected,
-                  $SaveNext,$parent_menu,$menu_cfg_file,
+                  $SaveNext,$parent_menu,$menu_config_module_file,
                   $Convey_contents);
                ${$SaveLast}{$MenuUnit_hash_ref}=$numbor;
                my %pick=();
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
-               my $subfile=substr($sub_module,0,-3).'::' if $sub_module;
+               my $subfile=substr($custom_code_module_file,0,-3).'::'
+                     if $custom_code_module_file;
                $subfile||='';
                foreach my $sub (&get_subs_from_menu($Selected)) {
                   eval {
@@ -2093,10 +2135,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code "
-                                        ."File $sub_module\n";
+                                        ."File $custom_code_module_file\n";
                                   } else { $die=$@ }
                               } else { $die=$@ }
-                              &Net::FullAuto::FA_lib::handle_error($die);
+                              &Net::FullAuto::FA_Core::handle_error($die);
                            } else { die $@ }
                         }
                      }
@@ -2124,7 +2166,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               $parent_menu,$die;
                            #return '',$die;
                         } elsif ($fullauto) {
-                           &Net::FullAuto::FA_lib::handle_error($die,'-28');
+                           &Net::FullAuto::FA_Core::handle_error($die,'-28');
                         } else { print "CRAP3\n";die $die }
                      }
                   } else { $done=1;last }
@@ -2163,7 +2205,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    }
    my $pick=$pickone[$numbor-1];
    undef @pickone;#return $pick;
-   return $picks,
+   return $pick,
           $FullMenu,$Selected,$Conveyed,
           $SavePick,$SaveLast,$SaveNext,
           $parent_menu,$error;
