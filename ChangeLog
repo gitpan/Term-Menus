@@ -1,10 +1,24 @@
+2010-08-30  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.45 released.
+
+        * 'Default' items now work for Menus with large
+          numbers of choices.
+
+        * 'Default' messaging is better - Users are informed
+          when 'Default' selections exist on hidden screens.
+
+        * Press 'q' to quit has been changed to
+          Type 'quit' to quit
+
+
 2010-08-26  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
-        * Version 1.43 released.
+        * Version 1.44 released.
 
         * Fixed bug when Selection is set to One
 
-        # Modified to conform to new Net:FullAuto architecture
+        * Modified to conform to new Net:FullAuto architecture
 
 
 2010-08-25  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>

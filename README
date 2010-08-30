@@ -47,7 +47,7 @@ DESCRIPTION
             2.        Second Item
             3.        Third Item
 
-         (Press "q" to quit)
+         (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -85,7 +85,7 @@ DESCRIPTION
 
          Press ENTER (or "d") to scroll downward
 
-         OR "u" to scroll upward  (Press "q" to quit)
+         OR "u" to scroll upward  (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -108,7 +108,7 @@ DESCRIPTION
 
          Press ENTER (or "d") to scroll downward
 
-         OR "u" to scroll upward  (Press "q" to quit)
+         OR "u" to scroll upward  (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -161,7 +161,7 @@ DESCRIPTION
 
          Press ENTER (or "d") to scroll downward
 
-         OR "u" to scroll upward  (Press "q" to quit)
+         OR "u" to scroll upward  (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -191,7 +191,7 @@ DESCRIPTION
 
          Press ENTER (or "d") to scroll downward
 
-         OR "u" to scroll upward  (Press "q" to quit)
+         OR "u" to scroll upward  (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -258,7 +258,7 @@ DESCRIPTION
 
          Press ENTER (or "d") to scroll downward
 
-         OR "u" to scroll upward  (Press "q" to quit)
+         OR "u" to scroll upward  (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -269,7 +269,7 @@ DESCRIPTION
             1.        bash is a Good Utility
             2.        bash is a Bad Utility
 
-         (Press "q" to quit)
+         (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -388,7 +388,7 @@ DESCRIPTION
 
          Press ENTER (or "d") to scroll downward
 
-         OR "u" to scroll upward  (Press "q" to quit)
+         OR "u" to scroll upward  (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -399,7 +399,7 @@ DESCRIPTION
             1.        bash is a Good Utility
             2.        bash is a Bad Utility
 
-         (Press "q" to quit)
+         (Type "quit" to quit)
 
          PLEASE ENTER A CHOICE:
 
@@ -641,7 +641,7 @@ METHODS
 
              Press ENTER (or "d") to scroll downward
 
-             OR "u" to scroll upward  (Press "q" to quit)
+             OR "u" to scroll upward  (Type "quit" to quit)
 
              PLEASE ENTER A CHOICE:
 
@@ -780,7 +780,7 @@ METHODS
 
              Press ENTER (or "d") to scroll downward
 
-             OR "u" to scroll upward  (Press "q" to quit)
+             OR "u" to scroll upward  (Type "quit" to quit)
 
              PLEASE ENTER A CHOICE:
 
@@ -853,7 +853,7 @@ METHODS
 
              Press ENTER (or "d") to scroll downward
 
-             OR "u" to scroll upward  (Press "q" to quit)
+             OR "u" to scroll upward  (Type "quit" to quit)
 
              PLEASE ENTER A CHOICE:
 
@@ -864,7 +864,7 @@ METHODS
                 1.        bash is a Good Utility
                 2.        bash is a Bad Utility
 
-             (Press "q" to quit)
+             (Type "quit" to quit)
 
              PLEASE ENTER A CHOICE:
 
@@ -961,7 +961,7 @@ METHODS
                 1.        bash is a Good Utility
                 2.        bash is a Bad Utility
 
-             (Press "q" to quit)
+             (Type "quit" to quit)
 
              PLEASE ENTER A CHOICE:
 
@@ -972,7 +972,7 @@ METHODS
                 1.        Bob said bash is a Good Utility!
                 2.        Mary said bash is a Good Utility!
 
-             (Press "q" to quit)
+             (Type "quit" to quit)
 
              PLEASE ENTER A CHOICE:
 
@@ -1063,7 +1063,7 @@ USAGE and NAVIGATION
 
            Press ENTER (or "d") to scroll downward
 
-           OR "u" to scroll upward  (Press "q" to quit)
+           OR "u" to scroll upward  (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
@@ -1076,7 +1076,7 @@ USAGE and NAVIGATION
               1.        bash is a Good Utility
               2.        bash is a Bad Utility
 
-           (Press "q" to quit)
+           (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
@@ -1098,7 +1098,7 @@ USAGE and NAVIGATION
           1.        bash is a Good Utility
           2.        bash is a Bad Utility
 
-       (Press "q" to quit)
+       (Type "quit" to quit)
 
        PLEASE ENTER A CHOICE:
 
@@ -1126,7 +1126,7 @@ USAGE and NAVIGATION
 
        Press ENTER (or "d") to scroll downward
 
-       OR "u" to scroll upward  (Press "q" to quit)
+       OR "u" to scroll upward  (Type "quit" to quit)
 
        PLEASE ENTER A CHOICE:
 
@@ -1164,7 +1164,7 @@ USAGE and NAVIGATION
 
        Press ENTER (or "d") to scroll downward
 
-       OR "u" to scroll upward  (Press "q" to quit)
+       OR "u" to scroll upward  (Type "quit" to quit)
 
        PLEASE ENTER A CHOICE:
 
@@ -1198,7 +1198,7 @@ USAGE and NAVIGATION
 
            Press ENTER (or "d") to scroll downward
 
-           OR "u" to scroll upward  (Press "q" to quit)
+           OR "u" to scroll upward  (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
@@ -1226,7 +1226,7 @@ USAGE and NAVIGATION
 
            Press ENTER (or "d") to scroll downward
 
-           OR "u" to scroll upward  (Press "q" to quit)
+           OR "u" to scroll upward  (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
@@ -1256,7 +1256,7 @@ USAGE and NAVIGATION
 
            Press ENTER (or "d") to scroll downward
 
-           OR "u" to scroll upward  (Press "q" to quit)
+           OR "u" to scroll upward  (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
@@ -1298,7 +1298,7 @@ USAGE and NAVIGATION
 
            Press ENTER (or "d") to scroll downward
 
-           OR "u" to scroll upward  (Press "q" to quit)
+           OR "u" to scroll upward  (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
@@ -1313,7 +1313,7 @@ USAGE and NAVIGATION
            *  9.        /bin Utility - chown
            *  11.       /bin Utility - cpio
 
-           (Press "q" to quit)
+           (Type "quit" to quit)
 
            PLEASE ENTER A CHOICE:
 
