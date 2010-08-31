@@ -1,3 +1,13 @@
+2010-08-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.46 released.
+
+        * Implemented 'unattended' mode for use with Net:FullAuto
+          and other scripts that run in batch. For 'unattended'
+          mode to work, Menu blocks must be configured with
+          Default selections.
+
+
 2010-08-30  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.45 released.

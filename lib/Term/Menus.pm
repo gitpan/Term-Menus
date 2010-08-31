@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.45';
+$VERSION = '1.46';
 
 
 use 5.006;
@@ -508,6 +508,11 @@ sub Menu
 #print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
    my $picks_from_parent=$_[1];
+   my $unattended=0;
+   if ($picks_from_parent=~/\](Cron|Batch|Unattended|FullAuto)\[/i) {
+      $unattended=1;
+      undef $picks_from_parent;
+   }
    my $recurse = (defined $_[2]) ? $_[2] : 0;
    my $FullMenu= (defined $_[3]) ? $_[3] : {};
    my $Selected= (defined $_[4]) ? $_[4] : {};
@@ -538,6 +543,8 @@ sub Menu
          $Items{substr($key,5)}=${$MenuUnit_hash_ref}{$key};
       }
    }
+   $Persists{unattended}=$unattended if $unattended;
+
    ############################################
    # Breakdown the MenuUnit into its Components
    ############################################
@@ -840,16 +847,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    }
    my $num_pick=$#pickone+1;
    my $caller=(caller(1))[3];
-   if ($^O ne 'cygwin') {
-      unless ($noclear) {
-         if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
-            system("cmd /c cls");
-            print "\n";
-         } else {
-            print `${clearpath}clear`."\n";
-         }
+   unless ($Persists{unattended}) {
+      if ($^O ne 'cygwin') {
+         unless ($noclear) {
+            if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
+               system("cmd /c cls");
+               print "\n";
+            } else {
+               print `${clearpath}clear`."\n";
+            }
+         } else { print $blanklines }
       } else { print $blanklines }
-   } else { print $blanklines }
+   }
    my $numbor=0;                    # Number of Item Selected
    my $return_from_child_menu=0;
 
@@ -1273,7 +1282,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
 #print "DONE_SUB3\n";
  return 'DONE_SUB';
-                        } else { print "DONE1\n";return 'DONE' }
+                        } else { return 'DONE' }
                      } elsif ($menu_output) {
 #print "WHAT IS MENU3=$menu_output\n";
                         return $menu_output;
@@ -1321,48 +1330,73 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } $picknum++;
             $numlist--;
          } $hidedefaults=1;
-         if ($^O ne 'cygwin') {
-            unless ($noclear) {
-               if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
-                  system("cmd /c cls");
-                  print "\n";
-               } else {
-                  print `${clearpath}clear`."\n";
-               }
+         unless ($Persists{unattended}) {
+            if ($^O ne 'cygwin') {
+               unless ($noclear) {
+                  if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
+                     system("cmd /c cls");
+                     print "\n";
+                  } else {
+                     print `${clearpath}clear`."\n";
+                  }
+               } else { print $blanklines }
             } else { print $blanklines }
-         } else { print $blanklines }
-         print $menu_text;my $ch=0;
-         if (wantarray && !$no_wantarray &&
-               (exists ${$MenuUnit_hash_ref}{Select} &&
-               ${$MenuUnit_hash_ref}{Select} eq 'Many')) {
-            print "\n";
-            unless (keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}) {
-               print "   a.  Select All.";$ch=1;
+            print $menu_text;my $ch=0;
+            if (wantarray && !$no_wantarray &&
+                  (exists ${$MenuUnit_hash_ref}{Select} &&
+                  ${$MenuUnit_hash_ref}{Select} eq 'Many')) {
+               print "\n";
+               unless (keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}) {
+                  print "   a.  Select All.";$ch=1;
+               }
+               if ($mark_flg==1 || $Persists{$MenuUnit_hash_ref}{defaults}) {
+                  print "   c.  Clear All.";print "\n" if $ch;
+               }
+               print "   f.  Finish.\n";
+               if ($filtered_menu || $sum_menu) {
+                  print "\n   (Type '<' to return to previous Menu)\n";
+               }
+               if ($Persists{$MenuUnit_hash_ref}{defaults} && !($filtered_menu || $sum_menu)) {
+                  print "\n   == Defaults Selections Exist! == (Type '*' to view them)\n";
+               }
+            } else {
+               if ($Persists{$MenuUnit_hash_ref}{defaults}) {
+                  print "\n";
+                  print "   c.  Clear Default Selection.\n";
+                  print "   f.  Finish with Default Selection.\n";
+                  if ($filtered_menu || $sum_menu) {
+                     print "\n   (Type '<' to return to previous Menu)\n";
+                  } else {
+                     print "\n   == Default Selection Exists! == (Type '*' to view it)\n";
+                  }
+               } elsif ($filtered_menu || $sum_menu) {
+                  print "\n   (Type '<' to return to previous Menu)\n";
+               }
             }
-            if ($mark_flg==1 || $Persists{$MenuUnit_hash_ref}{defaults}) {
-               print "   c.  Clear All.";print "\n" if $ch;
-            }
-            print "   f.  Finish.\n";
-            if ($Persists{$MenuUnit_hash_ref}{defaults}) {
-               print "\n   == Defaults Exist! == (Type '*' to view them)\n";
-            }
+            if ($display_this_many_items<$num_pick) {
+               print "\n   $num_pick Total Choices\n",
+                     "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
+                     "\n   OR \"u\" to scroll upward  \(Type \"quit\" to quit\)\n";
+            } else { print"\n   \(Type \"quit\" to quit\)\n" }
+            print"\n   PLEASE ENTER A CHOICE: ";
+            $numbor=<STDIN>;$pn=$numbor;chomp $pn;
+         } elsif ($Persists{$MenuUnit_hash_ref}{defaults}) {
+            $numbor='f';
+         } elsif (wantarray && !$no_wantarray) {
+            my $die="\n       FATAL ERROR! - 'Unattended' mode cannot\n"
+                   ."                         be used without Default\n"
+                   ."                         Selections being available.";
+            return '',$die;
+         } else {
+            my $die="\n       FATAL ERROR! - 'Unattended' mode cannot\n"
+                   ."                         be used without Default\n"
+                   ."                         Selections being available.";
+            die($die);
          }
-         #if ($Persists{$MenuUnit_hash_ref}{defaults}) {
-         #   unless ($mark_flg) {
-         #      print "   c.  Clear All.";print "\n" if $ch;
-         #   }
-         #   print "\n   == Defaults Exist! == (Type '*' to view them)\n"; 
-         #}
-         if ($display_this_many_items<$num_pick) {
-            print "\n   $num_pick Total Choices\n",
-                  "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
-                  "\n   OR \"u\" to scroll upward  \(Type \"quit\" to quit\)\n";
-         } else { print"\n   \(Type \"quit\" to quit\)\n" }
-         print"\n   PLEASE ENTER A CHOICE: ";
-         $numbor=<STDIN>;$pn=$numbor;chomp $pn;
-         if ($numbor=~/^f$/i && wantarray && !$no_wantarray
+         if ($numbor=~/^f$/i && ((wantarray && !$no_wantarray
                && (exists ${$MenuUnit_hash_ref}{Select} &&
-               ${$MenuUnit_hash_ref}{Select} eq 'Many')) {
+               ${$MenuUnit_hash_ref}{Select} eq 'Many')) ||
+               $Persists{$MenuUnit_hash_ref}{defaults})) {
             # FINISH
             my $choice='';my @keys=();
             my $chosen='';
@@ -1472,7 +1506,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
 #print "RETURNING4 and PICKD=@pickd\n";<STDIN>;
             return \@pickd if $return_values;
-print "DONE2\n";
+#print "DONE2\n";
             return 'DONE';
          } elsif ($numbor=~/^\s*%(.*)/s) {
             my $one=$1||'';
@@ -1592,7 +1626,7 @@ print "DONE2\n";
                   }
 #print "DONE_SUB5\n";
  return 'DONE_SUB';
-               } else { print "DONE3\n";return 'DONE' }
+               } else { return 'DONE' }
             } elsif ($menu_output) {
 #print "WHAT IS MENU5=$menu_output\n";
                return $menu_output;
@@ -1600,12 +1634,12 @@ print "DONE2\n";
             #print "DO THE SORT\n";<STDIN>;
          } elsif ($numbor=~/^\*\s*$/s) {
             ## STAR SELECTED
-            if (!exists ${$MenuUnit_hash_ref}{Select} ||
-                  ${$MenuUnit_hash_ref}{Select} eq 'One') {
-               print "\n   ERROR: Cannot Show Multiple Selected Items\n".
-                     "          When 'Select' is NOT set to 'Many'\n";
-               sleep 3;next;
-            }
+            #if (!exists ${$MenuUnit_hash_ref}{Select} ||
+            #      ${$MenuUnit_hash_ref}{Select} eq 'One') {
+            #   print "\n   ERROR: Cannot Show Multiple Selected Items\n".
+            #         "          When 'Select' is NOT set to 'Many'\n";
+            #   sleep 3;next;
+            #}
             my @splice=();
             if ($filtered_menu) {
 #print "ARE WE FILTERED??\n";
@@ -1728,7 +1762,7 @@ print "DONE2\n";
                   }
 #print "DONE_SUB7\n";
  return 'DONE_SUB';
-               } else { print "DONE4\n";return 'DONE' }
+               } else { return 'DONE' }
             } elsif ($menu_output) {
 #print "WHAT IS MENU7=$menu_output\n";
                return $menu_output;
@@ -1876,7 +1910,7 @@ print "DONE2\n";
                   }
 #print "DONE_SUB9\n";
  return 'DONE_SUB';
-               } else { print "DONE5\n";return 'DONE' }
+               } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
@@ -1996,7 +2030,7 @@ print "DONE2\n";
                   } 
 #print "DONE_SUB11\n";
 return 'DONE_SUB';
-               } else { print "DONE6\n";return 'DONE' }
+               } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
@@ -2029,12 +2063,6 @@ return 'DONE_SUB';
             }
          } elsif ($numbor=~/^c$/i) {
             ## CLEAR ALL CLEARALL
-            if (!exists ${$MenuUnit_hash_ref}{Select} ||
-                  ${$MenuUnit_hash_ref}{Select} eq 'One') {
-               print "\n   ERROR: Cannot Clear Items\n".
-                     "          When 'Select' is NOT set to 'Many'\n";
-               sleep 3;next;
-            }
 #print "WHAT IS SUM_MENU=$sum_menu and FILTERED_MENU=$filtered_menu\n";sleep 2;
             if ($sum_menu || $filtered_menu) {
                foreach my $key (keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]}) {
@@ -2263,7 +2291,7 @@ return 'DONE_SUB';
 #print "DONE_SUB12\n";
                      return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
-                     print "DONE7\n";return 'DONE';
+                     return 'DONE';
                   } elsif ($menu_output) {
                      return $menu_output;
                   } else {
@@ -2520,7 +2548,7 @@ return 'DONE_SUB';
                            #return '',$die;
                         } elsif ($fullauto) {
                            &Net::FullAuto::FA_Core::handle_error($die,'-28');
-                        } else { print "CRAP3\n";die $die }
+                        } else { die $die }
                      }
                   } else { $done=1;last }
                }
@@ -2540,16 +2568,18 @@ return 'DONE_SUB';
          push @picks, $pik;
       } undef @pickone;
       if ($MenuUnit_hash_ref) {
-         if ($^O ne 'cygwin') {
-            unless ($noclear) {
-               if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
-                  system("cmd /c cls");
-                  print "\n";
-               } else {
-                  print `${clearpath}clear`."\n";
-               }
+         unless ($Persists{unattended}) {
+            if ($^O ne 'cygwin') {
+               unless ($noclear) {
+                  if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
+                     system("cmd /c cls");
+                     print "\n";
+                  } else {
+                     print `${clearpath}clear`."\n";
+                  }
+               } else { print $blanklines }
             } else { print $blanklines }
-         } else { print $blanklines }
+         }
          return \@picks,
                 $FullMenu,$Selected,$Conveyed,
                 $SavePick,$SaveLast,$SaveNext,
