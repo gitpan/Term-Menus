@@ -1,3 +1,17 @@
+2010-09-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.48 released.
+
+        * Removed Build.PL from build
+
+
+2010-09-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.47 released.
+
+        * 'Finally' got the gpg signature going again
+
+
 2010-08-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.46 released.
