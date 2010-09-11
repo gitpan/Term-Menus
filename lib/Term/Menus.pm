@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.48';
+$VERSION = '1.49';
 
 
 use 5.006;
@@ -309,16 +309,11 @@ BEGIN { ##  Begin  Term::Menus
 
    our $termwidth='';
    our $termheight='';
-   eval {
-      require Term::ReadKey;
-   };
-   unless ($@) {
-      eval {
-         ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
-      };
-      if ($@) {
-         $termwidth='';$termheight='';
-      }
+   use Module::Load::Conditional qw[can_load];
+   if (can_load( modules => { Term::ReadKey => 0 } )) {
+      ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+   } else {
+      $termwidth='';$termheight='';
    }
    our $clearpath='';
    if ($^O ne 'MSWin32' && $^O ne 'MSWin64') {
