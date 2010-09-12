@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.49';
+$VERSION = '1.50';
 
 
 use 5.006;
@@ -311,7 +311,12 @@ BEGIN { ##  Begin  Term::Menus
    our $termheight='';
    use Module::Load::Conditional qw[can_load];
    if (can_load( modules => { Term::ReadKey => 0 } )) {
-      ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+      eval {
+         ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+      };
+      if ($@) {
+         $termwidth='';$termheight='';
+      }
    } else {
       $termwidth='';$termheight='';
    }

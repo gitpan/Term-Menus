@@ -1,3 +1,19 @@
+2010-09-11  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.50 released.
+
+        * Using eval around GetTerminalSize so that CPAN
+          Testers automated tests won't break
+
+
+2010-09-11  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.49 released.
+
+        * Now using Module::Load::Conditional to load
+          Term::ReadKey
+
+
 2010-09-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.48 released.
