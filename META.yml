@@ -13,9 +13,9 @@ name: Term-Menus
 provides:
   Term::Menus:
     file: lib/Term/Menus.pm
-    version: 1.49
+    version: 1.51
 requires:
   Term::ReadKey: 0
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 1.49
+version: 1.51

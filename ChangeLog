@@ -1,3 +1,11 @@
+2010-09-14  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.51 released.
+
+        * Added can_load for files in Custom directory - if
+          file doesn't exist, load Distro instead
+
+
 2010-09-11  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.50 released.

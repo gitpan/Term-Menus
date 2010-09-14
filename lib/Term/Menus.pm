@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.50';
+$VERSION = '1.51';
 
 
 use 5.006;
@@ -26,6 +26,7 @@ use vars qw(@EXPORT);
 ## Module import.
 use Exporter ();
 our @ISA = qw(Exporter);
+use Module::Load::Conditional qw[can_load];
 
 ##############################################################
 ##############################################################
@@ -145,7 +146,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      require 'Net/FullAuto/Custom/'.$menu_config_module_file;
+      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+            $menu_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.$menu_config_module_file;
+      }
       my $mc=substr($menu_config_module_file,0,-3);
       import $mc;
       $fullauto=1;
@@ -174,8 +178,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       }
 
    } elsif (-1<index caller(2),'FullAuto') {
-
-      require 'Net/FullAuto/Custom/'.$custom_code_module_file;
+      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+            $custom_code_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.$custom_code_module_file;
+      }
       my $cc=substr($custom_code_module_file,0,-3);
       import $cc;
 
@@ -204,7 +210,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      require 'Net/FullAuto/Custom/'.$configuration_module_file;
+      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+            $configuration_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.$configuration_module_file;
+      }
       my $cf=substr($configuration_module_file,0,-3);
       import $cf;
 
@@ -233,7 +242,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      require 'Net/FullAuto/Custom/'.$hosts_config_module_file;
+      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+            $hosts_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.$hosts_config_module_file;
+      }
       my $hc=substr($hosts_config_module_file,0,-3);
       import $hc;
 
@@ -262,7 +274,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      require 'Net/FullAuto/Custom/'.$maps_config_module_file;
+      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+            $maps_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.$maps_config_module_file;
+      }
       my $mp=substr($maps_config_module_file,0,-3);
       import $mp;
 
@@ -309,14 +324,8 @@ BEGIN { ##  Begin  Term::Menus
 
    our $termwidth='';
    our $termheight='';
-   use Module::Load::Conditional qw[can_load];
    if (can_load( modules => { Term::ReadKey => 0 } )) {
-      eval {
-         ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
-      };
-      if ($@) {
-         $termwidth='';$termheight='';
-      }
+      ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
    } else {
       $termwidth='';$termheight='';
    }
