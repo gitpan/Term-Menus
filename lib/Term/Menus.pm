@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.51';
+$VERSION = '1.52';
 
 
 use 5.006;
@@ -325,7 +325,12 @@ BEGIN { ##  Begin  Term::Menus
    our $termwidth='';
    our $termheight='';
    if (can_load( modules => { Term::ReadKey => 0 } )) {
-      ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+      eval {
+         ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+      };
+      if ($@) {
+         $termwidth='';$termheight='';
+      }
    } else {
       $termwidth='';$termheight='';
    }
