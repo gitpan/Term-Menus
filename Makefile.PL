@@ -6,6 +6,7 @@ name            'Term-Menus';
 sign;
 all_from        'lib/Term/Menus.pm';
 
-requires        'Term::ReadKey'          => 0;    
+requires        'Module::Load::Conditional' => 0;
+requires        'Term::ReadKey'             => 0;    
 auto_install;
 WriteAll;

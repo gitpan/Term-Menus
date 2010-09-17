@@ -14,11 +14,11 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 26d3a9dcfbad74779c488a72d87e040f3fbbe7e5 ChangeLog
+SHA1 168ecce22f62d4e8c7c8728dd55db15e9fbe5546 ChangeLog
 SHA1 a74125560a260a18a646ef0b3702e1b77a45b931 LICENSE
 SHA1 536d4ce30b1934be585da55e463477877c31fe8c MANIFEST
-SHA1 6ad5be9cc9ca407f550b210761b4e8ff7b544f2c META.yml
-SHA1 971640082357606899d8c4bd8de932c11b10d9e9 Makefile.PL
+SHA1 ccaa49171342599fdc954ddd2c6eab8a663d67fa META.yml
+SHA1 dcd75f6898ac9db1b89b5016c755b7ea4587f30d Makefile.PL
 SHA1 9adf23fe6adb034c41f51c46c372e31d3dc45d3f README
 SHA1 20c73697e1713638140c719d8eaa19a275ed43a5 inc/Module/AutoInstall.pm
 SHA1 7305dbe2904416e28decb05396988a5d51d578be inc/Module/Install.pm
@@ -31,13 +31,13 @@ SHA1 b721c93ca5bc9a6aa863b49af15f1b1de6125935 inc/Module/Install/Makefile.pm
 SHA1 026cc0551a0ad399d195e395b46bdf842e115192 inc/Module/Install/Metadata.pm
 SHA1 5457015ea5a50e93465bf2dafa29feebd547f85b inc/Module/Install/Win32.pm
 SHA1 051e7fa8063908befa3440508d0584a2497b97db inc/Module/Install/WriteAll.pm
-SHA1 a14631b39ce93dafaa4b14621708aca0b9b726f4 lib/Term/Menus.pm
+SHA1 7b44013d7e42bacab26dc2e5a5a4eeee8e79c167 lib/Term/Menus.pm
 SHA1 7f2e13f5f6a798d52ea897d24d07b49af4039341 t/0-signature.t
 SHA1 ded9def7d10cf71606da96112acc159e0aa9a582 t/test.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (Cygwin)
 
-iEYEARECAAYFAkyQrZkACgkQdsVAdUjO9Il/jwCcDNdlgsjFpY7K1/vIKOI2E8xm
-x18AoI607k6dn5jm46PzpO+XIKUg1V11
-=lmfo
+iEYEARECAAYFAkyTfGMACgkQdsVAdUjO9IlncQCeL0hIqNCmx3wmsvEla4WFtX1w
+aN4AoJsmZxVMH2elzYS1JHnev4HdqGsN
+=WcYR
 -----END PGP SIGNATURE-----
