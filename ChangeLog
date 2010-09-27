@@ -1,5 +1,15 @@
 2010-09-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.54 released.
+
+        * Fixed Bug #32350 for Term-Menus:
+          Using &selected(]Selected[) does not always work
+
+        * Improved Error reporting in certain routines
+
+
+2010-09-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.53 released.
 
         * Added requires Module::Load::Conditional to
@@ -147,7 +157,7 @@
           to define whitespace header for screens
 
         * Fixed bug https://rt.cpan.org/Ticket/Display.html?id=18382
-          where the screen was not properly clearign for Windows
+          where the screen was not properly clearing for Windows
 
         $ Fixed bug with "Default" setting
 

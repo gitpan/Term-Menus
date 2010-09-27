@@ -1025,6 +1025,16 @@ METHODS
 
           NOTE: "]S[" can be used as a shorthand for "]Selected[".
 
+          NOTE: if you want to return output from the Result subroutine,
+                you must include a 'return' statement. So the sub above:
+
+                sub selected { print "\n   SELECTED ITEM = $_[0]\n" }
+
+                Becomes:
+
+                sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
+
+
 USAGE and NAVIGATION
     Usage of "&pick()" and/or "&Menu()" during the runtime of a script in
     which one or both are included, is simple and intuitive. Nearly

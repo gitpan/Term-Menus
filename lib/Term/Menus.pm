@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.53';
+$VERSION = '1.54';
 
 
 use 5.006;
@@ -1105,27 +1105,76 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $result=~s/\"$esc_one\"/$Convey_contents/g;
                }
             } elsif (substr($result,0,1) eq '&') {
-               my $subname='&'.substr($custom_code_module_file,0,-3)
-                           .'::'.substr($result,1);
-               if (!eval "defined $subname") {
-                  my $die="The \"Result =>\" Setting";
-                  $die.="\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                      [2]{${$_[1]}[$_[2]-1]};
-                  $die.="\n\t\tFound in the Menu Unit -> ";
-                  $die.="${$LookUpMenuName}{$_[0]}\n\t\t";
-                  $die.="Specifies a Subroutine";
-                  $die.=" that Does NOT Exist\n\t\tin the ";
-                  $die.=" User Code File $custom_code_module_file";
-                  $die.=".\n";
-                  if (defined $log_handle &&
-                        -1<index $log_handle,'*') {
-                     print $log_handle $die;
-                     close(log_handle);
+               my $sub=substr($result,1);
+               my $subfile=substr($custom_code_module_file,0,-3).'::'
+                      if $custom_code_module_file;
+               $subfile||='main::';
+               my @resu=();
+               eval {
+                  unless (defined eval "\@resu=\&$subfile$sub") {
+                     if ($@) {
+                        my $die='';
+                        if ($fullauto) {
+                           if ($@=~/Undefined subroutine/) {
+                              if (${$FullMenu}{$_[0]}
+                                    [2]{${$_[1]}[$_[2]-1]}) {
+                                 $die="The \"Result =>\" Setting"
+                                     ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                     [2]{${$_[1]}[$_[2]-1]}
+                                     ."\n\t\tFound in the Menu Unit -> "
+                                     ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                     ."Specifies a Subroutine"
+                                     ." that Does NOT Exist"
+                                     ."\n\t\tin the User Code "
+                                     ."File $custom_code_module_file\n";
+                               } else { $die=$@ }
+                           } else { $die=$@ }
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close(log_handle);
+                           }
+                           &Net::FullAuto::FA_Core::handle_error($die);
+                        } else {
+                           die $@
+                        }
+                     }
                   }
-                  &Net::FullAuto::FA_Core::handle_error($die) if $fullauto;
-                  die $die;
-               } else {
-                  eval $subname;
+               };
+               if ($@) {
+                  if (unpack('a11',$@) eq 'FATAL ERROR') {
+                     if (defined $log_handle &&
+                           -1<index $log_handle,'*') {
+                        print $log_handle $die;
+                        close($log_handle);
+                     }
+                     die $die;
+                  } else {
+                     my $die="\n       FATAL ERROR! - The Local "
+                            ."System $local_hostname Conveyed\n"
+                            ."              the Following "
+                            ."Unrecoverable Error Condition :\n\n"
+                            ."       $@";
+                     if (defined $log_handle &&
+                           -1<index $log_handle,'*') {
+                        print $log_handle $die;
+                        close($log_handle);
+                     }
+                     if ($parent_menu && wantarray && !$no_wantarray) {
+                        return '',
+                           $FullMenu,$Selected,$Conveyed,
+                           $SavePick,$SaveLast,$SaveNext,
+                           $Persists,$parent_menu,$die;
+                     } elsif ($fullauto) {
+                        &Net::FullAuto::FA_Core::handle_error($die);
+                     } else { die $die }
+                  }
+               } elsif (-1<$#resu) {
+                  if (wantarray && !no_wantarray) {
+                     return @resu;
+                  } else {
+                     return $resu[0];
+                  }
                }
 #print "DONE_SUB1\n";
  return 'DONE_SUB';
@@ -1261,11 +1310,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (1==$recurse_level) {
                            my $subfile=substr($custom_code_module_file,0,-3).'::'
                                  if $custom_code_module_file;
-                           $subfile||='';
+                           $subfile||='main::';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
+                              my @resu=();
                               eval {
-#print "TEST FOR UNDEF SUB1\n";sleep 4;
-                                 unless (defined eval "$subfile$sub") {
+                                 unless (defined eval "\@resu=$subfile$sub") {
                                     if ($@) {
                                        my $die='';
                                        if ($fullauto) {
@@ -1289,9 +1338,34 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  }
                               };
                               if ($@) {
-                                 #&Net::FullAuto::FA_Core::handle_error($@,'-5')
-                                 #   if $fullauto;
-                                 die $@;
+                                 if (unpack('a11',$@) eq 'FATAL ERROR') {
+                                    if (defined $log_handle &&
+                                          -1<index $log_handle,'*') {
+                                       print $log_handle $die;
+                                       close($log_handle);
+                                    }
+                                    die $die;
+                                 } else {
+                                    my $die="\n       FATAL ERROR! - The Local "
+                                       ."System $local_hostname Conveyed\n"
+                                       ."              the Following "
+                                       ."Unrecoverable Error Condition :\n\n"
+                                       ."       $@";
+                                    if (defined $log_handle &&
+                                          -1<index $log_handle,'*') {
+                                       print $log_handle $die;
+                                       close($log_handle);
+                                    }
+                                    if ($fullauto) {
+                                       &Net::FullAuto::FA_Core::handle_error($die);
+                                    } else { die $die }
+                                  }
+                              } elsif (-1<$#resu) {
+                                 if (wantarray && !no_wantarray) {
+                                    return @resu;
+                                 } else {
+                                    return $resu[0];
+                                 }
                               }
                            }
 #print "DONE_SUB3\n";
@@ -1605,11 +1679,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='';
+                  $subfile||='main::';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
+                     my @resu=();
                      eval {
-#print "TEST FOR UNDEF SUB2\n";sleep 4;
-                        unless (defined eval "$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -1633,9 +1707,34 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      };
                      if ($@) {
-                        #@&Net::FullAuto::FA_Core::handle_error($@,'-5')
-                        #   if $fullauto;
-                        die $@;
+                        if (unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
+                           }
+                           die $die;
+                        } else {
+                           my $die="\n       FATAL ERROR! - The Local "
+                              ."System $local_hostname Conveyed\n"
+                              ."              the Following "
+                              ."Unrecoverable Error Condition :\n\n"
+                              ."       $@";
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
+                           }
+                           if ($fullauto) {
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } else { die $die }
+                        }
+                     } elsif (-1<$#resu) {
+                        if (wantarray && !no_wantarray) {
+                           return @resu;
+                        } else {
+                           return $resu[0];
+                        }
                      }
                   }
 #print "DONE_SUB5\n";
@@ -1741,11 +1840,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='';
+                  $subfile||='main::';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
+                     my @resu=();
                      eval {
-#print "TEST FOR UNDEF SUB3\n";sleep 4;
-                        unless (defined eval "$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -1769,9 +1868,34 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      };
                      if ($@) {
-                        #&Net::FullAuto::FA_Core::handle_error($@,'-5')
-                        #   if $fullauto;
-                        die $@;
+                        if (unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
+                           }
+                           die $die;
+                        } else {
+                           my $die="\n       FATAL ERROR! - The Local "
+                              ."System $local_hostname Conveyed\n"
+                              ."              the Following "
+                              ."Unrecoverable Error Condition :\n\n"
+                              ."       $@";
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
+                           }
+                           if ($fullauto) {
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } else { die $die }
+                        }
+                     } elsif (-1<$#resu) {
+                        if (wantarray && !no_wantarray) {
+                           return @resu;
+                        } else {
+                           return $resu[0];
+                        }
                      }
                   }
 #print "DONE_SUB7\n";
@@ -1866,11 +1990,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='';
+                  $subfile||='main::';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
+                     my @resu=();
                      eval {
-#print "TEST FOR UNDEF SUB4\n";sleep 4;
-                        unless (defined eval "$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -1895,12 +2019,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      };
                      if ($@) {
                         if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           #if (wantarray && !$no_wantarray) {
-                           #   return '', $@;
-                           #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_Core::handle_error($@,'-10');
-                           #} else { die $@ }
-                           die $@;
+                           die $die;
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
                                   ."System $local_hostname Conveyed\n"
@@ -1910,15 +2029,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
-                              close(log_handle);
+                              close($log_handle);
                            }
-                           if (wantarray && !$no_wantarray) {
-                              return '',$die;
-                           } elsif ($@) {
-                              &Net::FullAuto::FA_Core::handle_error($die,'-28')
-                                 if $fullauto;
-                              die $die;
-                           }
+                           if ($fullauto) {
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } else { die $die }
+                        }
+                     } elsif (-1<$#resu) {
+                        if (wantarray && !no_wantarray) {
+                           return @resu;
+                        } else {
+                           return $resu[0];
                         }
                      }
                   }
@@ -1986,11 +2107,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='';
+                  $subfile||='main::';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
+                     my @resu=();
                      eval {
-#print "TEST FOR UNDEF SUB5\n";sleep 4;
-                        unless (defined eval "$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -2015,30 +2136,32 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      };
                      if ($@) {
                         if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           #if (wantarray && !$no_wantarray) {
-                           #   return '', $@;
-                           #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_Core::handle_error($@,'-10');
-                           #} else { die $@ }
-                           die $@;
-                        } else {
-                           my $die="\n       FATAL ERROR! - The Local "
-                                  ."System $local_hostname Conveyed\n"
-                                  ."              the Following "
-                                  ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@";
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
-                              close(log_handle);
+                              close($log_handle);
                            }
-                           if (wantarray && !$no_wantarray) {
-                              return '',$die;
-                           } elsif ($@) {
-                              #&Net::FullAuto::FA_Core::handle_error($die,'-28')
-                              #   if $fullauto;
-                              die $die;
+                           die $die;
+                        } else {
+                           my $die="\n       FATAL ERROR! - The Local "
+                              ."System $local_hostname Conveyed\n"
+                              ."              the Following "
+                              ."Unrecoverable Error Condition :\n\n"
+                              ."       $@";
+                           if (defined $log_handle &&
+                                 -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
                            }
+                           if ($fullauto) {
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } else { die $die }
+                        }
+                     } elsif (-1<$#resu) {
+                        if (wantarray && !no_wantarray) {
+                           return @resu;
+                        } else {
+                           return $resu[0];
                         }
                      }
                   } 
@@ -2311,11 +2434,11 @@ return 'DONE_SUB';
                   } else {
                      my $subfile=substr($custom_code_module_file,0,-3).'::'
                            if $custom_code_module_file;
-                     $subfile||='';
+                     $subfile||='main::';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
+                        my @resu=();
                         eval {
-#print "TEST FOR UNDEF SUB6\n";sleep 4;
-                           unless (defined eval "$subfile$sub") {
+                           unless (defined eval "\@resu=$subfile$sub") {
                               if ($@) {
                                  my $die='';
                                  if ($fullauto) {
@@ -2340,29 +2463,37 @@ return 'DONE_SUB';
                         };
                         if ($@) {
                            if (unpack('a11',$@) eq 'FATAL ERROR') {
-                              #if (wantarray && !$no_wantarray) {
-                              #   return '',$@;
-                              #} elsif ($fullauto) {
-                              #  &Net::FullAuto::FA_Core::handle_error($@,'-10');
-                              #} else { die $die }
-                              die $@;
-                           } else {
-                              my $die="\n       FATAL ERROR! - The Local "
-                                     ."System $local_hostname Conveyed\n"
-                                     ."              the Following "
-                                     ."Unrecoverable Error Condition :\n\n"
-                                     ."       $@";
                               if (defined $log_handle &&
                                     -1<index $log_handle,'*') {
                                  print $log_handle $die;
                                  close($log_handle);
                               }
-                              if (wantarray && !$no_wantarray) {
-                                 return '',$die;
+                              die $die;
+                           } else {
+                              my $die="\n       FATAL ERROR! - The Local "
+                                 ."System $local_hostname Conveyed\n"
+                                 ."              the Following "
+                                 ."Unrecoverable Error Condition :\n\n"
+                                 ."       $@";
+                              if (defined $log_handle &&
+                                    -1<index $log_handle,'*') {
+                                 print $log_handle $die;
+                                 close($log_handle);
+                              }
+                              if ($parent_menu && wantarray && !$no_wantarray) {
+                                 return '',
+                                    $FullMenu,$Selected,$Conveyed,
+                                    $SavePick,$SaveLast,$SaveNext,
+                                    $Persists,$parent_menu,$die;
                               } elsif ($fullauto) {
-                                 &Net::FullAuto::FA_Core::handle_error(
-                                    $die,'-28');
+                                 &Net::FullAuto::FA_Core::handle_error($die);
                               } else { die $die }
+                           }
+                        } elsif (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
                            }
                         }
                      }
@@ -2430,11 +2561,11 @@ return 'DONE_SUB';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='';
+                  $subfile||='main::';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
+                     my @resu=();
                      eval {
-#print "TEST FOR UNDEF SUB7\n";sleep 4;
-                        unless (defined eval "$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -2459,24 +2590,36 @@ return 'DONE_SUB';
                      };
                      if ($@) {
                         if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           #if (wantarray && !$no_wantarray) {
-                           #   return '',$@;
-                           #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_Core::handle_error($@,'-10');
-                           #} else { die $die }
-                           die $@;
+                           die $die;
                         } else {
                            my $die="\n       FATAL ERROR! - The Local "
                                   ."System $local_hostname Conveyed\n"
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
                                   ."       $@";
-                           if (wantarray && !$no_wantarray) {
-                              return '',$die;
-                           #} elsif ($fullauto) {
-                           #   &Net::FullAuto::FA_Core::handle_error($die,'-28');
+                           if (defined $log_handle &&
+                                -1<index $log_handle,'*') {
+                              print $log_handle $die;
+                              close($log_handle);
+                           }
+                           if ($parent_menu && wantarray && !$no_wantarray) {
+                              return '',
+                                 $FullMenu,$Selected,$Conveyed,
+                                 $SavePick,$SaveLast,$SaveNext,
+                                 $Persists,$parent_menu,$die;
+                           } elsif ($fullauto) {
+                              &Net::FullAuto::FA_Core::handle_error($die);
                            } else { die $die }
                         }
+                     } else {
+                        if (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
+                        $done=1;last
                      }
                   }
                } else { $done=1;last }
@@ -2511,11 +2654,11 @@ return 'DONE_SUB';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
                my $subfile=substr($custom_code_module_file,0,-3).'::'
                      if $custom_code_module_file;
-               $subfile||='';
+               $subfile||='main::';
                foreach my $sub (&get_subs_from_menu($Selected)) {
+                  my @resu=();
                   eval {
-#print "TEST FOR UNDEF SUB8 ==>$subfile$sub<==\n";sleep 4;
-                     unless (defined eval "$subfile$sub") {
+                     unless (defined eval "\@resu=$subfile$sub") {
                         if ($@) {
                            my $die='';
                            if ($fullauto) {
@@ -2539,7 +2682,6 @@ return 'DONE_SUB';
                      }
                   };
                   if ($@) {
-#print "WHAT IS THE ERROR=$@<==\n";
                      if (unpack('a11',$@) eq 'FATAL ERROR') {
                         die $die;
                      } else {
@@ -2553,18 +2695,25 @@ return 'DONE_SUB';
                            print $log_handle $die;
                            close($log_handle);
                         }
-#print "WHAT IS THE ERROR=$@ and FULLAUTO=$fullauto and DIE=$die\n";
-                        if (wantarray && !$no_wantarray) {
+                        if ($parent_menu && wantarray && !$no_wantarray) {
                            return '',
                               $FullMenu,$Selected,$Conveyed,
                               $SavePick,$SaveLast,$SaveNext,
                               $Persists,$parent_menu,$die;
-                           #return '',$die;
                         } elsif ($fullauto) {
                            &Net::FullAuto::FA_Core::handle_error($die,'-28');
                         } else { die $die }
                      }
-                  } else { $done=1;last }
+                  } else {
+                     if (-1<$#resu) {
+                        if (wantarray && !no_wantarray) {
+                           return @resu;
+                        } else {
+                           return $resu[0];
+                        }
+                     }
+                     $done=1;last
+                  }
                }
 #print "DONE_SUB15\n";
  return 'DONE_SUB';
@@ -3851,6 +4000,15 @@ C<Result> element method of the current menu:
    print "SELECTIONS=@selections\n";
 
 B<NOTE:>     C<]S[>  can be used as a shorthand for  C<]Selected[>.
+
+B<NOTE:>     if you want to return output from the Result subroutine,
+             you must include a 'return' statement. So the sub above:
+
+                sub selected { print "\n   SELECTED ITEM = $_[0]\n" }
+
+             Becomes:
+
+                sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
 
 =back
 
