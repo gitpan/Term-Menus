@@ -1,4 +1,13 @@
-2010-09-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+2010-09-27  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.55 released.
+
+        * Fixed Bug #32350 for Term-Menus:
+          Using &selected(]Selected[) does not always work
+          - found bug in fix for 1.54
+
+
+2010-09-27  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.54 released.
 

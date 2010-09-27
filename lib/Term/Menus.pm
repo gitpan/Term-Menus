@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.54';
+$VERSION = '1.55';
 
 
 use 5.006;
@@ -1108,10 +1108,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                my $sub=substr($result,1);
                my $subfile=substr($custom_code_module_file,0,-3).'::'
                       if $custom_code_module_file;
-               $subfile||='main::';
+               $subfile||='';
                my @resu=();
                eval {
-                  unless (defined eval "\@resu=\&$subfile$sub") {
+                  unless (defined eval "\@resu=\&$subfile$sub" ||
+                          defined eval "\@resu=\&main::$sub") {
                      if ($@) {
                         my $die='';
                         if ($fullauto) {
@@ -1310,11 +1311,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (1==$recurse_level) {
                            my $subfile=substr($custom_code_module_file,0,-3).'::'
                                  if $custom_code_module_file;
-                           $subfile||='main::';
+                           $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
                               my @resu=();
                               eval {
-                                 unless (defined eval "\@resu=$subfile$sub") {
+                                 unless (defined eval "\@resu=$subfile$sub" ||
+                                         defined eval "\@resu=\&main::$sub") {
                                     if ($@) {
                                        my $die='';
                                        if ($fullauto) {
@@ -1679,11 +1681,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='main::';
+                  $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub" ||
+                                defined eval "\@resu=\&main::$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -1840,11 +1843,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='main::';
+                  $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub" ||
+                                defined eval "\@resu=\&main::$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -1990,11 +1994,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='main::';
+                  $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub" ||
+                                defined eval "\@resu=\&main::$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -2107,11 +2112,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (1==$recurse_level) {
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='main::';
+                  $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub" ||
+                                defined eval "\@resu=\&main::$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -2434,11 +2440,12 @@ return 'DONE_SUB';
                   } else {
                      my $subfile=substr($custom_code_module_file,0,-3).'::'
                            if $custom_code_module_file;
-                     $subfile||='main::';
+                     $subfile||='';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         my @resu=();
                         eval {
-                           unless (defined eval "\@resu=$subfile$sub") {
+                           unless (defined eval "\@resu=$subfile$sub" ||
+                                   defined eval "\@resu=\&main::$sub") {
                               if ($@) {
                                  my $die='';
                                  if ($fullauto) {
@@ -2561,11 +2568,12 @@ return 'DONE_SUB';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
-                  $subfile||='main::';
+                  $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub") {
+                        unless (defined eval "\@resu=$subfile$sub" ||
+                                defined eval "\@resu=\&main::$sub") {
                            if ($@) {
                               my $die='';
                               if ($fullauto) {
@@ -2654,11 +2662,12 @@ return 'DONE_SUB';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
                my $subfile=substr($custom_code_module_file,0,-3).'::'
                      if $custom_code_module_file;
-               $subfile||='main::';
+               $subfile||='';
                foreach my $sub (&get_subs_from_menu($Selected)) {
                   my @resu=();
                   eval {
-                     unless (defined eval "\@resu=$subfile$sub") {
+                     unless (defined eval "\@resu=$subfile$sub" ||
+                             defined eval "\@resu=\&main::$sub") {
                         if ($@) {
                            my $die='';
                            if ($fullauto) {
