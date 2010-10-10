@@ -1,3 +1,12 @@
+2010-10-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.56 released.
+
+        * Added new ability to define result with anonymous
+          subroutine - with macros in the subroutine. This
+          new feature is not yet documented.
+
+
 2010-09-27  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.55 released.

@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.55';
+$VERSION = '1.56';
 
 
 use 5.006;
@@ -324,6 +324,7 @@ BEGIN { ##  Begin  Term::Menus
 
    our $termwidth='';
    our $termheight='';
+   our $data_dump_streamer=0;
    if (can_load( modules => { Term::ReadKey => 0 } )) {
       eval {
          ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
@@ -333,6 +334,9 @@ BEGIN { ##  Begin  Term::Menus
       }
    } else {
       $termwidth='';$termheight='';
+   }
+   if (can_load( modules => { Data::Dump::Streamer => 0 } )) {
+      $data_dump_streamer=1;
    }
    our $clearpath='';
    if ($^O ne 'MSWin32' && $^O ne 'MSWin64') {
@@ -584,6 +588,8 @@ sub Menu
             foreach my $line (@{${$Items{$num}}{Convey}}) {
                push @convey, $line;
             }
+         } elsif (ref ${$Items{$num}}{Convey} eq 'CODE') {
+            @convey=${$Items{$num}}{Convey}->();
          } elsif (substr(${$Items{$num}}{Convey},0,1) eq '&') {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
@@ -945,7 +951,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          foreach my $item (keys %{${$Selected}{$key}}) {
             if (substr(${$Selected}{$key}{$item},0,1) eq '&') {
                push @subs, escape_quotes(unpack('x1 a*',${$Selected}{$key}{$item}));
-            }
+            } elsif (ref ${$Selected}{$key}{$item} eq 'CODE') {
+               push @subs, ${$Selected}{$key}{$item};
+            } 
          }
       } return @subs;
    }
@@ -957,7 +965,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       # $_[2] => $numbor
       # $_[3] => $picks_from_parent
 
-      my $convey='';my $result='';
+      my $convey='';
       my $send_all=0;my $all_convey='';
       my $FullMenu=$_[4];
       my $Conveyed=$_[5];
@@ -1026,31 +1034,24 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          $convey=${$_[1]}[$_[2]-1];
          ${$Conveyed}{${$_[0]}{'Label'}}=$convey;
       }
-      if (exists ${$FullMenu}{$_[0]}[2]
-                                  {${$_[1]}[$_[2]-1]}) {
+      my $test_item=${$FullMenu}{$_[0]}[2]{${$_[1]}[$_[2]-1]};
+      if (exists ${$FullMenu}{$_[0]}[2]{${$_[1]}[$_[2]-1]}) {
          my $ret_regex=qr/\]r(e+turn)*\[/i;
-         my $test_result=substr(${$FullMenu}{$_[0]}
-            [2]{${$_[1]}[$_[2]-1]},0,1);
-         if ((ref ${$FullMenu}{$_[0]}[2]
-                   {${$_[1]}[$_[2]-1]} eq 'HASH' &&
-                   exists ${$FullMenu}{$_[0]}[2]
-                   {${$_[1]}[$_[2]-1]}{Item_1})
-                   || substr(${$FullMenu}{$_[0]}
-                   [2]{${$_[1]}[$_[2]-1]},0,1) eq '&'
-                   || ${$FullMenu}{$_[0]}[2]{${$_[1]}[$_[2]-1]}
-                   =~/$ret_regex/) {
-            $result=${$FullMenu}{$_[0]}[2]
-                                     {${$_[1]}[$_[2]-1]};
+         if ((ref $test_item eq 'HASH' &&
+                   exists $test_item->{Item_1})
+                   || substr($test_item,0,1) eq '&'
+                   || $test_item=~/$ret_regex/
+                   || ref $test_item eq 'CODE') {
             my $con_regex=qr/\]c(o+nvey)*\[/i;
             my $sicm_regex=
                qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
                   *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*a*(l+l)*\[/xi;
             my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
                   *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
-            if (ref $result eq 'HASH' &&
-                    !exists ${$LookUpMenuName}{$result}) {
-               if (exists ${$result}{'Label'}) {
-                  $LookUpMenuName{$result}=${$result}{'Label'};
+            if (ref $test_item eq 'HASH' &&
+                    !exists ${$LookUpMenuName}{$test_item}) {
+               if (exists ${$test_item}{'Label'}) {
+                  $LookUpMenuName{$test_item}=${$test_item}{'Label'};
                } else {
                   my $die="The \"Result =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
@@ -1067,9 +1068,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   die $die;
                }
             }
-            if ($result=~/$con_regex|$pmsi_regex|$sicm_regex/) {
+            if ($test_item=~/$con_regex|$pmsi_regex|$sicm_regex/) {
                my $one='';
-               while ($result=~m/($sicm_regex)/g) {
+               while ($test_item=~m/($sicm_regex)/g) {
                   next if $1 eq $one;
                   $one=$1;
                   $send_all=1 if -1<index lc($one),'a';
@@ -1078,7 +1079,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   if ($convey ne 'SKIP') {
                      if ($send_all) {
                         if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
-                           $result=~s/\"$esc_one\"/$all_convey/g;
+                           $test_item=~s/\"$esc_one\"/$all_convey/g;
                         } else {
                            my $die="Can Only Use \"All\" (or A)";
                            $die.="\n\t\tQualifier in ".__PACKAGE__;
@@ -1091,57 +1092,64 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            die $die;
                         }
                      } else {
-                        $result=~s/$esc_one/${$_[1]}[$_[2]-1]/g;
+                        $test_item=~s/$esc_one/${$_[1]}[$_[2]-1]/g;
                      }
-                  } $result=~s/$esc_one/${$_[1]}[$_[2]-1]/g;
+                  } $test_item=~s/$esc_one/${$_[1]}[$_[2]-1]/g;
                }
-               $result=&transform_pmsi($result,
+               $test_item=&transform_pmsi($test_item,
                        $Conveyed,$pmsi_regex,$picks_from_parent);
-               while ($result=~m/($con_regex)/g) {
+               while ($test_item=~m/($con_regex)/g) {
                   next if $1 eq $one;
                   $one=$1;
                   my $esc_one=$one;
                   $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
-                  $result=~s/\"$esc_one\"/$Convey_contents/g;
+                  $test_item=~s/\"$esc_one\"/$Convey_contents/g;
                }
-            } elsif (substr($result,0,1) eq '&') {
-               my $sub=substr($result,1);
-               my $subfile=substr($custom_code_module_file,0,-3).'::'
-                      if $custom_code_module_file;
-               $subfile||='';
-               my @resu=();
-               eval {
-                  unless (defined eval "\@resu=\&$subfile$sub" ||
-                          defined eval "\@resu=\&main::$sub") {
-                     if ($@) {
-                        my $die='';
-                        if ($fullauto) {
-                           if ($@=~/Undefined subroutine/) {
-                              if (${$FullMenu}{$_[0]}
-                                    [2]{${$_[1]}[$_[2]-1]}) {
-                                 $die="The \"Result =>\" Setting"
-                                     ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                     [2]{${$_[1]}[$_[2]-1]}
-                                     ."\n\t\tFound in the Menu Unit -> "
-                                     ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                     ."Specifies a Subroutine"
-                                     ." that Does NOT Exist"
-                                     ."\n\t\tin the User Code "
-                                     ."File $custom_code_module_file\n";
-                               } else { $die=$@ }
-                           } else { $die=$@ }
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close(log_handle);
+            } elsif (ref $test_item eq 'CODE') {
+               my $cd=$test_item;
+               if ($data_dump_streamer) {
+                  tie *memhand, "TMMemHandle";
+                  my $me=\*memhand;
+                  print $me &Data::Dump::Streamer::Dump($test_item);
+                  $cd=<$me>;
+                  my $one='';
+                  while ($cd=~m/($sicm_regex)/sg) {
+                     next if $1 eq $one;
+                     $one=$1;
+                     $send_all=1 if -1<index lc($one),'a';
+                     my $esc_one=$one;
+                     $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+                     if ($convey ne 'SKIP') {
+                        if ($send_all) {
+                           if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
+                              $cd=~s/\"$esc_one\"/$all_convey/sg;
+                           } else {
+                              my $die="Can Only Use \"All\" (or A)";
+                              $die.="\n\t\tQualifier in ".__PACKAGE__;
+                              $die.=".pm when the";
+                              $die.="\n\t\t\"Select =>\" Element is ";
+                              $die.="set to\n\t\t\'Many\' in Menu Block ";
+                              $die.='%'.${$LookUpMenuName}{$_[0]}."\n\n";
+                              &Net::FullAuto::FA_Core::handle_error($die)
+                                 if $fullauto;
+                              die $die;
                            }
-                           &Net::FullAuto::FA_Core::handle_error($die);
                         } else {
-                           die $@
+                           $cd=~s/$esc_one/${$_[1]}[$_[2]-1]/sg;
                         }
-                     }
+                     } $cd=~s/$esc_one/${$_[1]}[$_[2]-1]/sg;
                   }
-               };
+                  $cd=&transform_pmsi($cd,
+                          $Conveyed,$pmsi_regex,$picks_from_parent);
+                  while ($cd=~m/($con_regex)/sg) {
+                     next if $1 eq $one;
+                     $one=$1;
+                     my $esc_one=$one;
+                     $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+                     $cd=~s/\"$esc_one\"/$Convey_contents/sg;
+                  }
+               }
+               eval { $test_item=eval $cd };
                if ($@) {
                   if (unpack('a11',$@) eq 'FATAL ERROR') {
                      if (defined $log_handle &&
@@ -1170,25 +1178,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         &Net::FullAuto::FA_Core::handle_error($die);
                      } else { die $die }
                   }
-               } elsif (-1<$#resu) {
-                  if (wantarray && !no_wantarray) {
-                     return @resu;
-                  } else {
-                     return $resu[0];
-                  }
                }
-#print "DONE_SUB1\n";
- return 'DONE_SUB';
+               $Selected={ key => { item => $test_item } };
+               return $FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,$convey,$parent_menu;
             }
-            if ($result=~/Convey\s*=\>/) {
+            if ($test_item=~/Convey\s*=\>/) {
                if ($convey ne 'SKIP') {
-                  $result=~s/Convey\s*=\>/$convey/g;
+                  $test_item=~s/Convey\s*=\>/$convey/g;
                } else {
-                  $result=~s/Convey\s*=\>/${$_[1]}[$_[2]-1]/g;
+                  $test_item=~s/Convey\s*=\>/${$_[1]}[$_[2]-1]/g;
                }
             }
-            if ($result=~/Text\s*=\>/) {
-               $result=~s/Text\s*=\>/${$_[1]}[$_[2]-1]/g;
+            if ($test_item=~/Text\s*=\>/) {
+               $test_item=~s/Text\s*=\>/${$_[1]}[$_[2]-1]/g;
             }
          } else {
             my $die="The \"Result =>\" Setting\n              -> "
@@ -1209,7 +1211,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          foreach my $item (keys %{${$Selected}{$_[0]}}) {
             ${$Selected}{$_[0]}{$item}='';
          }
-      } ${$Selected}{$_[0]}{$_[2]}=$result;
+      } ${$Selected}{$_[0]}{$_[2]}=$test_item;
       if (ref ${$_[0]}{${$FullMenu}{$_[0]}
             [4]{${$_[1]}[$_[2]-1]}}{'Result'} eq 'HASH') {
          if (exists ${$_[0]}{${$FullMenu}{$_[0]}
@@ -1233,8 +1235,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             die $die;
          }
       }
-#print "ARE WE HERE\n";
- return $FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,$convey,$parent_menu;
+      return $FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,$convey,$parent_menu;
    };
 
    my $sum_menu=0;my $filtered_menu=0;my $defaults_exist=0;
@@ -1305,7 +1306,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      } elsif ($menu_output eq '+') {
                         $picks{$picknum}='+';$mark='+';
                      } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB2\n";
+#print "DONE_SUB1\n";
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
@@ -1314,6 +1315,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
                               my @resu=();
+                              if (ref $sub eq 'code') {
+                                 @resu=$sub->();
+                                 if (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan23 in TERM-MENUS!!\n";sleep 5;
+                  }
+                                    if (wantarray && !no_wantarray) {
+                                       return @resu;
+                                    } else {
+                                       return $resu[0];
+                                    } return 'DONE_SUB';
+                                 }
+                              }
                               eval {
                                  unless (defined eval "\@resu=$subfile$sub" ||
                                          defined eval "\@resu=\&main::$sub") {
@@ -1363,6 +1377,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     } else { die $die }
                                   }
                               } elsif (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
+                  }
                                  if (wantarray && !no_wantarray) {
                                     return @resu;
                                  } else {
@@ -1370,7 +1387,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  }
                               }
                            }
-#print "DONE_SUB3\n";
+#print "DONE_SUB2\n";
  return 'DONE_SUB';
                         } else { return 'DONE' }
                      } elsif ($menu_output) {
@@ -1675,7 +1692,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB4\n";
+#print "DONE_SUB3\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -1734,13 +1751,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      } elsif (-1<$#resu) {
                         if (wantarray && !no_wantarray) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
+                  }
                            return @resu;
                         } else {
                            return $resu[0];
                         }
                      }
                   }
-#print "DONE_SUB5\n";
+#print "DONE_SUB4\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
@@ -1837,7 +1857,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB6\n";
+#print "DONE_SUB5\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -1895,6 +1915,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
+                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -1902,7 +1925,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      }
                   }
-#print "DONE_SUB7\n";
+#print "DONE_SUB6\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
@@ -1988,7 +2011,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB8\n";
+#print "DONE_SUB7\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -2041,6 +2064,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
+                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2048,7 +2074,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      }
                   }
-#print "DONE_SUB9\n";
+#print "DONE_SUB8\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
@@ -2106,7 +2132,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU10=$menu_output\n";
             if ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB10\n";
+#print "DONE_SUB9\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -2164,6 +2190,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan6 in TERM-MENUS!!\n";sleep 5;
+                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2171,7 +2200,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      }
                   } 
-#print "DONE_SUB11\n";
+#print "DONE_SUB10\n";
 return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
@@ -2431,7 +2460,7 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq '+') {
                      $return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB12\n";
+#print "DONE_SUB11\n";
                      return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
@@ -2497,6 +2526,9 @@ return 'DONE_SUB';
                               } else { die $die }
                            }
                         } elsif (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
+                  }
                            if (wantarray && !no_wantarray) {
                               return @resu;
                            } else {
@@ -2504,7 +2536,7 @@ return 'DONE_SUB';
                            }
                         }
                      }
-#print "DONE_SUB13\n";
+#print "DONE_SUB12\n";
  return 'DONE_SUB';
                   }
                } else {
@@ -2621,6 +2653,9 @@ return 'DONE_SUB';
                         }
                      } else {
                         if (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
+                  }
                            if (wantarray && !no_wantarray) {
                               return @resu;
                            } else {
@@ -2631,10 +2666,12 @@ return 'DONE_SUB';
                      }
                   }
                } else { $done=1;last }
-#print "DONE_SUB14\n";
+#print "DONE_SUB13\n";
                return 'DONE_SUB';
             } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
-               if (substr(${$FullMenu}{$MenuUnit_hash_ref}
+               my $rest=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
+               if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} eq 'CODE') {
+               } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
                      [2]{$pn{$numbor}[0]},0,1) ne '&') {
                   my $die="The \"Result =>\" Setting\n              -> "
                          .${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
@@ -2661,12 +2698,26 @@ return 'DONE_SUB';
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
                my $subfile=substr($custom_code_module_file,0,-3).'::'
-                     if $custom_code_module_file;
+                  if $custom_code_module_file;
                $subfile||='';
                foreach my $sub (&get_subs_from_menu($Selected)) {
                   my @resu=();
+                  if (ref $sub eq 'CODE') {
+                     @resu=$sub->();
+                     if (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan91 in TERM-MENUS!!\n";sleep 5;
+                  }
+                        if (wantarray && !no_wantarray) {
+                           return @resu;
+                        } else {
+                           return $resu[0];
+                        }
+                     }
+                     $done=1;last
+                  }
                   eval {
-                     unless (defined eval "\@resu=$subfile$sub" ||
+                     unless (defined eval "\@resu=\&$subfile$sub" ||
                              defined eval "\@resu=\&main::$sub") {
                         if ($@) {
                            my $die='';
@@ -2715,6 +2766,9 @@ return 'DONE_SUB';
                      }
                   } else {
                      if (-1<$#resu) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+print "We have a plan9 in TERM-MENUS!!\n";sleep 5;
+                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2724,7 +2778,7 @@ return 'DONE_SUB';
                      $done=1;last
                   }
                }
-#print "DONE_SUB15\n";
+#print "DONE_SUB14\n";
  return 'DONE_SUB';
             } else { $done=1 }
             last if !$return_from_child_menu;
@@ -2772,6 +2826,7 @@ return 'DONE_SUB';
 sub escape_quotes {
 
    my $sub=$_[0];
+   return $sub if -1==index $sub,'"';
    my $routine=substr($sub,0,(index $sub,'(')+1);
    my $args=substr($sub,(index $sub,'(')+1,-1);
    $args=~s/[']/!%!'%!%/g;
@@ -2798,6 +2853,31 @@ sub escape_quotes {
 }
 
 1;
+
+package TMMemHandle;
+
+use strict;
+sub TIEHANDLE {
+   my $class = shift;
+   bless [], $class;
+}
+
+sub PRINT {
+   my $self = shift;
+   push @$self, join '', @_;
+}
+
+sub PRINTF {
+   my $self = shift;
+   my $fmt = shift;
+   push @$self, sprintf $fmt, @_;
+}
+
+sub READLINE {
+   my $self = shift;
+   shift @$self;
+}
+
 __END__;
 
 
