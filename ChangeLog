@@ -1,3 +1,11 @@
+2010-10-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.57 released.
+
+        * Changed way Module::Load::Conditional loads so that
+          it's not required to run Term::Menus
+
+
 2010-10-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.56 released.

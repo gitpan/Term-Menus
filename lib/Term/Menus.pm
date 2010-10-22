@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.56';
+$VERSION = '1.57';
 
 
 use 5.006;
@@ -25,8 +25,28 @@ use vars qw(@EXPORT);
 @EXPORT = qw(pick Menu);
 ## Module import.
 use Exporter ();
+use Config ();
 our @ISA = qw(Exporter);
-use Module::Load::Conditional qw[can_load];
+BEGIN {
+   if (-e $Config{installprivlib}."/Module/Load/Conditional.pm") {
+      $canload = sub {
+         require $Config{installprivlib}."/Module/Load/Conditional.pm";
+         return Module::Load::Conditional::can_load($_[0]);
+      };
+   } elsif (-e $Config{installsitelib}."/Module/Load/Conditional.pm") {
+      $canload = sub {
+         require $Config{installsitelib}."/Module/Load/Conditional.pm";
+         return Module::Load::Conditional::can_load($_[0]);
+      };
+   } elsif (-e $Config{installvendorlib}."/Module/Load/Conditional.pm") {
+      $canload = sub {
+         require $Config{installvendorlib}."/Module/Load/Conditional.pm";
+         return Module::Load::Conditional::can_load($_[0]);
+      };
+   } else {
+      $canload = sub { return 0 };
+   }
+}
 
 ##############################################################
 ##############################################################
@@ -146,7 +166,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+      if (!$canload->( modules => { 'Net/FullAuto/Custom/'.
             $menu_config_module_file => 0 } )) {
          require 'Net/FullAuto/Distro/'.$menu_config_module_file;
       }
@@ -178,7 +198,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       }
 
    } elsif (-1<index caller(2),'FullAuto') {
-      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+      if (!$canload->( modules => { 'Net/FullAuto/Custom/'.
             $custom_code_module_file => 0 } )) {
          require 'Net/FullAuto/Distro/'.$custom_code_module_file;
       }
@@ -210,7 +230,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+      if (!$canload->( modules => { 'Net/FullAuto/Custom/'.
             $configuration_module_file => 0 } )) {
          require 'Net/FullAuto/Distro/'.$configuration_module_file;
       }
@@ -242,7 +262,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+      if (!$canload->( modules => { 'Net/FullAuto/Custom/'.
             $hosts_config_module_file => 0 } )) {
          require 'Net/FullAuto/Distro/'.$hosts_config_module_file;
       }
@@ -274,7 +294,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (-1<index caller(2),'FullAuto') {
 
-      unless (can_load( modules => { 'Net/FullAuto/Custom/'.
+      if (!$canload->( modules => { 'Net/FullAuto/Custom/'.
             $maps_config_module_file => 0 } )) {
          require 'Net/FullAuto/Distro/'.$maps_config_module_file;
       }
@@ -325,7 +345,7 @@ BEGIN { ##  Begin  Term::Menus
    our $termwidth='';
    our $termheight='';
    our $data_dump_streamer=0;
-   if (can_load( modules => { Term::ReadKey => 0 } )) {
+   if ($canload->( modules => { Term::ReadKey => 0 } )) {
       eval {
          ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
       };
@@ -335,7 +355,7 @@ BEGIN { ##  Begin  Term::Menus
    } else {
       $termwidth='';$termheight='';
    }
-   if (can_load( modules => { Data::Dump::Streamer => 0 } )) {
+   if ($canload->( modules => { Data::Dump::Streamer => 0 } )) {
       $data_dump_streamer=1;
    }
    our $clearpath='';
@@ -1007,7 +1027,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      [4]{${$_[1]}[$_[2]-1]}}{'Result'}{'Label'};
                   $parent_menu=$LookUpMenuName{$_[0]};
                } else {
-                  my $die="The \"Result =>\" Setting".
+                  my $die="The \"Result1 =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
                           "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
                           "HASH reference to a Menu Unit\,\n\t\t".
@@ -1053,7 +1073,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if (exists ${$test_item}{'Label'}) {
                   $LookUpMenuName{$test_item}=${$test_item}{'Label'};
                } else {
-                  my $die="The \"Result =>\" Setting".
+                  my $die="The \"Result2 =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
                           "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
                           "HASH reference to a Menu Unit\,\n\t\t".
@@ -1193,7 +1213,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $test_item=~s/Text\s*=\>/${$_[1]}[$_[2]-1]/g;
             }
          } else {
-            my $die="The \"Result =>\" Setting\n              -> "
+            my $die="The \"Result3 =>\" Setting\n              -> "
                    .${$FullMenu}{$_[0]}[2]{${$_[1]}[$_[2]-1]}
                    ."\n              Found in the Menu Unit -> "
                    .$MenuUnit_hash_ref
@@ -1220,7 +1240,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                ${${$FullMenu}{$_[0]}[2]}
                {${$_[1]}[$_[2]-1]};
          } else {
-            my $die="The \"Result =>\" Setting".
+            my $die="The \"Result4 =>\" Setting".
                    "\n\t\tFound in the Menu Unit -> ".
                    "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
                    "HASH reference to a Menu Unit\,\n\t\t".
@@ -1306,7 +1326,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      } elsif ($menu_output eq '+') {
                         $picks{$picknum}='+';$mark='+';
                      } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB1\n";
+print "DONE_SUB1\n";
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
@@ -1337,7 +1357,7 @@ print "We have a plan23 in TERM-MENUS!!\n";sleep 5;
                                           if ($@=~/Undefined subroutine/) {
                                              if (${$FullMenu}{$_[0]}
                                                    [2]{${$_[1]}[$_[2]-1]}) {
-                                                $die="The \"Result =>\" Setting"
+                                                $die="The \"Result5 =>\" Setting"
                                                     ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                                     [2]{${$_[1]}[$_[2]-1]}
                                                     ."\n\t\tFound in the Menu Unit -> "
@@ -1387,7 +1407,7 @@ print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
                                  }
                               }
                            }
-#print "DONE_SUB2\n";
+print "DONE_SUB2\n";
  return 'DONE_SUB';
                         } else { return 'DONE' }
                      } elsif ($menu_output) {
@@ -1692,7 +1712,7 @@ print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB3\n";
+print "DONE_SUB3\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -1710,7 +1730,7 @@ print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
                                  if ($@=~/Undefined subroutine/) {
                                     if (${$FullMenu}{$_[0]}
                                           [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result =>\" Setting"
+                                       $die="The \"Result6 =>\" Setting"
                                            ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                            [2]{${$_[1]}[$_[2]-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
@@ -1760,7 +1780,7 @@ print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   }
-#print "DONE_SUB4\n";
+print "DONE_SUB4\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
@@ -1857,7 +1877,7 @@ print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB5\n";
+print "DONE_SUB5\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -1875,7 +1895,7 @@ print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
                                  if ($@=~/Undefined subroutine/) {
                                     if (${$FullMenu}{$_[0]}
                                           [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result =>\" Setting"
+                                       $die="The \"Result7 =>\" Setting"
                                            ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                            [2]{${$_[1]}[$_[2]-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
@@ -1925,7 +1945,7 @@ print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   }
-#print "DONE_SUB6\n";
+print "DONE_SUB6\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
@@ -2011,7 +2031,7 @@ print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB7\n";
+print "DONE_SUB7\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -2029,7 +2049,7 @@ print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
                                  if ($@=~/Undefined subroutine/) {
                                     if (${$FullMenu}{$_[0]}
                                           [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result =>\" Setting"
+                                       $die="The \"Result8 =>\" Setting"
                                            ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                            [2]{${$_[1]}[$_[2]-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
@@ -2074,7 +2094,7 @@ print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   }
-#print "DONE_SUB8\n";
+print "DONE_SUB8\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
@@ -2132,7 +2152,7 @@ print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
             chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU10=$menu_output\n";
             if ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB9\n";
+print "DONE_SUB9\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -2150,7 +2170,7 @@ print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
                                  if ($@=~/Undefined subroutine/) {
                                     if (${$FullMenu}{$_[0]}
                                           [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result =>\" Setting"
+                                       $die="The \"Result9 =>\" Setting"
                                            ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                            [2]{${$_[1]}[$_[2]-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
@@ -2200,7 +2220,7 @@ print "We have a plan6 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   } 
-#print "DONE_SUB10\n";
+print "DONE_SUB10\n";
 return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
@@ -2460,7 +2480,7 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq '+') {
                      $return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB11\n";
+print "DONE_SUB11\n";
                      return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
@@ -2481,7 +2501,7 @@ return 'DONE_SUB';
                                     if ($@=~/Undefined subroutine/) {
                                        if (${$FullMenu}{$_[0]}
                                              [2]{${$_[1]}[$_[2]-1]}) {
-                                          $die="The \"Result =>\" Setting"
+                                          $die="The \"Result10 =>\" Setting"
                                               ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                               [2]{${$_[1]}[$_[2]-1]}
                                               ."\n\t\tFound in the Menu Unit -> "
@@ -2536,11 +2556,11 @@ print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
                            }
                         }
                      }
-#print "DONE_SUB12\n";
+print "DONE_SUB12\n";
  return 'DONE_SUB';
                   }
                } else {
-                  my $die="The \"Result =>\" Setting".
+                  my $die="The \"Result11 =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
                           "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
                           "HASH reference to a Menu Unit\,\n\t\t".
@@ -2574,7 +2594,7 @@ print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
                if (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
                   if (substr(${$FullMenu}{$MenuUnit_hash_ref}
                         [2]{$pn{$numbor}[0]},0,1) ne '&') {
-                     my $die="The \"Result =>\" Setting\n              -> "
+                     my $die="The \"Result12 =>\" Setting\n              -> "
                             .${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
                             ."\n              Found in the Menu Unit -> "
                             .$MenuUnit_hash_ref
@@ -2612,7 +2632,7 @@ print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
                                  if ($@=~/Undefined subroutine/) {
                                     if (${$FullMenu}{$_[0]}
                                           [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result =>\" Setting"
+                                       $die="The \"Result13 =>\" Setting"
                                            ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                            [2]{${$_[1]}[$_[2]-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
@@ -2666,14 +2686,14 @@ print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
                      }
                   }
                } else { $done=1;last }
-#print "DONE_SUB13\n";
+print "DONE_SUB13\n";
                return 'DONE_SUB';
             } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
                my $rest=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
                if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} eq 'CODE') {
                } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
                      [2]{$pn{$numbor}[0]},0,1) ne '&') {
-                  my $die="The \"Result =>\" Setting\n              -> "
+                  my $die="The \"Result14 =>\" Setting\n              -> "
                          .${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
                          ."\n              Found in the Menu Unit -> "
                          .$MenuUnit_hash_ref
@@ -2725,7 +2745,7 @@ print "We have a plan91 in TERM-MENUS!!\n";sleep 5;
                               if ($@=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$_[0]}
                                        [2]{${$_[1]}[$_[2]-1]}) {
-                                    $die="The \"Result =>\" Setting"
+                                    $die="The \"Result15 =>\" Setting"
                                         ."\n\t\t-> " . ${$FullMenu}{$_[0]}
                                         [2]{${$_[1]}[$_[2]-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
@@ -2778,7 +2798,7 @@ print "We have a plan9 in TERM-MENUS!!\n";sleep 5;
                      $done=1;last
                   }
                }
-#print "DONE_SUB14\n";
+print "DONE_SUB14\n";
  return 'DONE_SUB';
             } else { $done=1 }
             last if !$return_from_child_menu;
