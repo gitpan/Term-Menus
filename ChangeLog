@@ -1,3 +1,10 @@
+2010-10-26  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.58 released.
+
+        * Initialized Config values to avoid warning.
+
+
 2010-10-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.57 released.

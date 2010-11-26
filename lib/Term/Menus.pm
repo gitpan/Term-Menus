@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.57';
+$VERSION = '1.58';
 
 
 use 5.006;
@@ -28,17 +28,23 @@ use Exporter ();
 use Config ();
 our @ISA = qw(Exporter);
 BEGIN {
-   if (-e $Config{installprivlib}."/Module/Load/Conditional.pm") {
+   $Config{installprivlib}||='';
+   $Config{installsitelib}||='';
+   $Config{installvendorlib}||=''; 
+   if ($Config{installprivlib} &&
+         -e $Config{installprivlib}."/Module/Load/Conditional.pm") {
       $canload = sub {
          require $Config{installprivlib}."/Module/Load/Conditional.pm";
          return Module::Load::Conditional::can_load($_[0]);
       };
-   } elsif (-e $Config{installsitelib}."/Module/Load/Conditional.pm") {
+   } elsif ($Config{installsitelib} &&
+         -e $Config{installsitelib}."/Module/Load/Conditional.pm") {
       $canload = sub {
          require $Config{installsitelib}."/Module/Load/Conditional.pm";
          return Module::Load::Conditional::can_load($_[0]);
       };
-   } elsif (-e $Config{installvendorlib}."/Module/Load/Conditional.pm") {
+   } elsif ($Config{installvendorlib} &&
+         -e $Config{installvendorlib}."/Module/Load/Conditional.pm") {
       $canload = sub {
          require $Config{installvendorlib}."/Module/Load/Conditional.pm";
          return Module::Load::Conditional::can_load($_[0]);

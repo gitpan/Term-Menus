@@ -13,7 +13,7 @@ name: Term-Menus
 provides:
   Term::Menus:
     file: lib/Term/Menus.pm
-    version: 1.57
+    version: 1.58
   TMMemHandle:
     file: lib/Term/Menus.pm
 requires:
@@ -22,4 +22,4 @@ requires:
   Term::ReadKey: 0
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 1.57
+version: 1.58
