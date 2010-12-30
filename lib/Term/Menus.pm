@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.58';
+$VERSION = '1.59';
 
 
 use 5.006;
@@ -627,6 +627,7 @@ sub Menu
             push @convey, ${$Items{$num}}{Convey};
          }
          foreach my $item (@convey) {
+            next if $item=~/^\s*$/s;
             my $text=${$Items{$num}}{Text};
             $text=~s/$con_regex/$item/g;
             $text=&transform_pmsi($text,
@@ -1332,7 +1333,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      } elsif ($menu_output eq '+') {
                         $picks{$picknum}='+';$mark='+';
                      } elsif ($menu_output eq 'DONE_SUB') {
-print "DONE_SUB1\n";
+#print "DONE_SUB1\n";
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
@@ -1355,28 +1356,36 @@ print "We have a plan23 in TERM-MENUS!!\n";sleep 5;
                                  }
                               }
                               eval {
-                                 unless (defined eval "\@resu=$subfile$sub" ||
-                                         defined eval "\@resu=\&main::$sub") {
-                                    if ($@) {
-                                       my $die='';
-                                       if ($fullauto) {
-                                          if ($@=~/Undefined subroutine/) {
-                                             if (${$FullMenu}{$_[0]}
-                                                   [2]{${$_[1]}[$_[2]-1]}) {
-                                                $die="The \"Result5 =>\" Setting"
-                                                    ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                                    [2]{${$_[1]}[$_[2]-1]}
-                                                    ."\n\t\tFound in the Menu Unit -> "
-                                                    ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                                    ."Specifies a Subroutine"
-                                                    ." that Does NOT Exist"
-                                                    ."\n\t\tin the User Code "
-                                                    ."File $custom_code_module_file\n";
-                                             } else { $die=$@ }
-                                          } else { $die=$@ }
-                                          &Net::FullAuto::FA_Core::handle_error($die);
-                                       } else { die $@ }
+                                 if ($subfile) {
+                                    eval "\@resu=\&$subfile$sub";
+                                    my $firsterr=$@||'';
+                                    if ($firsterr=~/Undefined subroutine/) {
+                                       eval "\@resu=\&main::$sub";
+                                       my $seconderr=$@||'';my $die='';
+                                       if ($seconderr=~/Undefined subroutine/) {
+                                          if (${$FullMenu}{$_[0]}
+                                                [2]{${$_[1]}[$_[2]-1]}) {
+                                             $die="The \"Result15 =>\" Setting"
+                                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                                 [2]{${$_[1]}[$_[2]-1]}
+                                                 ."\n\t\tFound in the Menu Unit -> "
+                                                 ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                                 ."Specifies a Subroutine"
+                                                 ." that Does NOT Exist"
+                                                 ."\n\t\tin the User Code "
+                                                 ."File $custom_code_module_file,"
+                                                 ."\n\t\tnor was a routine with "
+                                                 ."that name\n\t\tlocated in the"
+                                                 ." main:: script.\n";
+                                          } else { $die="$firsterr\n       $seconderr" }
+                                       } else { $die=$seconderr }
+                                       &Net::FullAuto::FA_Core::handle_error($die);
+                                    } elsif ($firsterr) {
+                                       &Net::FullAuto::FA_Core::handle_error($firsterr);
                                     }
+                                 } else {
+                                    eval "\@resu=\&main::$sub";
+                                    die $@ if $@;
                                  }
                               };
                               if ($@) {
@@ -1413,7 +1422,7 @@ print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
                                  }
                               }
                            }
-print "DONE_SUB2\n";
+#print "DONE_SUB2\n";
  return 'DONE_SUB';
                         } else { return 'DONE' }
                      } elsif ($menu_output) {
@@ -1718,7 +1727,7 @@ print "DONE_SUB2\n";
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-print "DONE_SUB3\n";
+#print "DONE_SUB3\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -1728,28 +1737,36 @@ print "DONE_SUB3\n";
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub" ||
-                                defined eval "\@resu=\&main::$sub") {
-                           if ($@) {
-                              my $die='';
-                              if ($fullauto) {
-                                 if ($@=~/Undefined subroutine/) {
-                                    if (${$FullMenu}{$_[0]}
-                                          [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result6 =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
-                                           ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                           ."Specifies a Subroutine"
-                                           ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $custom_code_module_file\n";
-                                     } else { $die=$@ }
-                                 } else { $die=$@ }
-                                 &Net::FullAuto::FA_Core::handle_error($die);
-                              } else { die $@ }
+                        if ($subfile) {
+                           eval "\@resu=\&$subfile$sub";
+                           my $firsterr=$@||'';
+                           if ($firsterr=~/Undefined subroutine/) {
+                              eval "\@resu=\&main::$sub";
+                              my $seconderr=$@||'';my $die='';
+                              if ($seconderr=~/Undefined subroutine/) {
+                                 if (${$FullMenu}{$_[0]}
+                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                    $die="The \"Result15 =>\" Setting"
+                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\tFound in the Menu Unit -> "
+                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                        ."Specifies a Subroutine"
+                                        ." that Does NOT Exist"
+                                        ."\n\t\tin the User Code "
+                                        ."File $custom_code_module_file,"
+                                        ."\n\t\tnor was a routine with "
+                                        ."that name\n\t\tlocated in the"
+                                        ." main:: script.\n";
+                                 } else { $die="$firsterr\n       $seconderr" }
+                              } else { $die=$seconderr }
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } elsif ($firsterr) {
+                              &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
+                        } else {
+                           eval "\@resu=\&main::$sub";
+                           die $@ if $@;
                         }
                      };
                      if ($@) {
@@ -1786,7 +1803,7 @@ print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   }
-print "DONE_SUB4\n";
+#print "DONE_SUB4\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
@@ -1883,7 +1900,7 @@ print "DONE_SUB4\n";
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-print "DONE_SUB5\n";
+#print "DONE_SUB5\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -1893,28 +1910,36 @@ print "DONE_SUB5\n";
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub" ||
-                                defined eval "\@resu=\&main::$sub") {
-                           if ($@) {
-                              my $die='';
-                              if ($fullauto) {
-                                 if ($@=~/Undefined subroutine/) {
-                                    if (${$FullMenu}{$_[0]}
-                                          [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result7 =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
-                                           ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                           ."Specifies a Subroutine"
-                                           ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $custom_code_module_file\n";
-                                    } else { $die=$@ }
-                                 } else { $die=$@ }
-                                 &Net::FullAuto::FA_Core::handle_error($die);
-                              } else { die $@ }
+                        if ($subfile) {
+                           eval "\@resu=\&$subfile$sub";
+                           my $firsterr=$@||'';
+                           if ($firsterr=~/Undefined subroutine/) {
+                              eval "\@resu=\&main::$sub";
+                              my $seconderr=$@||'';my $die='';
+                              if ($seconderr=~/Undefined subroutine/) {
+                                 if (${$FullMenu}{$_[0]}
+                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                    $die="The \"Result15 =>\" Setting"
+                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\tFound in the Menu Unit -> "
+                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                        ."Specifies a Subroutine"
+                                        ." that Does NOT Exist"
+                                        ."\n\t\tin the User Code "
+                                        ."File $custom_code_module_file,"
+                                        ."\n\t\tnor was a routine with "
+                                        ."that name\n\t\tlocated in the"
+                                        ." main:: script.\n";
+                                 } else { $die="$firsterr\n       $seconderr" }
+                              } else { $die=$seconderr }
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } elsif ($firsterr) {
+                              &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
+                        } else {
+                           eval "\@resu=\&main::$sub";
+                           die $@ if $@;
                         }
                      };
                      if ($@) {
@@ -1951,7 +1976,7 @@ print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   }
-print "DONE_SUB6\n";
+#print "DONE_SUB6\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
@@ -2037,7 +2062,7 @@ print "DONE_SUB6\n";
             } elsif ($menu_output eq '+') {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq 'DONE_SUB') {
-print "DONE_SUB7\n";
+#print "DONE_SUB7\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -2047,28 +2072,36 @@ print "DONE_SUB7\n";
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub" ||
-                                defined eval "\@resu=\&main::$sub") {
-                           if ($@) {
-                              my $die='';
-                              if ($fullauto) {
-                                 if ($@=~/Undefined subroutine/) {
-                                    if (${$FullMenu}{$_[0]}
-                                          [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result8 =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
-                                           ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                           ."Specifies a Subroutine"
-                                           ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $custom_code_module_file\n";
-                                    } else { $die=$@ }
-                                 } else { $die=$@ }
-                                 &Net::FullAuto::FA_Core::handle_error($die);
-                              } else { die $@ }
+                        if ($subfile) {
+                           eval "\@resu=\&$subfile$sub";
+                           my $firsterr=$@||'';
+                           if ($firsterr=~/Undefined subroutine/) {
+                              eval "\@resu=\&main::$sub";
+                              my $seconderr=$@||'';my $die='';
+                              if ($seconderr=~/Undefined subroutine/) {
+                                 if (${$FullMenu}{$_[0]}
+                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                    $die="The \"Result15 =>\" Setting"
+                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\tFound in the Menu Unit -> "
+                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                        ."Specifies a Subroutine"
+                                        ." that Does NOT Exist"
+                                        ."\n\t\tin the User Code "
+                                        ."File $custom_code_module_file,"
+                                        ."\n\t\tnor was a routine with "
+                                        ."that name\n\t\tlocated in the"
+                                        ." main:: script.\n";
+                                 } else { $die="$firsterr\n       $seconderr" }
+                              } else { $die=$seconderr }
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } elsif ($firsterr) {
+                              &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
+                        } else {
+                           eval "\@resu=\&main::$sub";
+                           die $@ if $@;
                         }
                      };
                      if ($@) {
@@ -2100,7 +2133,7 @@ print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   }
-print "DONE_SUB8\n";
+#print "DONE_SUB8\n";
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
@@ -2158,7 +2191,7 @@ print "DONE_SUB8\n";
             chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU10=$menu_output\n";
             if ($menu_output eq 'DONE_SUB') {
-print "DONE_SUB9\n";
+#print "DONE_SUB9\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -2168,28 +2201,36 @@ print "DONE_SUB9\n";
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub" ||
-                                defined eval "\@resu=\&main::$sub") {
-                           if ($@) {
-                              my $die='';
-                              if ($fullauto) {
-                                 if ($@=~/Undefined subroutine/) {
-                                    if (${$FullMenu}{$_[0]}
-                                          [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result9 =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
-                                           ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                           ."Specifies a Subroutine"
-                                           ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $custom_code_module_file\n";
-                                    } else { $die=$@ }
-                                 } else { $die=$@ }
-                                 &Net::FullAuto::FA_Core::handle_error($die);
-                              } else { die $@ }
+                        if ($subfile) {
+                           eval "\@resu=\&$subfile$sub";
+                           my $firsterr=$@||'';
+                           if ($firsterr=~/Undefined subroutine/) {
+                              eval "\@resu=\&main::$sub";
+                              my $seconderr=$@||'';my $die='';
+                              if ($seconderr=~/Undefined subroutine/) {
+                                 if (${$FullMenu}{$_[0]}
+                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                    $die="The \"Result15 =>\" Setting"
+                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\tFound in the Menu Unit -> "
+                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                        ."Specifies a Subroutine"
+                                        ." that Does NOT Exist"
+                                        ."\n\t\tin the User Code "
+                                        ."File $custom_code_module_file,"
+                                        ."\n\t\tnor was a routine with "
+                                        ."that name\n\t\tlocated in the"
+                                        ." main:: script.\n";
+                                 } else { $die="$firsterr\n       $seconderr" }
+                              } else { $die=$seconderr }
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } elsif ($firsterr) {
+                              &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
+                        } else {
+                           eval "\@resu=\&main::$sub";
+                           die $@ if $@;
                         }
                      };
                      if ($@) {
@@ -2226,7 +2267,7 @@ print "We have a plan6 in TERM-MENUS!!\n";sleep 5;
                         }
                      }
                   } 
-print "DONE_SUB10\n";
+#print "DONE_SUB10\n";
 return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
@@ -2486,7 +2527,7 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq '+') {
                      $return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
-print "DONE_SUB11\n";
+#print "DONE_SUB11\n";
                      return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
@@ -2499,28 +2540,36 @@ print "DONE_SUB11\n";
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         my @resu=();
                         eval {
-                           unless (defined eval "\@resu=$subfile$sub" ||
-                                   defined eval "\@resu=\&main::$sub") {
-                              if ($@) {
-                                 my $die='';
-                                 if ($fullauto) {
-                                    if ($@=~/Undefined subroutine/) {
-                                       if (${$FullMenu}{$_[0]}
-                                             [2]{${$_[1]}[$_[2]-1]}) {
-                                          $die="The \"Result10 =>\" Setting"
-                                              ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                              [2]{${$_[1]}[$_[2]-1]}
-                                              ."\n\t\tFound in the Menu Unit -> "
-                                              ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                              ."Specifies a Subroutine"
-                                              ." that Does NOT Exist"
-                                              ."\n\t\tin the User Code "
-                                              ."File $custom_code_module_file\n";
-                                       } else { $die=$@ }
-                                    } else { $die=$@ }
-                                    &Net::FullAuto::FA_Core::handle_error($die);
-                                 } else { die $@ }
+                           if ($subfile) {
+                              eval "\@resu=\&$subfile$sub";
+                              my $firsterr=$@||'';
+                              if ($firsterr=~/Undefined subroutine/) {
+                                 eval "\@resu=\&main::$sub";
+                                 my $seconderr=$@||'';my $die='';
+                                 if ($seconderr=~/Undefined subroutine/) {
+                                    if (${$FullMenu}{$_[0]}
+                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                       $die="The \"Result15 =>\" Setting"
+                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\tFound in the Menu Unit -> "
+                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                           ."Specifies a Subroutine"
+                                           ." that Does NOT Exist"
+                                           ."\n\t\tin the User Code "
+                                           ."File $custom_code_module_file,"
+                                           ."\n\t\tnor was a routine with "
+                                           ."that name\n\t\tlocated in the"
+                                           ." main:: script.\n";
+                                    } else { $die="$firsterr\n       $seconderr" }
+                                 } else { $die=$seconderr }
+                                 &Net::FullAuto::FA_Core::handle_error($die);
+                              } elsif ($firsterr) {
+                                 &Net::FullAuto::FA_Core::handle_error($firsterr);
                               }
+                           } else {
+                              eval "\@resu=\&main::$sub";
+                              die $@ if $@;
                            }
                         };
                         if ($@) {
@@ -2562,7 +2611,7 @@ print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
                            }
                         }
                      }
-print "DONE_SUB12\n";
+#print "DONE_SUB12\n";
  return 'DONE_SUB';
                   }
                } else {
@@ -2630,28 +2679,36 @@ print "DONE_SUB12\n";
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      eval {
-                        unless (defined eval "\@resu=$subfile$sub" ||
-                                defined eval "\@resu=\&main::$sub") {
-                           if ($@) {
-                              my $die='';
-                              if ($fullauto) {
-                                 if ($@=~/Undefined subroutine/) {
-                                    if (${$FullMenu}{$_[0]}
-                                          [2]{${$_[1]}[$_[2]-1]}) {
-                                       $die="The \"Result13 =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
-                                           ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                           ."Specifies a Subroutine"
-                                           ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $custom_code_module_file\n";
-                                    } else { $die=$@ }
-                                 } else { $die=$@ }
-                                 &Net::FullAuto::FA_Core::handle_error($die);
-                              } else { die $@ }
+                        if ($subfile) {
+                           eval "\@resu=\&$subfile$sub";
+                           my $firsterr=$@||'';
+                           if ($firsterr=~/Undefined subroutine/) {
+                              eval "\@resu=\&main::$sub";
+                              my $seconderr=$@||'';my $die='';
+                              if ($seconderr=~/Undefined subroutine/) {
+                                 if (${$FullMenu}{$_[0]}
+                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                    $die="The \"Result15 =>\" Setting"
+                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\tFound in the Menu Unit -> "
+                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                        ."Specifies a Subroutine"
+                                        ." that Does NOT Exist"
+                                        ."\n\t\tin the User Code "
+                                        ."File $custom_code_module_file,"
+                                        ."\n\t\tnor was a routine with "
+                                        ."that name\n\t\tlocated in the"
+                                        ." main:: script.\n";
+                                 } else { $die="$firsterr\n       $seconderr" }
+                              } else { $die=$seconderr }
+                              &Net::FullAuto::FA_Core::handle_error($die);
+                           } elsif ($firsterr) {
+                              &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
+                        } else {
+                           eval "\@resu=\&main::$sub";
+                           die $@ if $@;
                         }
                      };
                      if ($@) {
@@ -2692,7 +2749,7 @@ print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
                      }
                   }
                } else { $done=1;last }
-print "DONE_SUB13\n";
+#print "DONE_SUB13\n";
                return 'DONE_SUB';
             } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
                my $rest=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
@@ -2743,28 +2800,36 @@ print "We have a plan91 in TERM-MENUS!!\n";sleep 5;
                      $done=1;last
                   }
                   eval {
-                     unless (defined eval "\@resu=\&$subfile$sub" ||
-                             defined eval "\@resu=\&main::$sub") {
-                        if ($@) {
-                           my $die='';
-                           if ($fullauto) {
-                              if ($@=~/Undefined subroutine/) {
-                                 if (${$FullMenu}{$_[0]}
-                                       [2]{${$_[1]}[$_[2]-1]}) {
-                                    $die="The \"Result15 =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
-                                        ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$LookUpMenuName}{$_[0]}\n\t\t"
-                                        ."Specifies a Subroutine"
-                                        ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $custom_code_module_file\n";
-                                  } else { $die=$@ }
-                              } else { $die=$@ }
-                              &Net::FullAuto::FA_Core::handle_error($die);
-                           } else { die $@ }
+                     if ($subfile) {
+                        eval "\@resu=\&$subfile$sub";
+                        my $firsterr=$@||'';
+                        if ($firsterr=~/Undefined subroutine/) {
+                           eval "\@resu=\&main::$sub";
+                           my $seconderr=$@||'';my $die='';
+                           if ($seconderr=~/Undefined subroutine/) {
+                              if (${$FullMenu}{$_[0]}
+                                    [2]{${$_[1]}[$_[2]-1]}) {
+                                 $die="The \"Result15 =>\" Setting"
+                                     ."\n\t\t-> " . ${$FullMenu}{$_[0]}
+                                     [2]{${$_[1]}[$_[2]-1]}
+                                     ."\n\t\tFound in the Menu Unit -> "
+                                     ."${$LookUpMenuName}{$_[0]}\n\t\t"
+                                     ."Specifies a Subroutine"
+                                     ." that Does NOT Exist"
+                                     ."\n\t\tin the User Code "
+                                     ."File $custom_code_module_file,"
+                                     ."\n\t\tnor was a routine with "
+                                     ."that name\n\t\tlocated in the"
+                                     ." main:: script.\n";
+                              } else { $die="$firsterr\n       $seconderr" }
+                           } else { $die=$seconderr }
+                           &Net::FullAuto::FA_Core::handle_error($die);
+                        } elsif ($firsterr) {
+                           &Net::FullAuto::FA_Core::handle_error($firsterr);
                         }
+                     } else {
+                        eval "\@resu=\&main::$sub";
+                        die $@ if $@;
                      }
                   };
                   if ($@) {
@@ -2804,7 +2869,7 @@ print "We have a plan9 in TERM-MENUS!!\n";sleep 5;
                      $done=1;last
                   }
                }
-print "DONE_SUB14\n";
+#print "DONE_SUB14\n";
  return 'DONE_SUB';
             } else { $done=1 }
             last if !$return_from_child_menu;
