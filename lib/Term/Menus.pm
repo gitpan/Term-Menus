@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 
 use 5.006;
@@ -773,7 +773,7 @@ sub Menu
             && 1==$recurse) {
          my @choyce=@{$pick};undef @{$pick};undef $pick;
          return @choyce
-      } elsif ($pick) { return $pick }
+      } elsif ($pick) { print "ONEXX\n";return $pick }
    } else {
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveLast,$SaveNext,$Persists,$parent_menu,$error)
@@ -1337,6 +1337,16 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
+                           if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                              if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                                    !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                                 $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     Item   => $pn{$numbor}[0] }
+                           }
                            my $subfile=substr($custom_code_module_file,0,-3).'::'
                                  if $custom_code_module_file;
                            $subfile||='';
@@ -1345,9 +1355,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               if (ref $sub eq 'code') {
                                  @resu=$sub->();
                                  if (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan23 in TERM-MENUS!!\n";sleep 5;
-                  }
                                     if (wantarray && !no_wantarray) {
                                        return @resu;
                                     } else {
@@ -1412,9 +1419,6 @@ print "We have a plan23 in TERM-MENUS!!\n";sleep 5;
                                     } else { die $die }
                                   }
                               } elsif (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
-                  }
                                  if (wantarray && !no_wantarray) {
                                     return @resu;
                                  } else {
@@ -1731,11 +1735,32 @@ print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                     }
+                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                            Number => $numbor+1,
+                            Item   => $pn{$numbor}[0] }
+                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
+                     if (ref $sub eq 'CODE') {
+                        @resu=$sub->();
+                        if (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
+                        $done=1;last
+                     }
                      eval {
                         if ($subfile) {
                            eval "\@resu=\&$subfile$sub";
@@ -1794,9 +1819,6 @@ print "We have a plan2 in TERM-MENUS!!\n";sleep 5;
                         }
                      } elsif (-1<$#resu) {
                         if (wantarray && !no_wantarray) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
-                  }
                            return @resu;
                         } else {
                            return $resu[0];
@@ -1904,11 +1926,32 @@ print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                     }
+                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                            Number => $numbor+1,
+                            Item   => $pn{$numbor}[0] }
+                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
+                     if (ref $sub eq 'CODE') {
+                        @resu=$sub->();
+                        if (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
+                        $done=1;last
+                     }
                      eval {
                         if ($subfile) {
                            eval "\@resu=\&$subfile$sub";
@@ -1966,9 +2009,6 @@ print "We have a plan3 in TERM-MENUS!!\n";sleep 5;
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
-                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2066,11 +2106,32 @@ print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                     }
+                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                            Number => $numbor+1,
+                            Item   => $pn{$numbor}[0] }
+                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
+                     if (ref $sub eq 'CODE') {
+                        @resu=$sub->();
+                        if (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
+                        $done=1;last
+                     }
                      eval {
                         if ($subfile) {
                            eval "\@resu=\&$subfile$sub";
@@ -2123,9 +2184,6 @@ print "We have a plan4 in TERM-MENUS!!\n";sleep 5;
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
-                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2195,11 +2253,32 @@ print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                     }
+                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                            Number => $numbor+1,
+                            Item   => $pn{$numbor}[0] }
+                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
+                     if (ref $sub eq 'CODE') {
+                        @resu=$sub->();
+                        if (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
+                        $done=1;last
+                     }
                      eval {
                         if ($subfile) {
                            eval "\@resu=\&$subfile$sub";
@@ -2257,9 +2336,6 @@ print "We have a plan5 in TERM-MENUS!!\n";sleep 5;
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan6 in TERM-MENUS!!\n";sleep 5;
-                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2534,11 +2610,32 @@ return 'DONE_SUB';
                   } elsif ($menu_output) {
                      return $menu_output;
                   } else {
+                     if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                        if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                              !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                           $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                        }
+                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                            Number => $numbor+1,
+                            Item   => $pn{$numbor}[0] }
+                     }
                      my $subfile=substr($custom_code_module_file,0,-3).'::'
                            if $custom_code_module_file;
                      $subfile||='';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         my @resu=();
+                        if (ref $sub eq 'CODE') {
+                           @resu=$sub->();
+                           if (-1<$#resu) {
+                              if (wantarray && !no_wantarray) {
+                                 return @resu;
+                              } else {
+                                 return $resu[0];
+                              }
+                           }
+                           $done=1;last
+                        }
                         eval {
                            if ($subfile) {
                               eval "\@resu=\&$subfile$sub";
@@ -2601,9 +2698,6 @@ return 'DONE_SUB';
                               } else { die $die }
                            }
                         } elsif (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
-                  }
                            if (wantarray && !no_wantarray) {
                               return @resu;
                            } else {
@@ -2673,11 +2767,32 @@ print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
                   my %pick=();
                   $pick{$numbor}='*';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
+                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                     }
+                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                            Number => $numbor+1,
+                            Item   => $pn{$numbor}[0] }
+                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
+                     if (ref $sub eq 'CODE') {
+                        @resu=$sub->();
+                        if (-1<$#resu) {
+                           if (wantarray && !no_wantarray) {
+                              return @resu;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
+                        $done=1;last
+                     }
                      eval {
                         if ($subfile) {
                            eval "\@resu=\&$subfile$sub";
@@ -2736,9 +2851,6 @@ print "We have a plan7 in TERM-MENUS!!\n";sleep 5;
                         }
                      } else {
                         if (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
-                  }
                            if (wantarray && !no_wantarray) {
                               return @resu;
                            } else {
@@ -2751,9 +2863,13 @@ print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
                } else { $done=1;last }
 #print "DONE_SUB13\n";
                return 'DONE_SUB';
-            } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
+            } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]} 
+                  && exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
+                  {$pn{$numbor}[0]}) {
                my $rest=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
-               if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} eq 'CODE') {
+               if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
+                     eq 'CODE') {
+#print "GOT CODE\n";
                } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
                      [2]{$pn{$numbor}[0]},0,1) ne '&') {
                   my $die="The \"Result14 =>\" Setting\n              -> "
@@ -2780,6 +2896,16 @@ print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
                my %pick=();
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
+               if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
+                  if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
+                        !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
+                     $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0]; 
+                  }
+                  push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
+                       { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                         Number => $numbor+1,
+                         Item   => $pn{$numbor}[0] }
+               }
                my $subfile=substr($custom_code_module_file,0,-3).'::'
                   if $custom_code_module_file;
                $subfile||='';
@@ -2788,9 +2914,6 @@ print "We have a plan8 in TERM-MENUS!!\n";sleep 5;
                   if (ref $sub eq 'CODE') {
                      @resu=$sub->();
                      if (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan91 in TERM-MENUS!!\n";sleep 5;
-                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2856,10 +2979,8 @@ print "We have a plan91 in TERM-MENUS!!\n";sleep 5;
                         } else { die $die }
                      }
                   } else {
+#print "ARE WE HERE????\n";sleep 10;
                      if (-1<$#resu) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-print "We have a plan9 in TERM-MENUS!!\n";sleep 5;
-                  }
                         if (wantarray && !no_wantarray) {
                            return @resu;
                         } else {
@@ -2869,7 +2990,7 @@ print "We have a plan9 in TERM-MENUS!!\n";sleep 5;
                      $done=1;last
                   }
                }
-#print "DONE_SUB14\n";
+#print "DONE_SUB14\n";sleep 5;
  return 'DONE_SUB';
             } else { $done=1 }
             last if !$return_from_child_menu;
