@@ -4,6 +4,7 @@ package Term::Menus;
 #
 #    Copyright (C) 2000, 2001, 2002, 2003, 2004
 #                  2005, 2006, 2007, 2008, 2010
+#                  2011
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
 #    You may distribute under the terms of the GNU General
@@ -15,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.60';
+$VERSION = '1.61';
 
 
 use 5.006;
@@ -423,7 +424,6 @@ foreach my $dir (@INC) {
                   print $die if !$Net::FullAuto::FA_Core::cron;
                   &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
                } else { die $die }
-               #print $die;exit;
             }
          }
       }
@@ -467,6 +467,7 @@ sub fa_login
 
    my $fa_code='';my $menu_args='';$to='';my $die='';
    my $start_menu_ref='';
+   my $returned='';
    eval {
       ($fa_code,$menu_args,$to,$die)=
          &Net::FullAuto::FA_Core::fa_login(@_);
@@ -488,7 +489,20 @@ sub fa_login
                    ."name you choose is optional \]\n";
             &Net::FullAuto::FA_Core::handle_error($die);
          }
-         &Menu($start_menu_ref);
+         if ($Net::FullAuto::FA_Core::plan) {
+            my $plann=shift @{$Net::FullAuto::FA_Core::plan};
+            if (${$start_menu_ref}{Label} eq ${$plann}{Label}) {
+               my $return=eval ${$plann}{Item};
+               &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
+               return $return;
+            } else {
+               my $die="\n       FATAL ERROR! -  Plan Number ${$plann}{PlanID} does"
+                      ."\n                       match the current logic flow."
+                      ."\n\n      ";
+               die($die);
+            }
+         }
+         $returned=&Menu($start_menu_ref);
       } elsif ($start_menu_ref) {
          my $die="\n       FATAL ERROR! - The top level menu "
                 ."block indicated\n              by the "
@@ -525,7 +539,7 @@ sub fa_login
    }
    #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_Core::cron &&
    #      !$Net::FullAuto::FA_Core::stdio;
-   &Net::FullAuto::FA_Core::cleanup(1);
+   &Net::FullAuto::FA_Core::cleanup(1,$returned);
 
 }
 
@@ -814,7 +828,7 @@ sub Menu
             && 1==$recurse) {
          my @choyce=@{$pick};undef @{$pick};undef $pick;
          return @choyce
-      } elsif ($pick) { return $pick }
+      } elsif ($pick) { print "DO WE GET HERE\n";return $pick }
    }
 
 }
@@ -914,6 +928,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    my $menu_output='';
    my $hidedefaults=0;
    my $start=0;
+   my $got_default=0;
 
    sub delete_Selected
    {
@@ -925,7 +940,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          my $result=${$Selected}{$_[0]}{$_[1]};
          delete ${$Selected}{$_[0]}{$_[1]};
          delete ${$SavePick}{$_[0]}{$_[1]};
-         #delete ${$SaveNext}{$_[0]};
          if ($result) {
             &delete_Selected($result,'',
                 $Selected,$SavePick,$SaveNext);
@@ -1137,7 +1151,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if ($data_dump_streamer) {
                   tie *memhand, "TMMemHandle";
                   my $me=\*memhand;
-                  print $me &Data::Dump::Streamer::Dump($test_item);
+                  print $me &Data::Dump::Streamer::Dump($test_item)->Out();
                   $cd=<$me>;
                   my $one='';
                   while ($cd=~m/($sicm_regex)/sg) {
@@ -1288,6 +1302,27 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       }
       $Persists{$MenuUnit_hash_ref}{defaults}=0 unless exists
          $Persists{$MenuUnit_hash_ref}{defaults};
+      my $plann='';my $plannn='';
+      if ($Net::FullAuto::FA_Core::plan) {
+         my $plann=shift @{$Net::FullAuto::FA_Core::plan};
+         $plannn=${$plann}{Item}; 
+         my $plan_='';
+         if (substr($plannn,2,5) eq 'ARRAY') {
+            ${$MenuUnit_hash_ref}{Label}||='Unlabeled';
+            my $eval_plan=substr($plannn,1,-1);
+            $plan_=eval $eval_plan;
+         } else {
+            $plan_=$plannn;
+         }
+         if (${$MenuUnit_hash_ref}{Label} eq ${$plann}{Label}) {
+            return $plan_;
+         } else {
+            my $die="\n       FATAL ERROR! -  Plan Number ${$plann}{PlanID} does"
+                   ."\n                       match the current logic flow."
+                   ."\n\n      ";
+            die($die);
+         }
+      }
       while ($numbor=~/\d+/ &&
             ($numbor<=$start || $start+$choose_num < $numbor)) {
          my $menu_text='';my $pn='';
@@ -1337,22 +1372,32 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
-                           if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                              if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                                    !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                                 $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
-                              }
-                              push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
-                                     Item   => $pn{$numbor}[0] }
-                           }
-                           my $subfile=substr($custom_code_module_file,0,-3).'::'
+                           my $subfile=substr($custom_code_module_file,0,-3)
+                                 .'::'
                                  if $custom_code_module_file;
                            $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
                               my @resu=();
                               if (ref $sub eq 'code') {
+                                 if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                       !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                       defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN1\n";
+                                    if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                          'Plan'}} && !exists
+                                          $Net::FullAuto::FA_Core::makeplan->{
+                                          'Title'}) {
+                                       $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                          =$pn{$numbor}[0];
+                                    }
+                                    push @{$Net::FullAuto::FA_Core::makeplan->{
+                                            'Plan'}},
+                                         { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                           Number => $numbor+1,
+                                           PlanID =>
+                                              $Net::FullAuto::FA_Core::makeplan->{Number},
+                                           Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                                 }
                                  @resu=$sub->();
                                  if (-1<$#resu) {
                                     if (wantarray && !no_wantarray) {
@@ -1364,6 +1409,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                               eval {
                                  if ($subfile) {
+                                    if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                          !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                          defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN2\n";
+                                       if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                             'Plan'}} && !exists
+                                             $Net::FullAuto::FA_Core::makeplan->{
+                                             'Title'}) {
+                                          $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                             =$pn{$numbor}[0];
+                                       }
+                                       push @{$Net::FullAuto::FA_Core::makeplan->{
+                                               'Plan'}},
+                                            { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                              Number => $numbor+1,
+                                              PlanID =>
+                                                 $Net::FullAuto::FA_Core::makeplan->{Number},
+                                              Item   => "&$subfile$sub" }
+                                    }
                                     eval "\@resu=\&$subfile$sub";
                                     my $firsterr=$@||'';
                                     if ($firsterr=~/Undefined subroutine/) {
@@ -1434,7 +1498,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         return $menu_output;
                      } else { $picks{$picknum}='+';$mark='+' }
                   } else {
-#print "Yepp1\n";
                      $picks{$picknum}='*';
                   }
                }
@@ -1456,7 +1519,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "WHAT IS PN=$pn and PM=$parent_menu and MU=$MenuUnit_hash_ref\n";
 #print "COME ON=",keys %{${$SavePick}{$MenuUnit_hash_ref}},"\n";
 #print "WTFBABY=${${$SavePick}{$MenuUnit_hash_ref}}{19}\n";
-               #$mark=${$SavePick}{$parent_menu}{$pn}||' ';
                $mark=${$SavePick}{$MenuUnit_hash_ref}{$pn}||' ';
                $mark_flg=1 unless $mark eq ' ';
                $Persists{$MenuUnit_hash_ref}{defaults}=1
@@ -1472,10 +1534,53 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             if ($mark eq ' ' || (exists $picks{$picknum} ||
                   exists $picks{$pn})) {
                ${$_[0]}[$pn-1]=$pickone[$picknum-1];
-               #$picknum++;
             } $picknum++;
             $numlist--;
          } $hidedefaults=1;
+         if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+               $Net::FullAuto::FA_Core::makeplan &&
+               $Persists{$MenuUnit_hash_ref}{defaults} &&
+               !($filtered_menu || $sum_menu)) {
+            ${$MenuUnit_hash_ref}{Label}||='Unlabeled';
+            my %askmenu=(
+
+                  Label  => 'askmenu',
+                  Item_1 => {
+
+                     Text => "Use the result saved with the \"Plan\""
+
+                            },
+                  Item_2 => {
+
+                     Text => "Use the \"Default\" setting to determine result"
+
+                            },
+                  NoPlan => 1,
+                  Banner => "   FullAuto has determined that the ".
+                            ${$MenuUnit_hash_ref}{Label} . " Menu has been\n".
+                            "   configured with a \"Default\" setting."
+
+            );
+            my $answ=Menu(\%askmenu);
+            if ($answ eq ']quit[') {
+               return ']quit['
+            }
+            if (-1==index $answ,'result saved') {
+print "IN MAKEPLAN3\n";
+               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
+                     !exists $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
+                  $Net::FullAuto::FA_Core::makeplan->{'Title'}=$pn{$numbor}[0];
+               }
+               push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                      Number => 'Default',
+                      PlanID =>
+                         $Net::FullAuto::FA_Core::makeplan->{Number},
+                      Item   => '' };
+               $got_default=1;
+            }
+         }
          unless ($Persists{unattended}) {
             if ($^O ne 'cygwin') {
                unless ($noclear) {
@@ -1529,13 +1634,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          } elsif ($Persists{$MenuUnit_hash_ref}{defaults}) {
             $numbor='f';
          } elsif (wantarray && !$no_wantarray) {
-            my $die="\n       FATAL ERROR! - 'Unattended' mode cannot\n"
-                   ."                         be used without Default\n"
+            my $die="\n       FATAL ERROR! - 'Unattended' mode cannot be\n"
+                   ."                         used without a Plan or Default\n"
                    ."                         Selections being available.";
             return '',$die;
          } else {
-            my $die="\n       FATAL ERROR! - 'Unattended' mode cannot\n"
-                   ."                         be used without Default\n"
+            my $die="\n       FATAL ERROR! - 'Unattended' mode cannot be\n"
+                   ."                         used without a Plan or Default\n"
                    ."                         Selections being available.";
             die($die);
          }
@@ -1600,26 +1705,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             my $ret_regex=qr/\]?r(e+turn)*\[?/i;
             my $return_values=0;
             sub numerically { $a <=> $b }
-            #my @sortedpicks=();
-#print "WHAT ARE THE KEYS=@keys<==\n";
-            #if ($sum_menu || $filtered_menu) {
-            #   @sortedpicks=sort numerically keys
-            #      %{${$SavePick}{$chosen}};
-            #} else {
-            #   @sortedpicks=sort numerically keys %picks;
-            #}
-#print "WHAT ARE THE SORTED KEYS?=@sortedpicks\n";
             my %dupseen=();
-            #foreach my $pk (@sortedpicks) {
             foreach my $pk (sort numerically keys %picks) {
-#print "PK=$pk\n";
                $return_values=1 if !exists
                   ${$FullMenu}{$chosen}[2]{${$_[0]}[$pk-1]}
                   || !keys
                   %{${$FullMenu}{$chosen}[2]{${$_[0]}[$pk-1]}}
                   || ${$FullMenu}{$chosen}[2]{${$_[0]}[$pk-1]}
                   =~/$ret_regex/i;
-               #if ($filtered_menu || $sorted) {
                if (${${$FullMenu}{$parent_menu}[8]}[$pk-1] &&
                      !${$_[0]}[$pk-1]) {
                   my $txt=${${$FullMenu}{$parent_menu}[8]}[$pk-1];
@@ -1650,7 +1743,28 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   } $dupseen{$txt}='';
                }
             }
-#print "RETURNING4 and PICKD=@pickd\n";<STDIN>;
+#print "RETURNING4 and PICKD=@pickd\n";#<STDIN>;
+            if ($return_values && $fullauto &&
+                   (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                   !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                   defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN4\n";
+               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
+                     !exists $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
+                  $Net::FullAuto::FA_Core::makeplan->{'Title'}=
+                     "Multiple Selections";
+               }
+               unless ($got_default) {
+                  push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+                       { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                         Number => 'Multiple',
+                         PlanID =>
+                            $Net::FullAuto::FA_Core::makeplan->{Number},
+                         Item   => "'".
+                                   Data::Dump::Streamer::Dump(\@pickd)->Out().
+                                   "'" }
+               }
+            }
             return \@pickd if $return_values;
 #print "DONE2\n";
             return 'DONE';
@@ -1735,22 +1849,31 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
-                     }
-                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                            Number => $numbor+1,
-                            Item   => $pn{$numbor}[0] }
-                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      if (ref $sub eq 'CODE') {
+                        if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                              !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                              defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN5\n";
+                           if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                 'Plan'}} && !exists
+                                 $Net::FullAuto::FA_Core::makeplan->{
+                                 'Title'}) {
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                 =$pn{$numbor}[0];
+                           }
+                           push @{$Net::FullAuto::FA_Core::makeplan->{
+                                  'Plan'}},
+                                { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                  Number => $numbor+1,
+                                  PlanID =>
+                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                  Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                        }
                         @resu=$sub->();
                         if (-1<$#resu) {
                            if (wantarray && !no_wantarray) {
@@ -1763,6 +1886,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                 !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                 defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN6\n";
+                              if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                    'Plan'}} && !exists
+                                    $Net::FullAuto::FA_Core::makeplan->{
+                                    'Title'}) {
+                                 $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                    =$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::makeplan->{
+                                      'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     Item   => "&$subfile$sub" }
+                           }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
                            if ($firsterr=~/Undefined subroutine/) {
@@ -1832,15 +1974,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "WHAT IS MENU5=$menu_output\n";
                return $menu_output;
             } else { %picks=%{${$SavePick}{$MenuUnit_hash_ref}} }
-            #print "DO THE SORT\n";<STDIN>;
          } elsif ($numbor=~/^\*\s*$/s) {
-            ## STAR SELECTED
-            #if (!exists ${$MenuUnit_hash_ref}{Select} ||
-            #      ${$MenuUnit_hash_ref}{Select} eq 'One') {
-            #   print "\n   ERROR: Cannot Show Multiple Selected Items\n".
-            #         "          When 'Select' is NOT set to 'Many'\n";
-            #   sleep 3;next;
-            #}
             my @splice=();
             if ($filtered_menu) {
 #print "ARE WE FILTERED??\n";
@@ -1926,22 +2060,31 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
-                     }
-                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                            Number => $numbor+1,
-                            Item   => $pn{$numbor}[0] }
-                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      if (ref $sub eq 'CODE') {
+                        if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                              !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                              defined $Net::FullAuto::FA_Core::makeplan) {
+#print "IN MAKEPLAN7\n";
+                           if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                 'Plan'}} && !exists
+                                 $Net::FullAuto::FA_Core::makeplan->{
+                                 'Title'}) {
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                 =$pn{$numbor}[0];
+                           }
+                           push @{$Net::FullAuto::FA_Core::makeplan->{
+                                   'Plan'}},
+                                { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                  Number => $numbor+1,
+                                  PlanID =>
+                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                  Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                        }
                         @resu=$sub->();
                         if (-1<$#resu) {
                            if (wantarray && !no_wantarray) {
@@ -1954,6 +2097,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                 !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                 defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN8\n";
+                              if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                    'Plan'}} && !exists
+                                    $Net::FullAuto::FA_Core::makeplan->{
+                                    'Title'}) {
+                                 $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                    =$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::makeplan->{
+                                      'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     Item   => "&$subfile$sub" }
+                           }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
                            if ($firsterr=~/Undefined subroutine/) {
@@ -2106,22 +2268,31 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
-                     }
-                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                            Number => $numbor+1,
-                            Item   => $pn{$numbor}[0] }
-                  }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      if (ref $sub eq 'CODE') {
+                        if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                              !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                              defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN9\n";
+                           if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                 'Plan'}} && !exists
+                                 $Net::FullAuto::FA_Core::makeplan->{
+                                 'Title'}) {
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                 =$pn{$numbor}[0];
+                           }
+                           push @{$Net::FullAuto::FA_Core::makeplan->{
+                                   'Plan'}},
+                                { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                  Number => $numbor+1,
+                                  PlanID =>
+                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                  Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                        }
                         @resu=$sub->();
                         if (-1<$#resu) {
                            if (wantarray && !no_wantarray) {
@@ -2134,6 +2305,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                 !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                 defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN10\n";
+                              if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                    'Plan'}} && !exists
+                                    $Net::FullAuto::FA_Core::makeplan->{
+                                    'Title'}) {
+                                 $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                    =$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::makeplan->{
+                                      'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     Item   => "&$subfile$sub" }
+                           }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
                            if ($firsterr=~/Undefined subroutine/) {
@@ -2207,15 +2397,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                print "\n   WARNING! - You are at the First Menu!",
                      "\n   (Press any key to continue ...) ";<STDIN>;
             } elsif (grep { /\+|\*/ } values %picks) {
-               #delete ${$SaveLast}{$MenuUnit_hash_ref};
-               #delete ${$SaveNext}{$MenuUnit_hash_ref};
                return '+',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveLast,$SaveNext,
                   $Persists,$parent_menu;
             } else {
-               #delete ${$SaveLast}{$MenuUnit_hash_ref};
-               #delete ${$SaveNext}{$MenuUnit_hash_ref};
                return '-',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveLast,$SaveNext,
@@ -2253,15 +2439,24 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                  if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                        !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                        defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN11\n";
+                     if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
+                           !exists $Net::FullAuto::FA_Core::makeplan->{
+                           'Title'}) {
+                        $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                           =$pn{$numbor}[0];
                      }
-                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                            Number => $numbor+1,
-                            Item   => $pn{$numbor}[0] }
+                     unless ($got_default) {
+                        push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+                             { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                               Number => $numbor+1,
+                               PlanID =>
+                                  $Net::FullAuto::FA_Core::makeplan->{Number},
+                               Item   => $pn{$numbor}[0] }
+                     }
                   }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
@@ -2269,6 +2464,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      if (ref $sub eq 'CODE') {
+                        if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                              !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                              defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN12\n";
+                           if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                 'Plan'}} && !exists
+                                 $Net::FullAuto::FA_Core::makeplan->{
+                                 'Title'}) {
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                 =$pn{$numbor}[0];
+                           }
+                           push @{$Net::FullAuto::FA_Core::makeplan->{
+                                  'Plan'}},
+                                { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                  Number => $numbor+1,
+                                  PlanID =>
+                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                  Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                        }
                         @resu=$sub->();
                         if (-1<$#resu) {
                            if (wantarray && !no_wantarray) {
@@ -2281,6 +2495,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                 !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                 defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN13\n";
+                              if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                    'Plan'}} && !exists
+                                    $Net::FullAuto::FA_Core::makeplan->{
+                                    'Title'}) {
+                                 $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                    =$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::makeplan->{
+                                      'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     Item   => "&$subfile$sub" }
+                           }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
                            if ($firsterr=~/Undefined subroutine/) {
@@ -2608,17 +2841,27 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
                   } elsif ($menu_output) {
+#print "HERES A MENU OUTPUT OF INTEREST=$menu_output\n";
                      return $menu_output;
                   } else {
-                     if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                        if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                              !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                           $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                     if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                           !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                           defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN14\n";
+                        if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}}
+                              && !exists
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
+                           $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                              =$pn{$numbor}[0];
                         }
-                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                            Number => $numbor+1,
-                            Item   => $pn{$numbor}[0] }
+                     unless ($got_default) {
+                        push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+                             { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                               Number => $numbor+1,
+                               PlanID =>
+                                  $Net::FullAuto::FA_Core::makeplan->{Number},
+                               Item   => $pn{$numbor}[0] }
+                        }
                      }
                      my $subfile=substr($custom_code_module_file,0,-3).'::'
                            if $custom_code_module_file;
@@ -2626,6 +2869,25 @@ return 'DONE_SUB';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         my @resu=();
                         if (ref $sub eq 'CODE') {
+                           if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                 !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                 defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN15\n";
+                              if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                    'Plan'}} && !exists
+                                    $Net::FullAuto::FA_Core::makeplan->{
+                                    'Title'}) {
+                                 $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                    =$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::makeplan->{
+                                     'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                           }
                            @resu=$sub->();
                            if (-1<$#resu) {
                               if (wantarray && !no_wantarray) {
@@ -2638,6 +2900,25 @@ return 'DONE_SUB';
                         }
                         eval {
                            if ($subfile) {
+                              if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                    !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                    defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN16\n";
+                                 if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                       'Plan'}} && !exists
+                                       $Net::FullAuto::FA_Core::makeplan->{
+                                       'Title'}) {
+                                    $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                       =$pn{$numbor}[0];
+                                 }
+                                 push @{$Net::FullAuto::FA_Core::makeplan->{
+                                         'Plan'}},
+                                      { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                        Number => $numbor+1,
+                                        PlanID =>
+                                           $Net::FullAuto::FA_Core::makeplan->{Number},
+                                        Item   => "&$subfile$sub" }
+                              }
                               eval "\@resu=\&$subfile$sub";
                               my $firsterr=$@||'';
                               if ($firsterr=~/Undefined subroutine/) {
@@ -2767,15 +3048,24 @@ return 'DONE_SUB';
                   my %pick=();
                   $pick{$numbor}='*';
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
-                  if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                     if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                           !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                        $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0];
+                  if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                        !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                        defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN17\n";
+                     if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
+                           !exists
+                           $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
+                        $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                           =$pn{$numbor}[0];
                      }
-                     push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                          { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                            Number => $numbor+1,
-                            Item   => $pn{$numbor}[0] }
+                     unless ($got_default) {
+                        push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+                             { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                               Number => $numbor+1,
+                               PlanID =>
+                                  $Net::FullAuto::FA_Core::makeplan->{Number},
+                               Item   => $pn{$numbor}[0] }
+                     }
                   }
                   my $subfile=substr($custom_code_module_file,0,-3).'::'
                         if $custom_code_module_file;
@@ -2783,6 +3073,25 @@ return 'DONE_SUB';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
                      if (ref $sub eq 'CODE') {
+                        if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                              !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                              defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN18\n";
+                           if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                 'Plan'}} && !exists
+                                 $Net::FullAuto::FA_Core::makeplan->{
+                                 'Title'}) {
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                 =$pn{$numbor}[0];
+                           }
+                           push @{$Net::FullAuto::FA_Core::makeplan->{
+                                  'Plan'}},
+                                { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                  Number => $numbor+1,
+                                  PlanID =>
+                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                  Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                        }
                         @resu=$sub->();
                         if (-1<$#resu) {
                            if (wantarray && !no_wantarray) {
@@ -2795,6 +3104,25 @@ return 'DONE_SUB';
                      }
                      eval {
                         if ($subfile) {
+                           if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                                 !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                                 defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN19\n";
+                              if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                    'Plan'}} && !exists
+                                    $Net::FullAuto::FA_Core::makeplan->{
+                                    'Title'}) {
+                                 $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                    =$pn{$numbor}[0];
+                              }
+                              push @{$Net::FullAuto::FA_Core::makeplan->{
+                                      'Plan'}},
+                                   { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                     Number => $numbor+1,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     Item   => "&$subfile$sub" }
+                           }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
                            if ($firsterr=~/Undefined subroutine/) {
@@ -2896,22 +3224,31 @@ return 'DONE_SUB';
                my %pick=();
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
-               if ($fullauto && defined $Net::FullAuto::FA_Core::plan) {
-                  if (-1==$#{$Net::FullAuto::FA_Core::plan{'Plan'}} &&
-                        !exists $Net::FullAuto::FA_Core::plan->{'Title'}) {
-                     $Net::FullAuto::FA_Core::plan->{'Title'}=$pn{$numbor}[0]; 
-                  }
-                  push @{$Net::FullAuto::FA_Core::plan->{'Plan'}},
-                       { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                         Number => $numbor+1,
-                         Item   => $pn{$numbor}[0] }
-               }
                my $subfile=substr($custom_code_module_file,0,-3).'::'
                   if $custom_code_module_file;
                $subfile||='';
                foreach my $sub (&get_subs_from_menu($Selected)) {
                   my @resu=();
                   if (ref $sub eq 'CODE') {
+                     if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                           !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                           defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN20\n";
+                        if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                              'Plan'}} && !exists
+                              $Net::FullAuto::FA_Core::makeplan->{
+                              'Title'}) {
+                           $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                              =$pn{$numbor}[0];
+                        }
+                        push @{$Net::FullAuto::FA_Core::makeplan->{
+                               'Plan'}},
+                             { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                               Number => $numbor+1,
+                               PlanID =>
+                                  $Net::FullAuto::FA_Core::makeplan->{Number},
+                               Item   => Data::Dump::Streamer::Dump($sub)->Out() }
+                     }
                      @resu=$sub->();
                      if (-1<$#resu) {
                         if (wantarray && !no_wantarray) {
@@ -2924,6 +3261,25 @@ return 'DONE_SUB';
                   }
                   eval {
                      if ($subfile) {
+                        if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+                              !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+                              defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN21\n";
+                           if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
+                                 'Plan'}} && !exists
+                                 $Net::FullAuto::FA_Core::makeplan->{
+                                 'Title'}) {
+                              $Net::FullAuto::FA_Core::makeplan->{'Title'}
+                                 =$pn{$numbor}[0];
+                           }
+                           push @{$Net::FullAuto::FA_Core::makeplan->{
+                                   'Plan'}},
+                                { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                                  Number => $numbor+1,
+                                  PlanID =>
+                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                  Item   => "&$subfile$sub" }
+                        }
                         eval "\@resu=\&$subfile$sub";
                         my $firsterr=$@||'';
                         if ($firsterr=~/Undefined subroutine/) {
@@ -3023,11 +3379,29 @@ return 'DONE_SUB';
                 $SavePick,$SaveLast,$SaveNext,
                 $Persists,$parent_menu,$error;
       } else {
+#print "OK DIKEEY\n";
          return @picks;
       }
    }
    my $pick=$pickone[$numbor-1];
    undef @pickone;
+   if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
+         !${$MenuUnit_hash_ref}{'NoPlan'}) &&
+         defined $Net::FullAuto::FA_Core::makeplan) {
+print "IN MAKEPLAN23\n";
+      if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
+            !exists $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
+         $Net::FullAuto::FA_Core::makeplan->{'Title'}=$pick;
+      }
+      unless ($got_default) {
+         push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+              { Label  => ${$MenuUnit_hash_ref}{'Label'},
+                Number => $numbor+1,
+                PlanID =>
+                   $Net::FullAuto::FA_Core::makeplan->{Number},
+                Item   => $pick }
+      }
+   }
    return $pick,
           $FullMenu,$Selected,$Conveyed,
           $SavePick,$SaveLast,$SaveNext,
