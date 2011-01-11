@@ -2,9 +2,9 @@ package Term::Menus;
 
 #    Menus.pm
 #
-#    Copyright (C) 2000, 2001, 2002, 2003, 2004
-#                  2005, 2006, 2007, 2008, 2010
-#                  2011
+#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
+#                  2006, 2007, 2008, 2010, 2011
+#
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
 #    You may distribute under the terms of the GNU General
@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.61';
+$VERSION = '1.62';
 
 
 use 5.006;
@@ -545,9 +545,28 @@ sub fa_login
 
 sub run_sub
 {
+   use if $fullauto, "IO::Handle";
+   use if $fullauto, POSIX => qw(setsid);
+
+   if ($fullauto && $Net::FullAuto::FA_Core::service) {
+      print "\n\n   ##### TRANSITIONING TO SERVICE ######".
+            "\n\n   FullAuto will now continue running as".
+            "\n   as a Service/Daemon. Now exiting".
+            "\n   interactive mode ...\n\n";
+      chdir '/'                 or die "Can't chdir to /: $!";
+      umask 0;
+      open STDIN, '/dev/null'   or die "Can't read /dev/null: $!";
+      open STDOUT, '>/dev/null' or die "Can't write to /dev/null: $!";
+      open STDERR, '>/dev/null' or die "Can't write to /dev/null: $!";
+      defined(my $pid = fork)   or die "Can't fork: $!";
+      exit if $pid;
+      $pid = setsid          or die "Can't start a new session: $!";
+   }
+
    my $fa_code=$_[0];
    my $menu_args= (defined $_[1]) ? $_[1] : '';
-   my $subfile=substr($custom_code_module_file,0,-3).'::' if $custom_code_module_file;
+   my $subfile=substr($custom_code_module_file,0,-3).'::'
+         if $custom_code_module_file;
    $subfile||='';
    my $return=
       eval "\&$subfile$fa_code\(\@{\$menu_args}\)";
