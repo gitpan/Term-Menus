@@ -13,13 +13,16 @@ name: Term-Menus
 provides:
   Term::Menus:
     file: lib/Term/Menus.pm
-    version: 1.62
+    version: 1.63
   TMMemHandle:
+    file: lib/Term/Menus.pm
+  Term::Input:
     file: lib/Term/Menus.pm
 requires:
   Data::Dump::Streamer: 0
   Module::Load::Conditional: 0
   Term::ReadKey: 0
+#  Term::Input: 0
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 1.62
+version: 1.63

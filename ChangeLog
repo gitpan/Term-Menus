@@ -1,3 +1,11 @@
+2011-01-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.63 released.
+
+        * Updated to use new Term::Input in order to capture
+          arrow keys for easy scrolling and navigation.
+
+
 2011-01-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.62 released.

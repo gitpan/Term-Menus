@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.62';
+$VERSION = '1.63';
 
 
 use 5.006;
@@ -352,9 +352,13 @@ BEGIN { ##  Begin  Term::Menus
    our $termwidth='';
    our $termheight='';
    our $data_dump_streamer=0;
-   if ($canload->( modules => { Term::ReadKey => 0 } )) {
+   our $term_input=0;
+   eval { require Term::ReadKey };
+   unless ($@) {
+      import Term::ReadKey;
       eval {
-         ($termwidth, $termheight) = Term::ReadKey::GetTerminalSize(STDOUT);
+         ($termwidth, $termheight) =
+            Term::ReadKey::GetTerminalSize(STDOUT);
       };
       if ($@) {
          $termwidth='';$termheight='';
@@ -362,8 +366,17 @@ BEGIN { ##  Begin  Term::Menus
    } else {
       $termwidth='';$termheight='';
    }
-   if ($canload->( modules => { Data::Dump::Streamer => 0 } )) {
+   if ($termwidth) {
+      eval { require Term::Input };
+      unless ($@) {
+         $term_input=1;
+         import Term::Input;
+      }
+   }
+   eval { require Data::Dump::Streamer };
+   unless ($@) {
       $data_dump_streamer=1;
+      import Data::Dump::Streamer;
    }
    our $clearpath='';
    if ($^O ne 'MSWin32' && $^O ne 'MSWin64') {
@@ -648,7 +661,49 @@ sub Menu
                push @convey, $line;
             }
          } elsif (ref ${$Items{$num}}{Convey} eq 'CODE') {
-            @convey=${$Items{$num}}{Convey}->();
+            my $cd=${$Items{$num}}{Convey};
+            if ($data_dump_streamer) {
+               $cd=&Data::Dump::Streamer::Dump($cd)->Out();
+               my $one='';
+               while ($cd=~m/($sicm_regex)/sg) {
+                  next if $1 eq $one;
+                  $one=$1;
+                  $send_all=1 if -1<index lc($one),'a';
+                  my $esc_one=$one;
+                  $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+                  if ($convey ne 'SKIP') {
+                     if ($send_all) {
+                        if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
+                           $cd=~s/\"$esc_one\"/$all_convey/sg;
+                        } else {
+                           my $die="Can Only Use \"All\" (or A)";
+                           $die.="\n\t\tQualifier in ".__PACKAGE__;
+                           $die.=".pm when the";
+                           $die.="\n\t\t\"Select =>\" Element is ";
+                           $die.="set to\n\t\t\'Many\' in Menu Block ";
+                           $die.='%'.${$LookUpMenuName}{$_[0]}."\n\n";
+                           &Net::FullAuto::FA_Core::handle_error($die)
+                              if $fullauto;
+                           die $die;
+                        }
+                     } else {
+                        $cd=~s/$esc_one/${$_[1]}[$_[2]-1]/sg;
+                     }
+                  } $cd=~s/$esc_one/${$_[1]}[$_[2]-1]/sg;
+               }
+               $cd=&transform_pmsi($cd,
+                       $Conveyed,$pmsi_regex,$picks_from_parent);
+               while ($cd=~m/($con_regex)/sg) {
+                  next if $1 eq $one;
+                  $one=$1;
+                  my $esc_one=$one;
+                  $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+                  $cd=~s/\"$esc_one\"/$Convey_contents/sg;
+               }
+            }
+#print "WHAT IS CD=$cd<==\n";
+            my $cd_=eval $cd;
+            @convey=$cd_->();
          } elsif (substr(${$Items{$num}}{Convey},0,1) eq '&') {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
@@ -847,7 +902,7 @@ sub Menu
             && 1==$recurse) {
          my @choyce=@{$pick};undef @{$pick};undef $pick;
          return @choyce
-      } elsif ($pick) { print "DO WE GET HERE\n";return $pick }
+      } elsif ($pick) { return $pick }
    }
 
 }
@@ -940,6 +995,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       } else { print $blanklines }
    }
    my $numbor=0;                    # Number of Item Selected
+   my $ikey='';                     # Input Key - key used to
+                                    #    end menu. Can be any
+                                    #    non-alphanumeric key
+                                    #    like Enter or Right
+                                    #    Arrow.
    my $return_from_child_menu=0;
 
    my $choose_num='';
@@ -1401,7 +1461,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                        !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                        defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN1\n";
+#print "IN MAKEPLAN1\n";
                                     if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                           'Plan'}} && !exists
                                           $Net::FullAuto::FA_Core::makeplan->{
@@ -1431,7 +1491,7 @@ print "IN MAKEPLAN1\n";
                                     if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                           !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                           defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN2\n";
+#print "IN MAKEPLAN2\n";
                                        if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                              'Plan'}} && !exists
                                              $Net::FullAuto::FA_Core::makeplan->{
@@ -1586,7 +1646,7 @@ print "IN MAKEPLAN2\n";
                return ']quit['
             }
             if (-1==index $answ,'result saved') {
-print "IN MAKEPLAN3\n";
+#print "IN MAKEPLAN3\n";
                if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
                      !exists $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
                   $Net::FullAuto::FA_Core::makeplan->{'Title'}=$pn{$numbor}[0];
@@ -1648,8 +1708,14 @@ print "IN MAKEPLAN3\n";
                      "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
                      "\n   OR \"u\" to scroll upward  \(Type \"quit\" to quit\)\n";
             } else { print"\n   \(Type \"quit\" to quit\)\n" }
-            print"\n   PLEASE ENTER A CHOICE: ";
-            $numbor=<STDIN>;$pn=$numbor;chomp $pn;
+            if ($term_input) {
+               print "\n";
+               ($numbor,$ikey)=Input("   PLEASE ENTER A CHOICE: ");
+               print "\n";
+            } else {
+               print"\n   PLEASE ENTER A CHOICE: ";
+               $numbor=<STDIN>;
+            } $pn=$numbor;chomp $pn;
          } elsif ($Persists{$MenuUnit_hash_ref}{defaults}) {
             $numbor='f';
          } elsif (wantarray && !$no_wantarray) {
@@ -1714,7 +1780,14 @@ print "IN MAKEPLAN3\n";
                            "       selected anything!\n\n       Do you wish ",
                            "to quit or re-attempt selecting?\n\n       ",
                            "Type \"quit\" to quit or ENTER to continue ... ";
-                     $choice=<STDIN>;
+                     if ($term_input) {
+                        print "\n";
+                        ($choice,$ikey)=Input("   PLEASE ENTER A CHOICE: ");
+                        print "\n";
+                     } else {
+                        print"\n   PLEASE ENTER A CHOICE: ";
+                        $choice=<STDIN>;
+                     } 
                      chomp($choice);
                      next if lc($choice) ne 'quit';
                      return ']quit['
@@ -1767,7 +1840,7 @@ print "IN MAKEPLAN3\n";
                    (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                    !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                    defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN4\n";
+#print "IN MAKEPLAN4\n";
                if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
                      !exists $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
                   $Net::FullAuto::FA_Core::makeplan->{'Title'}=
@@ -1877,7 +1950,7 @@ print "IN MAKEPLAN4\n";
                         if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                               defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN5\n";
+#print "IN MAKEPLAN5\n";
                            if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                  'Plan'}} && !exists
                                  $Net::FullAuto::FA_Core::makeplan->{
@@ -1908,7 +1981,7 @@ print "IN MAKEPLAN5\n";
                            if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                  defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN6\n";
+#print "IN MAKEPLAN6\n";
                               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                     'Plan'}} && !exists
                                     $Net::FullAuto::FA_Core::makeplan->{
@@ -2119,7 +2192,7 @@ print "IN MAKEPLAN6\n";
                            if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                  defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN8\n";
+#print "IN MAKEPLAN8\n";
                               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                     'Plan'}} && !exists
                                     $Net::FullAuto::FA_Core::makeplan->{
@@ -2296,7 +2369,7 @@ print "IN MAKEPLAN8\n";
                         if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                               defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN9\n";
+#print "IN MAKEPLAN9\n";
                            if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                  'Plan'}} && !exists
                                  $Net::FullAuto::FA_Core::makeplan->{
@@ -2327,7 +2400,7 @@ print "IN MAKEPLAN9\n";
                            if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                  defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN10\n";
+#print "IN MAKEPLAN10\n";
                               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                     'Plan'}} && !exists
                                     $Net::FullAuto::FA_Core::makeplan->{
@@ -2411,10 +2484,10 @@ print "IN MAKEPLAN10\n";
 #print "WHAT IS MENU9=$menu_output\n";
                return $menu_output;
             }
-         } elsif ($numbor=~/^\</ && $FullMenu) {
+         } elsif (($numbor=~/^\</ || $ikey eq 'LEFTARROW') && $FullMenu) {
             if ($recurse_level==1) {
                print "\n   WARNING! - You are at the First Menu!",
-                     "\n   (Press any key to continue ...) ";<STDIN>;
+                     "\n   (Press ENTER to continue ...) ";<STDIN>;
             } elsif (grep { /\+|\*/ } values %picks) {
                return '+',
                   $FullMenu,$Selected,$Conveyed,
@@ -2426,7 +2499,7 @@ print "IN MAKEPLAN10\n";
                   $SavePick,$SaveLast,$SaveNext,
                   $Persists,$parent_menu;
             } last;
-         } elsif ($numbor=~/^\>/ && exists
+         } elsif (($numbor=~/^\>/ || $ikey eq 'RIGHTARROW') && exists
                   ${$SaveNext}{$MenuUnit_hash_ref}) {
             if (exists ${$FullMenu}{$MenuUnit_hash_ref}[3]
                   {$pickone[${$SaveLast}{
@@ -2461,7 +2534,7 @@ print "IN MAKEPLAN10\n";
                   if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                         !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                         defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN11\n";
+#print "IN MAKEPLAN11\n";
                      if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
                            !exists $Net::FullAuto::FA_Core::makeplan->{
                            'Title'}) {
@@ -2486,7 +2559,7 @@ print "IN MAKEPLAN11\n";
                         if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                               defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN12\n";
+#print "IN MAKEPLAN12\n";
                            if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                  'Plan'}} && !exists
                                  $Net::FullAuto::FA_Core::makeplan->{
@@ -2517,7 +2590,7 @@ print "IN MAKEPLAN12\n";
                            if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                  defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN13\n";
+#print "IN MAKEPLAN13\n";
                               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                     'Plan'}} && !exists
                                     $Net::FullAuto::FA_Core::makeplan->{
@@ -2675,17 +2748,19 @@ return 'DONE_SUB';
                $Persists{$MenuUnit_hash_ref}{defaults}=0;
             }
          }
-         if ($numbor=~/^()$/ || $numbor=~/^\n/ || $numbor=~/^d$/i) {
+         if ($numbor=~/^u$/i || $ikey eq 'UPARROW' || $ikey eq 'PAGEUP') {
+            if (0<=$start-$display_this_many_items) {
+               $start=$start-$display_this_many_items;
+            } else { $start=0 }
+            $numbor=$start+$choose_num+1;
+            last;
+         } elsif (((!$ikey || $ikey eq 'ENTER') &&
+               ($numbor=~/^()$/ || $numbor=~/^\n/)) || $numbor=~/^d$/i
+               || $ikey eq 'DOWNARROW' || $ikey eq 'PAGEDOWN') {
             if ($display_this_many_items<$num_pick-$start) {
                $start=$start+$display_this_many_items;
             } else { $start=0 }
             $hidedefaults=0;
-            $numbor=$start+$choose_num+1;
-            last;
-         } elsif ($numbor=~/^u$/i) {
-            if (0<=$start-$display_this_many_items) {
-               $start=$start-$display_this_many_items;
-            } else { $start=0 }
             $numbor=$start+$choose_num+1;
             last;
          } chomp $numbor;
@@ -2866,7 +2941,7 @@ return 'DONE_SUB';
                      if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                            !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                            defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN14\n";
+#print "IN MAKEPLAN14\n";
                         if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}}
                               && !exists
                               $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
@@ -2891,7 +2966,7 @@ print "IN MAKEPLAN14\n";
                            if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                  defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN15\n";
+#print "IN MAKEPLAN15\n";
                               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                     'Plan'}} && !exists
                                     $Net::FullAuto::FA_Core::makeplan->{
@@ -2922,7 +2997,7 @@ print "IN MAKEPLAN15\n";
                               if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                     !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                     defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN16\n";
+#print "IN MAKEPLAN16\n";
                                  if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                        'Plan'}} && !exists
                                        $Net::FullAuto::FA_Core::makeplan->{
@@ -3070,7 +3145,7 @@ print "IN MAKEPLAN16\n";
                   if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                         !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                         defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN17\n";
+#print "IN MAKEPLAN17\n";
                      if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
                            !exists
                            $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
@@ -3095,7 +3170,7 @@ print "IN MAKEPLAN17\n";
                         if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                               defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN18\n";
+#print "IN MAKEPLAN18\n";
                            if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                  'Plan'}} && !exists
                                  $Net::FullAuto::FA_Core::makeplan->{
@@ -3126,7 +3201,7 @@ print "IN MAKEPLAN18\n";
                            if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                                  defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN19\n";
+#print "IN MAKEPLAN19\n";
                               if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                     'Plan'}} && !exists
                                     $Net::FullAuto::FA_Core::makeplan->{
@@ -3252,7 +3327,7 @@ print "IN MAKEPLAN19\n";
                      if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                            !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                            defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN20\n";
+#print "IN MAKEPLAN20\n";
                         if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                               'Plan'}} && !exists
                               $Net::FullAuto::FA_Core::makeplan->{
@@ -3283,7 +3358,7 @@ print "IN MAKEPLAN20\n";
                         if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
                               defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN21\n";
+#print "IN MAKEPLAN21\n";
                            if (-1==$#{$Net::FullAuto::FA_Core::makeplan{
                                  'Plan'}} && !exists
                                  $Net::FullAuto::FA_Core::makeplan->{
@@ -3407,7 +3482,7 @@ print "IN MAKEPLAN21\n";
    if ($fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
          !${$MenuUnit_hash_ref}{'NoPlan'}) &&
          defined $Net::FullAuto::FA_Core::makeplan) {
-print "IN MAKEPLAN23\n";
+#print "IN MAKEPLAN23\n";
       if (-1==$#{$Net::FullAuto::FA_Core::makeplan{'Plan'}} &&
             !exists $Net::FullAuto::FA_Core::makeplan->{'Title'}) {
          $Net::FullAuto::FA_Core::makeplan->{'Title'}=$pick;
@@ -3482,6 +3557,250 @@ sub READLINE {
    my $self = shift;
    shift @$self;
 }
+
+package Term::Input;
+
+#    Input.pm
+#
+#    Copyright (C) 2011
+#
+#    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
+#
+#    You may distribute under the terms of the GNU General
+#    Public License, as specified in the LICENSE file.
+#    (http://www.opensource.org/licenses/gpl-license.php).
+#
+#    http://www.fullautosoftware.net/
+
+## See user documentation at the end of this file.  Search for =head
+
+
+#$VERSION = '1.04';
+
+
+use 5.006;
+
+## Module export.
+use vars qw(@EXPORT);
+@EXPORT = qw(Input);
+## Module import.
+use Exporter ();
+use Config ();
+our @ISA = qw(Exporter);
+
+use strict;
+use Term::ReadKey;
+use IO::Handle;
+
+sub Input {
+
+   my $length_prompt=length $_[0];
+   ReadMode('cbreak');
+   my $a='';
+   my $key='';
+   my @char=();
+   my $char='';
+   my $output=$_[0];
+   printf("\r% ${length_prompt}s",$output);
+   my $save='';
+   while (1) {
+      $char=ReadKey(0);
+      STDOUT->autoflush(1);
+      $a=ord($char);
+      push @char, $a;
+      if ($a==10 || $a==13) {
+         $save=$output;
+         while (1) {
+            last if (length $output==$length_prompt);
+            substr($output,-1)=' ';
+            printf("\r% ${length_prompt}s",$output);
+            chop $output;
+            printf("\r% ${length_prompt}s",$output);
+            last if (length $output==$length_prompt);
+         }
+         $key='ENTER' if $a==10;
+         last
+      }
+      if ($a==127) {
+         next if (length $output==$length_prompt);
+         substr($output,-1)=' ';
+         printf("\r% ${length_prompt}s",$output);
+         chop $output;
+         printf("\r% ${length_prompt}s",$output);
+      } elsif ($a==27) {
+         my $flag=0;
+         while ($char=ReadKey(-1)) {
+            $a=ord($char);
+            push @char, $a;
+            $flag++;
+         }
+         unless ($flag) {
+            $key='Escape';
+            last;
+         } elsif ($flag==2) {
+            my $e=$#char-2;
+            if ($char[$e+1]==79) {
+               if ($char[$e+2]==80) {
+                  $key='F1';
+               } elsif ($char[$e+2]==81) {
+                  $key='F2';
+               } elsif ($char[$e+2]==82) {
+                  $key='F3'; 
+               } elsif ($char[$e+2]==83) {
+                  $key='F4';
+               }
+            } elsif ($char[$e+1]==91) {
+               if ($char[$e+2]==65) {
+                  $key='UPARROW';
+               } elsif ($char[$e+2]==66) {
+                  $key='DOWNARROW';
+               } elsif ($char[$e+2]==67) {
+                  $key='RIGHTARROW';
+               } elsif ($char[$e+2]==68) {
+                  $key='LEFTARROW';
+               } elsif ($char[$e+2]==70) {
+                  $key='END';
+               } elsif ($char[$e+2]==72) {
+                  $key='HOME';
+               }
+               if ($key) {
+                  $save=$output;
+                  while (1) {
+                     last if (length $output==$length_prompt);
+                     substr($output,-1)=' ';
+                     printf("\r% ${length_prompt}s",$output);
+                     last if (length $output==$length_prompt);
+                     chop $output;
+                     printf("\r% ${length_prompt}s",$output);
+                     last if (length $output==$length_prompt);
+                  } last
+               }
+            }
+            if ($key) {
+               $save=$output;
+               while (1) {
+                  last if (length $output==$length_prompt);
+                  substr($output,-1)=' ';
+                  printf("\r% ${length_prompt}s",$output);
+                  chop $output;
+                  printf("\r% ${length_prompt}s",$output);
+                  last if (length $output==$length_prompt);
+               } last
+            }
+         } elsif ($flag==3) {
+            my $e=$#char-3;
+            if ($char[$e+1]==91) {
+               if ($char[$e+2]==49) {
+                  if ($char[$e+3]==126) {
+                     $key='HOME';
+                  }
+               } elsif ($char[$e+2]==50) {
+                  if ($char[$e+3]==126) {
+                     $key='INSERT';
+                  }
+               } elsif ($char[$e+2]==51) {
+                  if ($char[$e+3]==126) {
+                     $key='DELETE';
+                  }
+               } elsif ($char[$e+2]==52) {
+                  if ($char[$e+3]==126) {
+                     $key='END';
+                  }
+               } elsif ($char[$e+2]==53) {
+                  if ($char[$e+3]==126) {
+                     $key='PAGEUP';
+                  }
+               } elsif ($char[$e+2]==54) {
+                  if ($char[$e+3]==126) {
+                     $key='PAGEDOWN';
+                  }
+               }
+            }
+            if ($key) {
+               $save=$output;
+               while (1) {
+                  last if (length $output==$length_prompt);
+                  substr($output,-1)=' ';
+                  printf("\r% ${length_prompt}s",$output);
+                  last if (length $output==$length_prompt);
+                  chop $output;
+                  printf("\r% ${length_prompt}s",$output);
+                  last if (length $output==$length_prompt);
+               } last
+            }
+         } elsif ($flag==4) {
+            my $e=$#char-4;
+            if ($char[$e+1]==91) {
+               if ($char[$e+2]==49) {
+                  if ($char[$e+3]==53) {
+                     if ($char[$e+4]==126) {
+                        $key='F5';
+                     }
+                  } elsif ($char[$e+3]==55) {
+                     if ($char[$e+4]==126) {
+                        $key='F6';
+                     }
+                  } elsif ($char[$e+3]==56) {
+                     if ($char[$e+4]==126) {
+                        $key='F7';
+                     }
+                  } elsif ($char[$e+3]==57) {
+                     if ($char[$e+4]==126) {
+                        $key='F8';
+                     }
+                  }
+               } elsif ($char[$e+2]==50) {
+                  if ($char[$e+3]==48) {
+                     if ($char[$e+4]==126) {
+                        $key='F9';
+                     }
+                  } elsif ($char[$e+3]==49) {
+                     if ($char[$e+4]==126) {
+                        $key='F10';
+                     }
+                  } elsif ($char[$e+3]==51) {
+                     if ($char[$e+4]==126) {
+                        $key='F11';
+                     }
+                  } elsif ($char[$e+3]==52) {
+                     if ($char[$e+4]==126) {
+                        $key='F12';
+                     }
+                  } elsif ($char[$e+3]==57) {
+                     if ($char[$e+4]==126) {
+                        $key='CONTEXT';
+                     }
+                  } 
+               }
+
+            }
+            if ($key) {
+               $save=$output;
+               while (1) {
+                  last if (length $output==$length_prompt);
+                  substr($output,-1)=' ';
+                  printf("\r% ${length_prompt}s",$output);
+                  last if (length $output==$length_prompt);
+                  chop $output;
+                  printf("\r% ${length_prompt}s",$output);
+                  last if (length $output==$length_prompt);
+               } last
+            }
+         }
+      } else {
+         $output.=chr($a);
+         printf("\r% ${length_prompt}s",$output);
+      }
+      last unless defined $char;
+   }
+   substr($save,0,$length_prompt)='';
+   STDOUT->autoflush(0);
+   ReadMode('normal');
+
+   return $save,$key;
+
+}
+1;
 
 __END__;
 
