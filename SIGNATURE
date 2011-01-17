@@ -14,7 +14,7 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 3b59516cad94db545f7a7b9dfc88c712d06c7f20 ChangeLog
+SHA1 d02a53d0ea7992d0039baa3de18c6443eb0c9e9d ChangeLog
 SHA1 a74125560a260a18a646ef0b3702e1b77a45b931 LICENSE
 SHA1 536d4ce30b1934be585da55e463477877c31fe8c MANIFEST
 SHA1 d207b33faca443c4d36463ac7ecdfec9806fb51b META.yml
@@ -31,13 +31,13 @@ SHA1 b721c93ca5bc9a6aa863b49af15f1b1de6125935 inc/Module/Install/Makefile.pm
 SHA1 026cc0551a0ad399d195e395b46bdf842e115192 inc/Module/Install/Metadata.pm
 SHA1 5457015ea5a50e93465bf2dafa29feebd547f85b inc/Module/Install/Win32.pm
 SHA1 051e7fa8063908befa3440508d0584a2497b97db inc/Module/Install/WriteAll.pm
-SHA1 3c1f6aa3c972b2620a0a9e01e6fea7a04467e49d lib/Term/Menus.pm
+SHA1 234bec3b9b604086b051b053dc5537a9585a7d38 lib/Term/Menus.pm
 SHA1 7f2e13f5f6a798d52ea897d24d07b49af4039341 t/0-signature.t
 SHA1 ded9def7d10cf71606da96112acc159e0aa9a582 t/test.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (Cygwin)
 
-iEYEARECAAYFAk00aUMACgkQdsVAdUjO9Ik04gCdFgxTYYB8c8mJyex8VXtLgVxC
-bJQAniUYLihdwP/2lSy9J6dcZ+yhr1CM
-=oNHJ
+iEYEARECAAYFAk00cNgACgkQdsVAdUjO9ImDyQCcD2tkBtfy6UQ9+iA7UWBc43MT
+IWAAnA8iJjgGvtbKlDI84hWJqUtByd0a
+=pWtn
 -----END PGP SIGNATURE-----

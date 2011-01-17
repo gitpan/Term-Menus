@@ -1,5 +1,12 @@
 2011-01-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.65 released.
+
+        * Attempting fix to Input Version for CPAN parser.
+
+
+2011-01-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.64 released.
 
         * Temporarily included new module Term::Input as

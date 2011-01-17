@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.64';
+$VERSION = '1.65';
 
 
 use 5.006;
@@ -3576,7 +3576,7 @@ package Input;
 ## See user documentation at the end of this file.  Search for =head
 
 
-#$VERSION = '1.04';
+$Input::VERSION = '1.05';
 
 
 use 5.006;
