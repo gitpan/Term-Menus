@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.63';
+$VERSION = '1.64';
 
 
 use 5.006;
@@ -372,6 +372,7 @@ BEGIN { ##  Begin  Term::Menus
          $term_input=1;
          import Term::Input;
       }
+$term_input=1;
    }
    eval { require Data::Dump::Streamer };
    unless ($@) {
@@ -1710,7 +1711,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } else { print"\n   \(Type \"quit\" to quit\)\n" }
             if ($term_input) {
                print "\n";
-               ($numbor,$ikey)=Input("   PLEASE ENTER A CHOICE: ");
+               ($numbor,$ikey)=Input::Input("   PLEASE ENTER A CHOICE: ");
                print "\n";
             } else {
                print"\n   PLEASE ENTER A CHOICE: ";
@@ -1782,7 +1783,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            "Type \"quit\" to quit or ENTER to continue ... ";
                      if ($term_input) {
                         print "\n";
-                        ($choice,$ikey)=Input("   PLEASE ENTER A CHOICE: ");
+                        ($choice,$ikey)=Input::Input("   PLEASE ENTER A CHOICE: ");
                         print "\n";
                      } else {
                         print"\n   PLEASE ENTER A CHOICE: ";
@@ -3558,7 +3559,7 @@ sub READLINE {
    shift @$self;
 }
 
-package Term::Input;
+package Input;
 
 #    Input.pm
 #

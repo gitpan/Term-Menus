@@ -1,3 +1,13 @@
+2011-01-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.64 released.
+
+        * Temporarily included new module Term::Input as
+          package Input inside of Term::Menus until CPAN
+          approves Term::Menu for inclusion in the Module
+          List.
+
+
 2011-01-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.63 released.
