@@ -16,19 +16,31 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.66';
+our $VERSION = '1.68';
 
 
 use 5.006;
 
-#use strict;
+use strict;
+use warnings;
 ## Module export.
-use vars qw(@EXPORT);
-our @EXPORT = qw(pick Menu);
-## Module import.
-use Exporter ();
-use Config ();
+require Exporter;
 our @ISA = qw(Exporter);
+use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
+            %blanklines %maps_config_module_file %parent_menu %Hosts
+            %custom_code_module_file %canload %setsid %EXPORT %log
+            %VERSION %SetTerminalSize %SetControlChars %find_Selected
+            %clearpath %noclear %ReadKey %local_hostname %BEGIN %ISA
+            %editor %__ANON__  %data_dump_streamer %Maps %ReadMode
+            %configuration_module_file %transform_pmsi %termwidth %a
+            %DumpVars %DumpLex %fullauto %delete_Selected %timeout
+            %pick %termheight %EXPORT_OK %ReadLine %fa_login %Menu
+            %menu_config_module_file %hosts_config_module_file %FH
+            %get_all_hosts %hostname %GetSpeed %get_subs_from_menu
+            %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
+            %GetControlChars %numerically);
+@EXPORT = qw(pick Menu);
+use Config ();
 our $canload=sub {};
 BEGIN {
    our $canload=sub {};
@@ -372,12 +384,13 @@ if (defined $fa_code::tosspass && $fa_code::tosspass) {
       $termwidth='';$termheight='';
    }
    if ($termwidth) {
-      eval { require Term::Input };
-      unless ($@) {
-         $term_input=1;
-         import Term::Input;
+      eval { require Term::RawInput };
+      if (!$@ && $^O!~/MSWin/) {
+      #unless ($@) {
+         #$term_input=1;
+         import Term::RawInput;
       }
-$term_input=1;
+#$term_input=1;
    }
    eval { require Data::Dump::Streamer };
    unless ($@) {
@@ -452,7 +465,7 @@ foreach my $dir (@INC) {
 }
 
 if ($Term::Menus::fullauto) {
-   no strict 'refs';
+   #no strict 'refs';
    foreach my $symname (keys %Term::Menus::) {
       if (eval "\\%$symname") {
          my $hashref=eval "\\%$symname";
@@ -585,8 +598,8 @@ sub run_sub
       open STDERR, '>/dev/null' or die "Can't write to /dev/null: $!";
       defined(my $pid = fork)   or die "Can't fork: $!";
       exit if $pid;
-      no strict 'subs';
-      $pid = setsid          or die "Can't start a new session: $!";
+      #no strict 'subs';
+      $pid = &setsid          or die "Can't start a new session: $!";
    }
 
    my $fa_code=$_[0];
@@ -596,6 +609,7 @@ sub run_sub
    $subfile||='';
    my $return=
       eval "\&$subfile$fa_code\(\@{\$menu_args}\)";
+print "HERE AND WHAT IS=$return\n";
    &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
    return $return;
 }
@@ -610,7 +624,7 @@ sub Menu
 #print "MENUCALLER=",(caller)[0]," and ",__PACKAGE__,"\n";<STDIN>;
 #print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
-   my $picks_from_parent=$_[1];
+   my $picks_from_parent=$_[1]||'';
    my $unattended=0;
    if ($picks_from_parent=~/\](Cron|Batch|Unattended|FullAuto)\[/i) {
       $unattended=1;
@@ -680,10 +694,12 @@ sub Menu
                $cd=&transform_pmsi($cd,
                        $Conveyed,$pmsi_regex,$picks_from_parent);
             }
-#print "WHAT IS CD=$cd<==\n";
-            my $cd_=eval $cd;
-            $cd_||=sub {};
-            @convey=$cd_->();
+#print "WHAT IS CDNOW=$cd<==\n";<STDIN>;
+            $cd=~s/\$CODE\d*\s*=\s*//s;
+#print "WHAT IS CDREALLYNOW=$cd<==\n";<STDIN>;
+            my $evalcd=eval $cd;
+            $evalcd||=sub {};
+            @convey=$evalcd->();
          } elsif (substr(${$Items{$num}}{Convey},0,1) eq '&') {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
@@ -802,7 +818,7 @@ sub Menu
    }
    %default=() if defined ${$FullMenu}{$MenuUnit_hash_ref}[5]
       && !$cl_def;
-   my $nm_=(keys %num__)?\%num__:'_ZERO_';
+   my $nm_=(keys %num__)?\%num__:{};
    ${$FullMenu}{$MenuUnit_hash_ref}=[ $MenuUnit_hash_ref,
       \%negate,\%result,\%convey,\%chosen,\%default,$nm_,
       $filtered,$picks ];
@@ -954,11 +970,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       } else { print $blanklines }
    }
    my $numbor=0;                    # Number of Item Selected
-   my $ikey='';                     # Input Key - key used to
-                                    #    end menu. Can be any
-                                    #    non-alphanumeric key
-                                    #    like Enter or Right
-                                    #    Arrow.
+   my $ikey='';                     # RawInput Key - key used
+                                    #    to end menu. Can be
+                                    #    any non-alphanumeric
+                                    #    key like Enter or
+                                    #    Right Arrow.
    my $return_from_child_menu=0;
 
    my $choose_num='';
@@ -1230,6 +1246,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $cd=~s/\"$esc_one\"/$Convey_contents/sg;
                   }
                }
+               $cd=~s/\$CODE\d*\s*=\s*//s;
                eval { $test_item=eval $cd };
                if ($@) {
                   if (unpack('a11',$@) eq 'FATAL ERROR') {
@@ -1329,7 +1346,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $sorted_flag=0;
       $Persists->{$MenuUnit_hash_ref}={} unless exists
          $Persists->{$MenuUnit_hash_ref};
-      if (!exists $Persists->{$MenuUnit_hash_ref}{defaults}) {
+      if (!exists $Persists->{$MenuUnit_hash_ref}{defaults} &&
+               defined ${[keys %{${$FullMenu}{$MenuUnit_hash_ref}[5]}]}[0]) {
          my $it=${[keys %{${$FullMenu}{$MenuUnit_hash_ref}[5]}]}[0];
          my $def=${$FullMenu}{$MenuUnit_hash_ref}[5]{$it};
          if ($def) {
@@ -1420,7 +1438,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
                               my @resu=();
-                              if (ref $sub eq 'code') {
+                              if (ref $sub eq 'CODE') {
                                  if ($Term::Menus::fullauto && (!exists
                                        ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                        !${$MenuUnit_hash_ref}{'NoPlan'})
@@ -1561,8 +1579,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             $pn=$picknum;
 #print "WTF=${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]} AND PNnow=$pn\n";
             if (${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]} &&
-                  ${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]}
-                  ne '_ZERO_') {
+                  keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]
+                  {$pickone[$picknum-1]}}) {
                $pn=${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]};
 #print "WHAT IS PN=$pn and PM=$parent_menu and MU=$MenuUnit_hash_ref\n";
 #print "COME ON=",keys %{${$SavePick}{$MenuUnit_hash_ref}},"\n";
@@ -1678,9 +1696,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
                      "\n   OR \"u\" to scroll upward  \(Type \"quit\" to quit\)\n";
             } else { print"\n   \(Type \"quit\" to quit\)\n" }
-            if ($Term::Menus::term_input) {
+            #if ($Term::Menus::term_input) {
+            if (0) {
                print "\n";
-               ($numbor,$ikey)=Input::Input("   PLEASE ENTER A CHOICE: ");
+               ($numbor,$ikey)=RawInput::rawInput("   PLEASE ENTER A CHOICE: ");
                print "\n";
             } else {
                print"\n   PLEASE ENTER A CHOICE: ";
@@ -1750,9 +1769,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            "       selected anything!\n\n       Do you wish ",
                            "to quit or re-attempt selecting?\n\n       ",
                            "Type \"quit\" to quit or ENTER to continue ... ";
-                     if ($Term::Menus::term_input) {
+                     #if ($Term::Menus::term_input) {
+                     if (0) {
                         print "\n";
-                        ($choice,$ikey)=Input::Input("   PLEASE ENTER A CHOICE: ");
+                        ($choice,$ikey)=RawInput::rawInput(
+                           "   PLEASE ENTER A CHOICE: ");
                         print "\n";
                      } else {
                         print"\n   PLEASE ENTER A CHOICE: ";
@@ -1851,10 +1872,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      exists ${$FullMenu}{$MenuUnit_hash_ref}[6]
                      {$pn{$picknum}[0]} && ${$FullMenu}
                      {$MenuUnit_hash_ref}[6]{$pn{$picknum}[0]} &&
-                     ${$FullMenu}{$MenuUnit_hash_ref}[6]
+                     keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]
                      {$pn{$picknum}[0]} && ${$FullMenu}
-                     {$MenuUnit_hash_ref}[6]{$pn{$picknum}[0]}
-                     ne '_ZERO_') {
+                     {$MenuUnit_hash_ref}[6]{$pn{$picknum}[0]}}) {
                   $sort{$line}=${$FullMenu}{$MenuUnit_hash_ref}[6]{$line};
                } else { $sort{$line}=$cnt }
             } $cnt=0;
@@ -3554,9 +3574,9 @@ sub READLINE {
    shift @$self;
 }
 
-package Input;
+package RawInput;
 
-#    Input.pm
+#    RawInput.pm
 #
 #    Copyright (C) 2011
 #
@@ -3571,14 +3591,14 @@ package Input;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$Input::VERSION = '1.05';
+$RawInput::VERSION = '1.06';
 
 
 use 5.006;
 
 ## Module export.
 use vars qw(@EXPORT);
-@EXPORT = qw(Input);
+@EXPORT = qw(rawInput);
 ## Module import.
 use Exporter ();
 use Config ();
@@ -3588,7 +3608,7 @@ use strict;
 use Term::ReadKey;
 use IO::Handle;
 
-sub Input {
+sub rawInput {
 
    my $length_prompt=length $_[0];
    ReadMode('cbreak');

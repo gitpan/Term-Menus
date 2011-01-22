@@ -1,3 +1,20 @@
+2011-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.68 released.
+
+        * Dozens of changes in conjunction with hundreds of
+          changes in FullAuto. 'use strict' and 'use warnings'
+          are NOW TURNED *ON* in both Menus and FullAuto.
+
+
+2011-01-18  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.67 released.
+
+        * Fixed EXPORT issue - THANKS to Yogesh Sawant for
+          pointing this out.
+
+
 2011-01-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.66 released.

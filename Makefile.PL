@@ -9,7 +9,7 @@ all_from        'lib/Term/Menus.pm';
 requires        'Data::Dump::Streamer'      => 0;
 requires        'Module::Load::Conditional' => 0;
 requires        'Term::ReadKey'             => 0;
-#requires        'Term::Input'               => 0;
+#requires        'Term::RawInput'               => 0;
 auto_install;
 WriteAll;
 
