@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.70';
+our $VERSION = '1.71';
 
 
 use 5.006;
@@ -828,7 +828,7 @@ sub Menu
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveLast,$SaveNext,$Persists,$parent_menu)=&pick(
                         $picks,$banner,
-                        $display_this_many_items,'',
+                        $display_this_many_items,'','',
                         $MenuUnit_hash_ref,++$recurse,
                         $picks_from_parent,$parent_menu,
                         $FullMenu,$Selected,$Conveyed,$SavePick,
@@ -849,12 +849,12 @@ sub Menu
             && 1==$recurse) {
          my @choyce=@{$pick};undef @{$pick};undef $pick;
          return @choyce
-      } elsif ($pick) { print "ONEXX\n";return $pick }
+      } elsif ($pick) { return $pick }
    } else {
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveLast,$SaveNext,$Persists,$parent_menu)
               =&pick($picks,$banner,$display_this_many_items,
-                       '',$MenuUnit_hash_ref,++$recurse,
+                       '','',$MenuUnit_hash_ref,++$recurse,
                        $picks_from_parent,$parent_menu,
                        $FullMenu,$Selected,$Conveyed,$SavePick,
                        $SaveLast,$SaveNext,$Persists,
@@ -904,6 +904,7 @@ sub transform_pmsi
 sub pick # USAGE: &pick( ref_to_choices_array,
              #  (Optional)       banner_string,
              #  (Optional)       display_this_many_items,
+             #  (Optional)       return_index_only_flag,
              #  (Optional)       log_file_handle,
              #  ----------
              #  For Use With Sub-Menus
@@ -933,23 +934,24 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    my @pickone=@{$_[0]};
    my $banner=defined $_[1] ? $_[1] : "\n   Please Pick an Item :";
    my $display_this_many_items=defined $_[2] ? $_[2] : 10;
-   my $log_handle= (defined $_[3]) ? $_[3] : '';
+   my $return_index_only_flag=(defined $_[3]) ? 1 : 0;
+   my $log_handle= (defined $_[4]) ? $_[4] : '';
 
    # Used Only With Cascasding Menus (Optional)
-   my $MenuUnit_hash_ref= (defined $_[4]) ? $_[4] : '';
-   my $recurse_level= (defined $_[5]) ? $_[5] : 1;
-   my $picks_from_parent= (defined $_[6]) ? $_[6] : '';
-   my $parent_menu= (defined $_[7]) ? $_[7] : '';
-   my $FullMenu= (defined $_[8]) ? $_[8] : {};
-   my $Selected= (defined $_[9]) ? $_[9] : {};
-   my $Conveyed= (defined $_[10]) ? $_[10] : {};
-   my $SavePick= (defined $_[11]) ? $_[11] : {};
-   my $SaveLast= (defined $_[12]) ? $_[12] : {};
-   my $SaveNext= (defined $_[13]) ? $_[13] : {};
-   my $Persists= (defined $_[14]) ? $_[14] : {};
-   my $Convey_contents= (defined $_[15]) ? $_[15] : [];
-   my $no_wantarray= (defined $_[16]) ? $_[16] : 0;
-   my $sorted= (defined $_[17]) ? $_[17] : 0;
+   my $MenuUnit_hash_ref= (defined $_[5]) ? $_[5] : '';
+   my $recurse_level= (defined $_[6]) ? $_[6] : 1;
+   my $picks_from_parent= (defined $_[7]) ? $_[7] : '';
+   my $parent_menu= (defined $_[8]) ? $_[8] : '';
+   my $FullMenu= (defined $_[9]) ? $_[9] : {};
+   my $Selected= (defined $_[10]) ? $_[10] : {};
+   my $Conveyed= (defined $_[11]) ? $_[11] : {};
+   my $SavePick= (defined $_[12]) ? $_[12] : {};
+   my $SaveLast= (defined $_[13]) ? $_[13] : {};
+   my $SaveNext= (defined $_[14]) ? $_[14] : {};
+   my $Persists= (defined $_[15]) ? $_[15] : {};
+   my $Convey_contents= (defined $_[16]) ? $_[16] : [];
+   my $no_wantarray= (defined $_[17]) ? $_[17] : 0;
+   my $sorted= (defined $_[18]) ? $_[18] : 0;
 
    my %items=();my %picks=();my %negate=();
    my %exclude=();my %include=();my %default=();
@@ -1041,10 +1043,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 
    sub get_subs_from_menu
    {
+print "CALLER=",caller,"\n";
       my $Selected=$_[0];
       my @subs=();
       foreach my $key (keys %{$Selected}) {
          foreach my $item (keys %{${$Selected}{$key}}) {
+print "WHAT=${$Selected}{$key}{$item}<==\n";
             if (substr(${$Selected}{$key}{$item},0,1) eq '&') {
                push @subs, escape_quotes(unpack('x1 a*',${$Selected}{$key}{$item}));
             } elsif (ref ${$Selected}{$key}{$item} eq 'CODE') {
@@ -1089,7 +1093,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             $convey='SKIP' if $convey eq '';
          }
          if (exists ${$_[0]}{${$FullMenu}{$_[0]}
-               [4]{${$_[1]}[$_[2]-1]}}{Convey}) {
+               [4]{${$_[1]}[$_[2]-1]}}{Convey} &&
+               ref ${$_[0]}{${$FullMenu}{$_[0]}
+               [4]{${$_[1]}[$_[2]-1]}}{Convey} eq 'HASH') {
             ${$Conveyed}{${$Term::Menus::LookUpMenuName}{$_[0]}}=$convey;
             $parent_menu=${$Term::Menus::LookUpMenuName}{$_[0]};
             if (ref ${$_[0]}{${$FullMenu}{$_[0]}
@@ -3307,6 +3313,60 @@ return 'DONE_SUB';
                if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
                      eq 'CODE') {
 #print "GOT CODE\n";
+                  my $send_all=0;my $all_convey='';my $cd='';
+                  my $sub=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
+                  my $sicm_regex=
+                     qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
+                        *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*a*(l+l)*\[/xi;
+                  my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
+                     *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
+                  if ($Term::Menus::data_dump_streamer) {
+                     $cd=&Data::Dump::Streamer::Dump($sub)->Out();
+                     while ($cd=~m/($sicm_regex)/sg) {
+                        next unless $1;
+                        my $esc_one=$1;
+                        $send_all=1 if -1<index lc($esc_one),'a';
+                        $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+                        $cd=~s/$esc_one/$pickone[$numbor-1]/sg;
+                     }
+                     $cd=&transform_pmsi($cd,
+                             $Conveyed,$pmsi_regex,$picks_from_parent);
+                  }
+                  $cd=~s/\$CODE\d*\s*=\s*//s;
+                  $sub=eval $cd;
+                  if ($@) {
+                     my $die='';
+                     if (unpack('a11',$@) eq 'FATAL ERROR') {
+                        if (defined $log_handle &&
+                              -1<index $log_handle,'*') {
+                           print $log_handle $@;
+                           close($log_handle);
+                        }
+                        die $@;
+                     } else {
+                        $die="\n       FATAL ERROR! - The Local "
+                               ."System $Term::Menus::local_hostname Conveyed\n"
+                               ."              the Following "
+                               ."Unrecoverable Error Condition :\n\n"
+                               ."       $@";
+                        if (defined $log_handle &&
+                              -1<index $log_handle,'*') {
+                           print $log_handle $die;
+                           close($log_handle);
+                        }
+                     }
+                     if ($Term::Menus::fullauto) {
+                        &Net::FullAuto::FA_Core::handle_error($die);
+                     } else { die $die }
+                  }
+                  my @resu=$sub->();
+                  if (-1<$#resu) {
+                     if (wantarray && !$no_wantarray) {
+                        return @resu;
+                     } else {
+                        return $resu[0];
+                     }
+                  }
                } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
                      [2]{$pn{$numbor}[0]},0,1) ne '&') {
                   my $die="The \"Result14 =>\" Setting\n              -> "
@@ -3591,7 +3651,7 @@ package RawInput;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$VERSION = '1.11';
+$VERSION = '1.12';
 
 
 use 5.006;

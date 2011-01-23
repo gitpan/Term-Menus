@@ -1,5 +1,15 @@
 2011-01-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.71 released.
+
+        * Added ability to use anonymous subroutines with
+          the Result element. The subroutines can contain
+          macros that will be populated before the 
+          subroutine is executed.
+
+
+2011-01-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.70 released.
 
         * Updated embedded RawInput package - it now works
