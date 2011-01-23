@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.68';
+our $VERSION = '1.69';
 
 
 use 5.006;
@@ -38,7 +38,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %menu_config_module_file %hosts_config_module_file %FH
             %get_all_hosts %hostname %GetSpeed %get_subs_from_menu
             %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
-            %GetControlChars %numerically);
+            %GetControlChars %numerically %rawInput);
 @EXPORT = qw(pick Menu);
 use Config ();
 our $canload=sub {};
@@ -681,6 +681,7 @@ sub Menu
          &Net::FullAuto::FA_Core::handle_error($die) if $Term::Menus::fullauto;
          die $die;
       }
+      ${$MenuUnit_hash_ref}{Select}||='One';
       my $con_regex=qr/\]c(o+nvey)*\[/i;
       if (exists ${$Items{$num}}{Convey}) {
          if (ref ${$Items{$num}}{Convey} eq 'ARRAY') {
@@ -1577,9 +1578,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $picks{$picknum}='*';$mark='*';$mark_flg=1;
             }
             $pn=$picknum;
-#print "WTF=${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]} AND PNnow=$pn\n";
-            if (${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]} &&
-                  keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]
+            ${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]}||='';
+#print "WTF=${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]} AND PNnow=$pn AND $pickone[$picknum-1]\n";
+            if (ref ${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]}
+                  eq 'HASH' && keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]
                   {$pickone[$picknum-1]}}) {
                $pn=${$FullMenu}{$MenuUnit_hash_ref}[6]{$pickone[$picknum-1]};
 #print "WHAT IS PN=$pn and PM=$parent_menu and MU=$MenuUnit_hash_ref\n";
@@ -3591,7 +3593,7 @@ package RawInput;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$RawInput::VERSION = '1.06';
+$RawInput::VERSION = '1.09';
 
 
 use 5.006;

@@ -1,5 +1,12 @@
 2011-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.69 released.
+
+        * Added %rawInput to @EXPORT.
+
+
+2011-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.68 released.
 
         * Dozens of changes in conjunction with hundreds of
