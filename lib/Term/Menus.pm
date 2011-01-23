@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.69';
+our $VERSION = '1.70';
 
 
 use 5.006;
@@ -384,13 +384,13 @@ if (defined $fa_code::tosspass && $fa_code::tosspass) {
       $termwidth='';$termheight='';
    }
    if ($termwidth) {
-      eval { require Term::RawInput };
-      if (!$@ && $^O!~/MSWin/) {
+      #eval { require Term::RawInput };
+      #if (!$@ && $^O!~/MSWin/) {
       #unless ($@) {
-         #$term_input=1;
-         import Term::RawInput;
-      }
-#$term_input=1;
+      #   $term_input=1;
+      #   import Term::RawInput;
+      #}
+$term_input=1;
    }
    eval { require Data::Dump::Streamer };
    unless ($@) {
@@ -1698,8 +1698,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
                      "\n   OR \"u\" to scroll upward  \(Type \"quit\" to quit\)\n";
             } else { print"\n   \(Type \"quit\" to quit\)\n" }
-            #if ($Term::Menus::term_input) {
-            if (0) {
+            if ($Term::Menus::term_input) {
                print "\n";
                ($numbor,$ikey)=RawInput::rawInput("   PLEASE ENTER A CHOICE: ");
                print "\n";
@@ -1771,8 +1770,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            "       selected anything!\n\n       Do you wish ",
                            "to quit or re-attempt selecting?\n\n       ",
                            "Type \"quit\" to quit or ENTER to continue ... ";
-                     #if ($Term::Menus::term_input) {
-                     if (0) {
+                     if ($Term::Menus::term_input) {
                         print "\n";
                         ($choice,$ikey)=RawInput::rawInput(
                            "   PLEASE ENTER A CHOICE: ");
@@ -3578,7 +3576,7 @@ sub READLINE {
 
 package RawInput;
 
-#    RawInput.pm
+#    RawInput
 #
 #    Copyright (C) 2011
 #
@@ -3593,7 +3591,7 @@ package RawInput;
 ## See user documentation at the end of this file.  Search for =head
 
 
-$RawInput::VERSION = '1.09';
+$VERSION = '1.11';
 
 
 use 5.006;
@@ -3619,7 +3617,9 @@ sub rawInput {
    my @char=();
    my $char='';
    my $output=$_[0];
+   STDOUT->autoflush(1);
    printf("\r% ${length_prompt}s",$output);
+   STDOUT->autoflush(0);
    my $save='';
    while (1) {
       $char=ReadKey(0);
@@ -3636,15 +3636,19 @@ sub rawInput {
             printf("\r% ${length_prompt}s",$output);
             last if (length $output==$length_prompt);
          }
-         $key='ENTER' if $a==10;
+         $key='ENTER';
          last
       }
-      if ($a==127) {
+      if ($a==127 || $a==8) {
          next if (length $output==$length_prompt);
          substr($output,-1)=' ';
+         STDOUT->autoflush(1);
          printf("\r% ${length_prompt}s",$output);
+         STDOUT->autoflush(0);
          chop $output;
+         STDOUT->autoflush(1);
          printf("\r% ${length_prompt}s",$output);
+         STDOUT->autoflush(0);
       } elsif ($a==27) {
          my $flag=0;
          while ($char=ReadKey(-1)) {
@@ -3666,6 +3670,10 @@ sub rawInput {
                   $key='F3'; 
                } elsif ($char[$e+2]==83) {
                   $key='F4';
+               } elsif ($char[$e+2]==115) {
+                  $key='PAGEDOWN';
+               } elsif ($char[$e+2]==121) {
+                  $key='PAGEUP';
                }
             } elsif ($char[$e+1]==91) {
                if ($char[$e+2]==65) {
@@ -3821,7 +3829,6 @@ sub rawInput {
 1;
 
 __END__;
-
 
 ######################## User Documentation ##########################
 

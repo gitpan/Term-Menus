@@ -1,3 +1,13 @@
+2011-01-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.70 released.
+
+        * Updated embedded RawInput package - it now works
+          with Windows Versions of Perl (i.e. Strawberry).
+          Turned on rawInput instead of <STDIN> so arrow keys
+          now WORK with scrolling and menu navigation.
+
+
 2011-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.69 released.
