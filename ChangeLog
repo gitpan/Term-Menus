@@ -1,5 +1,17 @@
 2011-01-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.72 released.
+
+        * Fixed return for &pickone.
+
+        * Lots of code added to improve submenus. Added code
+          to enable multiple choice menus to be included in
+          submenu tree - and convey results to child menus,
+          and ultimately to output. Not yet complete.
+
+
+2011-01-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.71 released.
 
         * Added ability to use anonymous subroutines with
