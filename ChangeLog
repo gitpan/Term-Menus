@@ -1,3 +1,14 @@
+2011-01-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.73 released.
+
+        * Lots more code added to improve submenus.
+          Now complete.
+
+        * Removed embedded Term::RawInput since Term::RawInput
+          is now available as a stand-alone CPAN module.
+
+
 2011-01-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.72 released.
