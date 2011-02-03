@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.73';
+our $VERSION = '1.74';
 
 
 use 5.006;
@@ -38,7 +38,8 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %menu_config_module_file %hosts_config_module_file %FH
             %get_all_hosts %hostname %GetSpeed %get_subs_from_menu
             %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
-            %GetControlChars %numerically %rawInput %transform_sicm);
+            %GetControlChars %numerically %rawInput %transform_sicm
+            %return_result);
 @EXPORT = qw(pick Menu);
 use Config ();
 our $canload=sub {};
@@ -891,6 +892,34 @@ sub transform_sicm
    ## sicm - [s]elected [i]tems [c]urrent [m]enu
    my ($text,$sicm_regex,$numbor,$all_menu_items_array,$picks,$log_handle)=@_;
    my $selected=[];my $replace='';
+   my $expand_array_flag=0;
+   if ((-1<index $text,'][[') && (-1<index $text,']][')) {
+      unless ($text=~/^\s*\]\[\[\s*/s && $text=~/\s*\]\]\[\s*$/s) {
+         my $die="\n       FATAL ERROR! - The --RETURN-ARRAY-- Macro"
+                ."\n            Boundary indicators: '][[' and ']]['"
+                ."\n            are only supported at the beginning"
+                ."\n            and end of the return instructions."
+                ."\n            Nothing but white space should precede"
+                ."\n            the left indicator, nor extend beyond"
+                ."\n            the right indicator.\n"
+                ."\n       Your String:\n"
+                ."\n            $text\n"
+                ."\n       Remedy: Recreate your return instructions"
+                ."\n            to conform to this convention. Also"
+                ."\n            be sure to use the Macro delimiter"
+                ."\n            indicator ']|[' to denote return array"
+                ."\n            element separation boundaries."
+                ."\n       Example:\n"
+                ."\n            '][[ ]S[ ]|[ ]P[{Menu_One} ]|[ SomeString ]]['"
+                ."\n";
+         if (defined $log_handle &&
+               -1<index $log_handle,'*') {
+            print $log_handle $die;
+            close($log_handle);
+         }
+      }
+      $expand_array_flag=1;
+   }
    if (keys %{$picks}) {
       foreach my $key (sort numerically keys %{$picks}) {
          push @{$selected},${$all_menu_items_array}[$key-1];
@@ -898,6 +927,9 @@ sub transform_sicm
       $replace=&Data::Dump::Streamer::Dump($selected)->Out();
       $replace=~s/\$ARRAY\d*\s*=\s*//s;
       $replace=~s/\'/\\\'/sg;
+      if ($expand_array_flag) {
+         $replace='eval '.$replace;
+      }
    } else {
       $replace=${$all_menu_items_array}[$numbor-1];
    }
@@ -905,7 +937,6 @@ sub transform_sicm
       my $esc_one=$1;
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
       $text=~s/$esc_one/$replace/g;
-      #$text=~s/$esc_one/${$all_menu_items_array}[(keys %{$picks})[0]-1]/g;
    }
    return $text;
 
@@ -916,7 +947,35 @@ sub transform_pmsi
  
    ## pmsi - [p]revious [m]enu [s]elected [i]tems 
    my ($text,$Conveyed,$pmsi_regex,$picks_from_parent,$log_handle)=@_;
+   my $expand_array_flag=0;
    $text=~s/\s?$//s;
+   if ((-1<index $text,'][[') && (-1<index $text,']][')) {
+      unless ($text=~/^\s*\]\[\[\s*/s && $text=~/\s*\]\]\[\s*$/s) {
+         my $die="\n       FATAL ERROR! - The --RETURN-ARRAY-- Macro"
+                ."\n            Boundary indicators: '][[' and ']]['"
+                ."\n            are only supported at the beginning"
+                ."\n            and end of the return instructions."
+                ."\n            Nothing but white space should precede"
+                ."\n            the left indicator, nor extend beyond"
+                ."\n            the right indicator.\n"
+                ."\n       Your String:\n"
+                ."\n            $text\n"
+                ."\n       Remedy: Recreate your return instructions"
+                ."\n            to conform to this convention. Also"
+                ."\n            be sure to use the Macro delimiter"
+                ."\n            indicator ']|[' to denote return array"
+                ."\n            element separation boundaries."
+                ."\n       Example:\n"
+                ."\n            '][[ ]S[ ]|[ ]P[{Menu_One} ]|[ SomeString ]]['"
+                ."\n";
+         if (defined $log_handle &&
+               -1<index $log_handle,'*') {
+            print $log_handle $die;
+            close($log_handle);
+         }
+      }
+      $expand_array_flag=1;
+   }
    while ($text=~m/($pmsi_regex(?:\{[^}]+\})*)/sg) {
       my $esc_one=$1;
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
@@ -965,6 +1024,9 @@ sub transform_pmsi
             my $type=ref ${$Conveyed}{$1};
             $replace=~s/\$$type\d*\s*=\s*//s;
             $replace=~s/\'/\\\'/sg;
+            if ($expand_array_flag) {
+               $replace='eval '.$replace;
+            }
          }
          $text=~s/$esc_one/$replace/se;
       } my $pp=$picks_from_parent;
@@ -1495,9 +1557,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     if (wantarray && !$no_wantarray) {
                                        return @resu;
                                     } else {
-                                       ${$Conveyed}{${$MenuUnit_hash_ref}
-                                          {'Label'}}=$resu[0];
-                                       return $resu[0];
+#print "RETURN RESU9\n";
+                                       return return_result($resu[0],
+                                          $MenuUnit_hash_ref,$Conveyed);
                                     } return 'DONE_SUB';
                                  }
                               }
@@ -1584,9 +1646,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  if (wantarray && !$no_wantarray) {
                                     return @resu;
                                  } else {
-                                    ${$Conveyed}{${$MenuUnit_hash_ref}
-                                       {'Label'}}=$resu[0];
-                                    return $resu[0];
+#print "RETURN RESU10\n";
+                                    return return_result($resu[0],
+                                       $MenuUnit_hash_ref,$Conveyed);
                                  }
                               }
                            }
@@ -2015,9 +2077,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU11\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                         $done=1;last
@@ -2103,9 +2165,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU12\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   }
@@ -2242,9 +2304,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU13\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                         $done=1;last
@@ -2329,9 +2391,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU14\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   }
@@ -2461,9 +2523,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU15\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                         $done=1;last
@@ -2544,9 +2606,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU16\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   }
@@ -2557,7 +2619,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "NEGATIVE\n";
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
-#print "POSTIVE\n";
                $return_from_child_menu='+';
             } elsif ($menu_output) {
 #print "WHAT IS MENU_OUTPUT=${$menu_output}[0]<==\n" if ref $menu_output eq 'ARRAY';
@@ -2574,7 +2635,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $SavePick,$SaveLast,$SaveNext,
                   $Persists,$parent_menu;
             } else {
-#print "RETURNING NEGATIVE\n";
                return '-',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveLast,$SaveNext,
@@ -2665,9 +2725,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU17\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                         $done=1;last
@@ -2752,9 +2812,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU18\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   } 
@@ -3058,6 +3118,7 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
                   } elsif ($menu_output) {
+#print "WHAT IS MENU12=$menu_output<==\n";
                      return $menu_output;
                   } else {
                      if ($Term::Menus::fullauto && (!exists
@@ -3114,9 +3175,9 @@ return 'DONE_SUB';
                               if (wantarray && !$no_wantarray) {
                                  return @resu;
                               } else {
-                                 ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                    $resu[0];
-                                 return $resu[0];
+#print "RETURN RESU1\n";
+                                 return return_result($resu[0],
+                                    $MenuUnit_hash_ref,$Conveyed);
                               }
                            }
                            $done=1;last
@@ -3207,9 +3268,9 @@ return 'DONE_SUB';
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU2\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                      }
@@ -3310,9 +3371,9 @@ return 'DONE_SUB';
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU3=$resu[0]<==\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
@@ -3395,9 +3456,9 @@ return 'DONE_SUB';
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU4\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                         $done=1;last
@@ -3484,9 +3545,9 @@ return 'DONE_SUB';
                            if (wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-                              ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                                 $resu[0];
-                              return $resu[0];
+#print "RETURN RESU5\n";
+                              return return_result($resu[0],
+                                 $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                         $done=1;last
@@ -3547,8 +3608,9 @@ return 'DONE_SUB';
                      if (wantarray && !$no_wantarray) {
                         return @resu;
                      } else {
-                        ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=$resu[0];
-                        return $resu[0];
+#print "RETURN RESU6\n";
+                        return return_result($resu[0],
+                           $MenuUnit_hash_ref,$Conveyed);
                      }
                   }
                } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
@@ -3608,9 +3670,9 @@ return 'DONE_SUB';
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU7\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                      $done=1;last
@@ -3697,9 +3759,9 @@ return 'DONE_SUB';
                         if (wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-                           ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
-                              $resu[0];
-                           return $resu[0];
+#print "RETURN RESU8\n";
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                      $done=1;last
@@ -3766,6 +3828,31 @@ return 'DONE_SUB';
    } else {
       return $pick;
    }
+
+}
+
+sub return_result {
+
+   my $result_string=$_[0];
+   my $MenuUnit_hash_ref=$_[1];
+   my $Conveyed=$_[2];
+   ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
+      $result_string;
+   my $result_array=[];
+   if ((-1<index $result_string,'][[') &&
+         (-1<index $result_string,']][')) {
+      $result_string=~s/^\s*\]\[\[\s*//s;
+      $result_string=~s/\s*\]\]\[\s*$//s;
+      my @elems=split /\s*\]\|\[\s*/,$result_string;
+      foreach my $elem (@elems) {
+         if (unpack('a5',$elem) eq 'eval ') {
+            $elem=unpack('x5 a*',$elem);
+            push @{$result_array}, eval $elem;
+         } else {
+            push @{$result_array}, $elem;
+         }
+      }
+   } return $result_array;
 
 }
 
