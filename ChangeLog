@@ -1,5 +1,13 @@
 2011-02-02  Brian M. Kelly  in M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.75 released.
+
+        * Fixed %Config::Config is read-only bug that was
+          breaking CPAN testing reports.
+
+
+2011-02-02  Brian M. Kelly  in M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.74 released.
 
         * New Macro work complete. New Macro array indicators

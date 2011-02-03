@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.74';
+our $VERSION = '1.75';
 
 
 use 5.006;
@@ -45,25 +45,25 @@ use Config ();
 our $canload=sub {};
 BEGIN {
    our $canload=sub {};
-   $Config::Config{'installprivlib'}||='';
-   $Config::Config{'installsitelib'}||='';
-   $Config::Config{'installvendorlib'}||='';
-   if ($Config::Config{installprivlib} &&
-         -e $Config::Config{installprivlib}."/Module/Load/Conditional.pm") {
+   my $installprivlib=$Config::Config{'installprivlib'}||'';
+   my $installsitelib=$Config::Config{'installsitelib'}||'';
+   my $installvendorlib=$Config::Config{'installvendorlib'}||'';
+   if ($installprivlib &&
+         -e $installprivlib."/Module/Load/Conditional.pm") {
       $canload = sub {
-         require $Config::Config{installprivlib}."/Module/Load/Conditional.pm";
+         require $installprivlib."/Module/Load/Conditional.pm";
          return Module::Load::Conditional::can_load($_[0]);
       };
-   } elsif ($Config::Config{installsitelib} &&
-         -e $Config::Config{installsitelib}."/Module/Load/Conditional.pm") {
+   } elsif ($installsitelib &&
+         -e $installsitelib."/Module/Load/Conditional.pm") {
       $canload = sub {
-         require $Config::Config{installsitelib}."/Module/Load/Conditional.pm";
+         require $installsitelib."/Module/Load/Conditional.pm";
          return Module::Load::Conditional::can_load($_[0]);
       };
-   } elsif ($Config::Config{installvendorlib} &&
-         -e $Config::Config{installvendorlib}."/Module/Load/Conditional.pm") {
+   } elsif ($installvendorlib &&
+         -e $installvendorlib."/Module/Load/Conditional.pm") {
       $canload = sub {
-         require $Config::Config{installvendorlib}.
+         require $installvendorlib.
             "/Module/Load/Conditional.pm";
          return Module::Load::Conditional::can_load($_[0]);
       };
