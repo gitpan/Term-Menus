@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.75';
+our $VERSION = '1.76';
 
 
 use 5.006;
@@ -52,20 +52,26 @@ BEGIN {
          -e $installprivlib."/Module/Load/Conditional.pm") {
       $canload = sub {
          require $installprivlib."/Module/Load/Conditional.pm";
-         return Module::Load::Conditional::can_load($_[0]);
+         my $module={};
+         $module=$_[0] if ref $_[0] eq 'HASH';
+         return Module::Load::Conditional::can_load(%$module);
       };
    } elsif ($installsitelib &&
          -e $installsitelib."/Module/Load/Conditional.pm") {
       $canload = sub {
          require $installsitelib."/Module/Load/Conditional.pm";
-         return Module::Load::Conditional::can_load($_[0]);
+         my $module={};
+         $module=$_[0] if ref $_[0] eq 'HASH';
+         return Module::Load::Conditional::can_load(%$module);
       };
    } elsif ($installvendorlib &&
          -e $installvendorlib."/Module/Load/Conditional.pm") {
       $canload = sub {
          require $installvendorlib.
             "/Module/Load/Conditional.pm";
-         return Module::Load::Conditional::can_load($_[0]);
+         my $module={};
+         $module=$_[0] if ref $_[0] eq 'HASH';
+         return Module::Load::Conditional::can_load(%$module);
       };
    } else {
       $canload = sub { return 0 };
@@ -5458,7 +5464,8 @@ Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 =head1 COPYRIGHT
 
 Copyright (C) 2000, 2001, 2002, 2003, 2004,
-              2005, 2006, 2007, 2008
+              2005, 2006, 2007, 2008, 2010,
+              2011
 by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or

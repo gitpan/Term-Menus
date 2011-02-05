@@ -1,4 +1,12 @@
-2011-02-02  Brian M. Kelly  in M. Kelly  <Brian.Kelly@fullautosoftware.com>
+2011-02-06  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.76 released.
+
+        * Put in test for HASH ref for Module Conditional. Installation
+          was broken in Ubuntu with new 'use strict' pragma in use.
+
+
+2011-02-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.75 released.
 
@@ -6,7 +14,7 @@
           breaking CPAN testing reports.
 
 
-2011-02-02  Brian M. Kelly  in M. Kelly  <Brian.Kelly@fullautosoftware.com>
+2011-02-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.74 released.
 
@@ -18,7 +26,7 @@
           1.0 Release of Net::FullAuto.
 
 
-Brian.Kelly@fullautosoftware.com>
+2011-01-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.73 released.
 
