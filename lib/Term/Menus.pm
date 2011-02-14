@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.76';
+our $VERSION = '1.77';
 
 
 use 5.006;
@@ -1450,7 +1450,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       $Persists->{$MenuUnit_hash_ref}{defaults}=0 unless exists
          $Persists->{$MenuUnit_hash_ref}{defaults};
       my $plann='';my $plannn='';
-      if ($Net::FullAuto::FA_Core::plan) {
+      if (ref $Net::FullAuto::FA_Core::plan eq 'HASH') {
          my $plann=shift @{$Net::FullAuto::FA_Core::plan};
          $plannn=${$plann}{Item}; 
          my $plan_='';
@@ -1496,8 +1496,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                   $mark_flg=1;$mark='*';
                   if ((exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                        {$all_menu_items_array[$picknum-1]}) && (exists
+                        {$all_menu_items_array[$picknum-1]}) && ref
                         ${$FullMenu}{$MenuUnit_hash_ref}[2]
+                        {$all_menu_items_array[$picknum-1]} eq 'HASH' &&
+                        (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
                         {$all_menu_items_array[$picknum-1]}{Item_1})) {
                      if (exists ${$FullMenu}{$MenuUnit_hash_ref}[3]
                                          {$all_menu_items_array[$picknum-1]}) {
@@ -1551,7 +1553,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                             'Plan'}},
                                          { Label  => ${$MenuUnit_hash_ref}
                                                         {'Label'},
-                                           Number => $numbor+1,
+                                           Number => $numbor,
                                            PlanID =>
                                               $Net::FullAuto::FA_Core::makeplan->{Number},
                                            Item   =>
@@ -1587,7 +1589,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                        push @{$Net::FullAuto::FA_Core::makeplan->{
                                                'Plan'}},
                                             { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                              Number => $numbor+1,
+                                              Number => $numbor,
                                               PlanID =>
                                                  $Net::FullAuto::FA_Core::makeplan->{Number},
                                               Item   => "&$subfile$sub" }
@@ -2071,7 +2073,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                  Number => $numbor+1,
+                                  Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{
                                      'Number'},
@@ -2107,7 +2109,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
+                                     Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{
                                         'Number'},
@@ -2300,7 +2302,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                  Number => $numbor+1,
+                                  Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
                                   Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
@@ -2334,7 +2336,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
+                                     Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
                                      Item   => "&$subfile$sub" }
@@ -2519,7 +2521,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                  Number => $numbor+1,
+                                  Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
                                   Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
@@ -2553,7 +2555,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
+                                     Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
                                      Item   => "&$subfile$sub" }
@@ -2694,7 +2696,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      unless ($got_default) {
                         push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
                              { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                               Number => $numbor+1,
+                               Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
                                Item   => $pn{$numbor}[0] }
@@ -2721,7 +2723,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                  Number => $numbor+1,
+                                  Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
                                   Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
@@ -2755,7 +2757,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
+                                     Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
                                      Item   => "&$subfile$sub" }
@@ -3141,7 +3143,7 @@ return 'DONE_SUB';
                      unless ($got_default) {
                         push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
                              { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                               Number => $numbor+1,
+                               Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
                                Item   => $all_menu_items_array[$numbor-1] }
@@ -3169,7 +3171,7 @@ return 'DONE_SUB';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                      'Plan'}},
                                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
+                                     Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
                                      Item   =>
@@ -3205,7 +3207,7 @@ return 'DONE_SUB';
                                  push @{$Net::FullAuto::FA_Core::makeplan->{
                                          'Plan'}},
                                       { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                        Number => $numbor+1,
+                                        Number => $numbor,
                                         PlanID =>
                                            $Net::FullAuto::FA_Core::makeplan->{Number},
                                         Item   => "&$subfile$sub" }
@@ -3423,7 +3425,7 @@ return 'DONE_SUB';
                      unless ($got_default) {
                         push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
                              { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                               Number => $numbor+1,
+                               Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
                                Item   => $pn{$numbor}[0] }
@@ -3450,7 +3452,7 @@ return 'DONE_SUB';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                  Number => $numbor+1,
+                                  Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
                                   Item   => 
@@ -3486,7 +3488,7 @@ return 'DONE_SUB';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                     Number => $numbor+1,
+                                     Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
                                      Item   => "&$subfile$sub" }
@@ -3666,7 +3668,7 @@ return 'DONE_SUB';
                         push @{$Net::FullAuto::FA_Core::makeplan->{
                                'Plan'}},
                              { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                               Number => $numbor+1,
+                               Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
                                Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
@@ -3700,7 +3702,7 @@ return 'DONE_SUB';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                                  Number => $numbor+1,
+                                  Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
                                   Item   => "&$subfile$sub" }
@@ -3820,7 +3822,7 @@ return 'DONE_SUB';
       unless ($got_default) {
          push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
               { Label  => ${$MenuUnit_hash_ref}{'Label'},
-                Number => $numbor+1,
+                Number => $numbor,
                 PlanID =>
                    $Net::FullAuto::FA_Core::makeplan->{Number},
                 Item   => $pick }

@@ -1,3 +1,10 @@
+2011-02-14  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.77 released.
+
+        * Fixed '$numbor' accuracy when storing in FullAuto Plan.
+
+
 2011-02-06  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.76 released.
