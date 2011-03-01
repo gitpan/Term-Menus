@@ -1,3 +1,14 @@
+2011-03-01  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.78 released.
+
+        * Updated POD documentation to include new instructions
+          on how to pass multiple selections to sub menus, and
+          use anonymous subroutines or closures with macros to
+          transform those selections before presenting them to
+          user in the next layer menuing.
+
+
 2011-02-14  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.77 released.
