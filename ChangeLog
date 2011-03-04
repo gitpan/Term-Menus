@@ -1,3 +1,11 @@
+2011-03-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.79 released.
+
+        * Fixed issue when user moved back to parent menu
+          and makes different selection than previously
+
+
 2011-03-01  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.78 released.

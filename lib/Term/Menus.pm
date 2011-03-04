@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.78';
+our $VERSION = '1.79';
 
 
 use 5.006;
@@ -882,10 +882,14 @@ sub Menu
       } elsif ($pick=~/DONE/) {
          return $pick,$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveLast,$SaveNext,$Persists;
-      } elsif (ref $pick eq 'ARRAY' && wantarray
-            && 1==$recurse) {
-         my @choyce=@{$pick};undef @{$pick};undef $pick;
-         return @choyce
+      } elsif (ref $pick eq 'ARRAY') {
+         if (wantarray && 1==$recurse) {
+            my @choyce=@{$pick};undef @{$pick};undef $pick;
+            return @choyce
+         } elsif (!$picks_from_parent &&
+               ${$MenuUnit_hash_ref}{Select} eq 'One') {
+            return $pick->[0];
+         } else { return $pick }
       } elsif ($pick) { return $pick }
    }
 
@@ -896,7 +900,8 @@ sub transform_sicm
 
 #print "TRANSFROM_SCIM_CALLER=",caller,"\n";
    ## sicm - [s]elected [i]tems [c]urrent [m]enu
-   my ($text,$sicm_regex,$numbor,$all_menu_items_array,$picks,$log_handle)=@_;
+   my ($text,$sicm_regex,$numbor,$all_menu_items_array,
+       $picks,$return_from_child_menu,$log_handle)=@_;
    my $selected=[];my $replace='';
    my $expand_array_flag=0;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
@@ -926,7 +931,7 @@ sub transform_sicm
       }
       $expand_array_flag=1;
    }
-   if (keys %{$picks}) {
+   if (keys %{$picks} && !$return_from_child_menu) {
       foreach my $key (sort numerically keys %{$picks}) {
          push @{$selected},${$all_menu_items_array}[$key-1];
       }
@@ -1320,7 +1325,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
             if ($test_item=~/$con_regex|$pmsi_regex|$sicm_regex/) {
                $test_item=&transform_sicm($test_item,$sicm_regex,$numbor,
-                             \@all_menu_items_array,\%picks,$log_handle);
+                             \@all_menu_items_array,\%picks,
+                             $return_from_child_menu,$log_handle);
                $test_item=&transform_pmsi($test_item,
                        $Conveyed,$pmsi_regex,$picks_from_parent,$log_handle);
             } elsif (ref $test_item eq 'CODE') {
@@ -1332,9 +1338,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   #$cd=<$me>;
                   $cd=&Data::Dump::Streamer::Dump($test_item)->Out();
                   $cd=&transform_sicm($cd,$sicm_regex,$numbor,
-                         \@all_menu_items_array,\%picks,$log_handle);
+                         \@all_menu_items_array,\%picks,
+                         $return_from_child_menu,$log_handle);
                   $cd=&transform_pmsi($cd,
-                          $Conveyed,$pmsi_regex,$picks_from_parent);
+                         $Conveyed,$pmsi_regex,$picks_from_parent);
                }
                $cd=~s/\$CODE\d*\s*=\s*//s;
                eval { $test_item=eval $cd };
@@ -3342,9 +3349,11 @@ return 'DONE_SUB';
                      if ($Term::Menus::data_dump_streamer) {
                         $cd=&Data::Dump::Streamer::Dump($sub)->Out();
                         $cd=&transform_sicm($cd,$sicm_regex,$numbor,
-                               \@all_menu_items_array,\%picks,$log_handle);
+                               \@all_menu_items_array,\%picks,
+                               $return_from_child_menu,$log_handle);
+
                         $cd=&transform_pmsi($cd,
-                                $Conveyed,$pmsi_regex,$picks_from_parent);
+                               $Conveyed,$pmsi_regex,$picks_from_parent);
                      }
                      $cd=~s/\$CODE\d*\s*=\s*//s;
                      $sub=eval $cd;
@@ -3580,9 +3589,10 @@ return 'DONE_SUB';
                   if ($Term::Menus::data_dump_streamer) {
                      $cd=&Data::Dump::Streamer::Dump($sub)->Out();
                      $cd=&transform_sicm($cd,$sicm_regex,$numbor,
-                            \@all_menu_items_array,\%picks,$log_handle);
+                            \@all_menu_items_array,\%picks,
+                            $return_from_child_menu,$log_handle);
                      $cd=&transform_pmsi($cd,
-                             $Conveyed,$pmsi_regex,$picks_from_parent);
+                            $Conveyed,$pmsi_regex,$picks_from_parent);
                   }
                   $cd=~s/\$CODE\d*\s*=\s*//s;
                   $sub=eval $cd;
@@ -3860,7 +3870,7 @@ sub return_result {
             push @{$result_array}, $elem;
          }
       }
-   } return $result_array;
+   } return [ $result_string ];
 
 }
 
