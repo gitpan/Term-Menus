@@ -1,3 +1,11 @@
+2011-05-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.80 released.
+
+        * New recursive support added. See POD documentation
+          for details.
+
+
 2011-03-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.79 released.
