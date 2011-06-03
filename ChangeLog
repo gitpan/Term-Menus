@@ -1,3 +1,14 @@
+2011-06-03  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.81 released.
+
+        * New ITEM LEVEL Select element. See POD documentation
+          for details.
+
+        * New Mark element. See POD documentation
+          for details.
+
+
 2011-05-31  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.80 released.

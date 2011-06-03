@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.80';
+our $VERSION = '1.81';
 
 
 use 5.006;
@@ -647,7 +647,17 @@ sub Menu
 #print "MENUCALLER=",(caller)[0]," and ",__PACKAGE__,"\n";<STDIN>;
 #print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
-   ${$MenuUnit_hash_ref}{Select}||='One';
+   my $select_many=0;
+   if (exists ${$MenuUnit_hash_ref}{Select}) {
+      if (${$MenuUnit_hash_ref}{Select}=~/many/i) {
+         $select_many='NUTS';
+         ${$MenuUnit_hash_ref}{Select}={};
+      } elsif (${$MenuUnit_hash_ref}{Select}=~/one/i) {
+         ${$MenuUnit_hash_ref}{Select}={};
+      } 
+   } else {
+      ${$MenuUnit_hash_ref}{Select}={};
+   }
    my $picks_from_parent=$_[1]||'';
    my $unattended=0;
    if ($picks_from_parent=~/\](Cron|Batch|Unattended|FullAuto)\[/i) {
@@ -676,11 +686,11 @@ sub Menu
       *c*(?:h+osen[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
    my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
       *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
-   my %Items=();my %negate=();my %result=();
-   my %convey=();my %chosen=();my %default=();
+   my %Items=();my %negate=();my %result=();my %convey=();
+   my %chosen=();my %default=();my %select=();my %mark=();
    my $pick='';my $picks=[];my $banner='';my %num__=();
    my $display_this_many_items=10;my $die_err='';
-   my $master_substituted='';my $convey='';
+   my $master_substituted='';my $convey='';$mark{BLANK}=1;
    my $num=0;my @convey=();my $filtered=0;my $sorted='';
    foreach my $key (keys %{$MenuUnit_hash_ref}) {
       if (4<length $key && substr($key,0,4) eq 'Item') {
@@ -700,8 +710,8 @@ sub Menu
       @convey=();
       last unless exists $Items{$num};
       if (exists ${$Items{$num}}{Negate} &&
-            (!exists ${$MenuUnit_hash_ref}{Select} ||
-            ${$MenuUnit_hash_ref}{Select} eq 'One')) {
+            !(keys %{${$MenuUnit_hash_ref}{Select}})) {
+            # || ${$MenuUnit_hash_ref}{Select} eq 'One')) {
          my $die="Can Only Use \"Negate =>\""
                 ."\n\t\tElement in ".__PACKAGE__.".pm when the"
                 ."\n\t\t\"Select =>\" Element is set to \'Many\'\n\n";
@@ -781,13 +791,22 @@ sub Menu
                if exists ${$Items{$num}}{Negate};
             $result{$text}=${$Items{$num}}{Result}
                if exists ${$Items{$num}}{Result};
+            my $tsttt=${$Items{$num}}{Select};
+            $select{$text}=${$Items{$num}}{Select}
+               if exists ${$Items{$num}}{Select}
+               && $tsttt=~/many/i;
+            if (exists ${$Items{$num}}{Mark}) {
+               $mark{$text}=${$Items{$num}}{Mark};
+               my $lmt=length $mark{$text};
+               $mark{BLANK}=$lmt if $mark{BLANK}<$lmt;
+            }
             $filtered=1 if exists ${$Items{$num}}{Filter};
             $sorted=${$Items{$num}}{Sort}
                if exists ${$Items{$num}}{Sort};
             $chosen{$text}="Item_$num";
          }
       } else {
-print "PICKS_FROM_PARENT=$picks_from_parent\n";
+#print "PICKS_FROM_PARENT=$picks_from_parent\n";
          my $text=&transform_pmsi(${$Items{$num}}{Text},
                   $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
                   $picks_from_parent);
@@ -801,7 +820,6 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
             if (${$Items{$num}}{Text}=~/${$Items{$num}}{Include}/) {
                next if exists ${$Items{$num}}{Exclude} &&
                      ${$Items{$num}}{Text}=~/${$Items{$num}}{Exclude}/;
-
                push @{$picks}, $text;
             } else { next }
          } elsif (exists ${$Items{$num}}{Exclude} &&
@@ -816,6 +834,15 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
             if exists ${$Items{$num}}{Negate};
          $result{$text}=${$Items{$num}}{Result}
             if exists ${$Items{$num}}{Result};
+         my $tsttt=${$Items{$num}}{Select}||'';
+         $select{$text}=${$Items{$num}}{Select}
+            if exists ${$Items{$num}}{Select}
+            && $tsttt=~/many/i;
+         if (exists ${$Items{$num}}{Mark}) {
+            $mark{$text}=${$Items{$num}}{Mark};
+            my $lmt=length $mark{$text};
+            $mark{BLANK}=$lmt if $mark{BLANK}<$lmt;
+         }
          $filtered=1 if exists ${$Items{$num}}{Filter};
          $sorted=${$Items{$num}}{Sort}
             if exists ${$Items{$num}}{Sort};
@@ -860,10 +887,11 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
       && !$cl_def;
    my $nm_=(keys %num__)?\%num__:{};
    ${$FullMenu}{$MenuUnit_hash_ref}=[ $MenuUnit_hash_ref,
-      \%negate,\%result,\%convey,\%chosen,\%default,$nm_,
-      $filtered,$picks ];
-   if (exists ${$MenuUnit_hash_ref}{Select} &&
-         ${$MenuUnit_hash_ref}{Select} eq 'Many') {
+      \%negate,\%result,\%convey,\%chosen,\%default,
+      \%select,\%mark,$nm_,$filtered,$picks ];
+   #if (exists ${$MenuUnit_hash_ref}{Select} &&
+   #      ${$MenuUnit_hash_ref}{Select} eq 'Many') {
+   if ($select_many || keys %{${$MenuUnit_hash_ref}{Select}}) {
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveMMap,$SaveNext,$Persists,$parent_menu)=&pick(
                         $picks,$banner,
@@ -872,7 +900,9 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
                         $picks_from_parent,$parent_menu,
                         $FullMenu,$Selected,$Conveyed,$SavePick,
                         $SaveMMap,$SaveNext,$Persists,
-                        \@convey,$no_wantarray,$sorted);
+                        #\@convey,$no_wantarray,$sorted,
+                        $no_wantarray,$sorted,
+                        $select_many);
       if ($Term::Menus::fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
       }
@@ -898,7 +928,9 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
                        $picks_from_parent,$parent_menu,
                        $FullMenu,$Selected,$Conveyed,$SavePick,
                        $SaveMMap,$SaveNext,$Persists,
-                       \@convey,$no_wantarray,$sorted);
+                       #\@convey,$no_wantarray,$sorted,
+                       $no_wantarray,$sorted,
+                       $select_many);
 #print "WAHT IS ALL=$pick and FULL=$FullMenu and SEL=$Selected and CON=$Conveyed and SAVE=$SavePick and LAST=$SaveMMap and NEXT=$SaveNext and PERSISTS=$Persists  and PARENT=$parent_menu<==\n";
       if ($Term::Menus::fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
@@ -907,7 +939,7 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
          return ']quit['
       } elsif ($pick eq '-' || $pick eq '+') {
 #print "PICKMINUSPLUS2=$pick\n";
-         if (keys %{${$Selected}{$MenuUnit_hash_ref}}) {
+         if ($select_many || keys %{${$Selected}{$MenuUnit_hash_ref}}) {
             return '+',$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
          } else {
@@ -922,7 +954,8 @@ print "PICKS_FROM_PARENT=$picks_from_parent\n";
             my @choyce=@{$pick};undef @{$pick};undef $pick;
             return @choyce
          } elsif (!$picks_from_parent &&
-               ${$MenuUnit_hash_ref}{Select} eq 'One') {
+               !(keys %{${$MenuUnit_hash_ref}{Select}})) {
+               #${$MenuUnit_hash_ref}{Select} eq 'One') {
             return $pick->[0];
          } else { return $pick }
       } elsif ($pick) { return $pick }
@@ -1133,9 +1166,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
              #  (Optional)       SaveMMap_data_structure,
              #  (Optional)       SaveNext_data_structure,
              #  (Optional)       Persists_data_structure,
-             #  (Optional)       convey_item_contents_arrayref_from_menu,
              #  (Optional)       no_wantarray_flag,
-             #  (Optional)       sorted )
+             #  (Optional)       sorted
+             #  (Optional)       select_many )
 {
 
 #print "PICKCALLER=",caller," and Argument 7 =>$_[6]<=\n";sleep 3;
@@ -1151,7 +1184,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 
    # Used Only With Cascasding Menus (Optional)
    my $MenuUnit_hash_ref= (defined $_[5]) ? $_[5] : {};
-   ${$MenuUnit_hash_ref}{Select}||='One';
+   ${$MenuUnit_hash_ref}{Select}||={};
    my $recurse_level= (defined $_[6]) ? $_[6] : 1;
    my $picks_from_parent= (defined $_[7]) ? $_[7] : '';
    my $parent_menu= (defined $_[8]) ? $_[8] : '';
@@ -1164,6 +1197,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    my $Persists= (defined $_[15]) ? $_[15] : {};
    my $no_wantarray= (defined $_[16]) ? $_[16] : 0;
    my $sorted= (defined $_[17]) ? $_[17] : 0;
+   my $select_many= (defined $_[18]) ? $_[18] : 0;
 
    my %items=();my %picks=();my %negate=();
    my %exclude=();my %include=();my %default=();
@@ -1315,12 +1349,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $convey=$convey->[0];
             }
          }
-#print "WHAT IS CONVEYXXXXXXXXXXXXX=$convey<==\n";
+#print "WHAT IS CONVEYXXXXXXXXXXXXX=@{$convey} and PICK=$pick<==\n";<STDIN>;
          if ($pick && exists ${$_[0]}{${$FullMenu}{$_[0]}
                [4]{${$_[1]}[$pick-1]}}{Convey} &&
                ref ${$_[0]}{${$FullMenu}{$_[0]}
                [4]{${$_[1]}[$pick-1]}}{Convey} eq 'HASH') {
-#print "ARE WE HEREEEEEEEEEEEEEEEEE\n";
+#print "ARE WE HEREEEEEEEEEEEEEEEEE\n";<STDIN>;
             ${$Conveyed}{${$Term::Menus::LookUpMenuName}{$_[0]}}=$convey;
             $parent_menu=${$Term::Menus::LookUpMenuName}{$_[0]};
             if (ref ${$_[0]}{${$FullMenu}{$_[0]}
@@ -1567,25 +1601,42 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          my $menu_text='';my $picknum_for_display='';
          $menu_text.=$banner if defined $banner;
          $menu_text.="\n\n";
+#print "WHAT IS START=$start\n";
          my $picknum=$start+1;
          my $numlist=$choose_num;
-         my $mark=' ';my $mark_flg=0;my $prev_menu=0;
+         my $mark='';
+         my $mark_len=${$FullMenu}{$MenuUnit_hash_ref}[7]{BLANK};
+         while ($mark_len--) {
+            $mark.=' ';
+         }
+         my $mark_blank=$mark;
+         my $mark_flg=0;my $prev_menu=0;
          while (0 < $numlist) {
             if (exists $picks{$picknum}) {
                $mark_flg=1;
                if ($return_from_child_menu) {
-                  $mark=$picks{$picknum}=$return_from_child_menu;
+                  $mark=$mark_blank;
+                  substr($mark,-1)=$picks{$picknum}=$return_from_child_menu;
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                   $prev_menu=$picknum;
 #print "DO WE GET HERE3 and SEL=${$MenuUnit_hash_ref}{Select}!\n";
-               } else { $mark=$picks{$picknum} }
+               } else {
+                  $mark=$mark_blank;
+                  substr($mark,-1)=$picks{$picknum};
+               }
 #print "DO WE GET HERE4 and SEL=${$MenuUnit_hash_ref}{Select}!\n";
-               if ((${$MenuUnit_hash_ref}{Select} eq 'Many'
+               #if ((${$MenuUnit_hash_ref}{Select} eq 'Many'
+               my $gotmany=($select_many ||
+                     (keys %{${$MenuUnit_hash_ref}{Select}})) ? 1 : 0;
+               if (($gotmany
                      && $numbor=~/^[Ff]$/) || ($picks{$picknum} ne
                      '+' && $picks{$picknum} ne '-' &&
-                     ${$MenuUnit_hash_ref}{Select} ne 'Many')) {
-print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
-                  $mark_flg=1;$mark='*';
+                     !$gotmany)) {
+                     #${$MenuUnit_hash_ref}{Select} ne 'Many')) {
+#print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
+                  $mark_flg=1;
+                  $mark=$mark_blank;
+                  substr($mark,-1)='*';
                   if ((exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
                         {$all_menu_items_array[$picknum-1]}) && ref
                         ${$FullMenu}{$MenuUnit_hash_ref}[2]
@@ -1612,9 +1663,13 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                      chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU1=$menu_output and SEL${$MenuUnit_hash_ref}{Select}\n";
                      if ($menu_output eq '-') {
-                        $picks{$picknum}='-';$mark='-';
+                        $picks{$picknum}='-';
+                        $mark=$mark_blank;
+                        substr($mark,-1)='-';
                      } elsif ($menu_output eq '+') {
-                        $picks{$picknum}='+';$mark='+';
+                        $picks{$picknum}='+';
+                        $mark=$mark_blank;
+                        substr($mark,-1)='+';
                      } elsif ($menu_output eq 'DONE_SUB') {
 #print "DONE_SUB1\n";
                         return 'DONE_SUB';
@@ -1655,7 +1710,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                                  }
                                  @resu=$sub->();
                                  if (-1<$#resu) {
-                                    if (wantarray && !$no_wantarray) {
+                                    if (0<$#resu && wantarray && !$no_wantarray) {
                                        return @resu;
                                     } else {
 #print "RETURN RESU9\n";
@@ -1749,7 +1804,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                                     } else { die $die }
                                   }
                               } elsif (-1<$#resu) {
-                                 if (wantarray && !$no_wantarray) {
+                                 if (0<$#resu && wantarray && !$no_wantarray) {
                                     return @resu;
                                  } else {
 #print "RETURN RESU10\n";
@@ -1764,12 +1819,26 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                      } elsif ($menu_output) {
 #print "WHAT IS MENU3=$menu_output\n";<STDIN>;
                         return $menu_output;
-                     } else { $picks{$picknum}='+';$mark='+' }
+                     } else {
+                        $picks{$picknum}='+';
+                        $mark=$mark_blank;
+                        substr($mark,-1)='+';
+                     }
                   } else {
                      $picks{$picknum}='*';
                   }
                }
-            } else { $mark=' ' }
+            } else {
+               $mark='';
+               my $mark_len=${$FullMenu}{$MenuUnit_hash_ref}[7]{BLANK};
+               while ($mark_len--) {
+                  $mark.=' ';
+               }
+            }
+            $mark=${$FullMenu}{$MenuUnit_hash_ref}[7]
+                  {$all_menu_items_array[$picknum-1]}
+               if exists ${$FullMenu}{$MenuUnit_hash_ref}[7]
+                  {$all_menu_items_array[$picknum-1]};
 #print "WHAT IS MARKNOW=$mark<==\n";
             if (!$hidedefaults &&
                   ref ${$FullMenu}{$MenuUnit_hash_ref}[5] eq 'HASH' 
@@ -1779,26 +1848,29 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                   eq '*' || $all_menu_items_array[$picknum-1]=~
                   /${$FullMenu}{$MenuUnit_hash_ref}[5]{$all_menu_items_array[$picknum-1]}/
                   )) {
-               $picks{$picknum}='*';$mark='*';$mark_flg=1;
+               $picks{$picknum}='*';
+               $mark=$mark_blank;
+               substr($mark,-1)='*';$mark_flg=1;
             }
             $picknum_for_display=$picknum;
 #print "WHAT IS MARKNOW2=$mark<==\n";
-            if (ref ${$FullMenu}{$MenuUnit_hash_ref}[6] eq 'HASH'
-                  && keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]} &&
-                  exists ${$FullMenu}{$MenuUnit_hash_ref}[6]
+            if (ref ${$FullMenu}{$MenuUnit_hash_ref}[8] eq 'HASH'
+                  && keys %{${$FullMenu}{$MenuUnit_hash_ref}[8]} &&
+                  exists ${$FullMenu}{$MenuUnit_hash_ref}[8]
                   {$all_menu_items_array[$picknum-1]}
-                  && ${$FullMenu}{$MenuUnit_hash_ref}[6]
+                  && ${$FullMenu}{$MenuUnit_hash_ref}[8]
                   {$all_menu_items_array[$picknum-1]}) {
 #print "WHAT IS MARKNOW3=$mark<==\n";
                $picknum_for_display=
-                  ${$FullMenu}{$MenuUnit_hash_ref}[6]
+                  ${$FullMenu}{$MenuUnit_hash_ref}[8]
                   {$all_menu_items_array[$picknum-1]};
-               $mark=${$SavePick}{$MenuUnit_hash_ref}{$picknum_for_display}
+               $mark=$mark_blank;
+               substr($mark,-1)=${$SavePick}{$MenuUnit_hash_ref}{$picknum_for_display}
                   || ' ' unless $picks{$picknum};
-               $mark_flg=1 unless $mark eq ' ';
+               $mark_flg=1 unless $mark=~/^ +$/;
                $Persists->{$MenuUnit_hash_ref}{defaults}=1
                  if $Persists->{$parent_menu}{defaults};
-               if (${$FullMenu}{$MenuUnit_hash_ref}[7]) {
+               if (${$FullMenu}{$MenuUnit_hash_ref}[9]) {
                   $filtered_menu=1;
                } else {
                   $sum_menu=1;
@@ -1809,13 +1881,24 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                [ $all_menu_items_array[$picknum-1],$picknum ];
             $menu_text.="   $mark  $picknum_for_display. "
                        ."\t$all_menu_items_array[$picknum-1]\n";
-            if ($mark eq ' ' || (exists $picks{$picknum} ||
+            if (exists ${$FullMenu}{$MenuUnit_hash_ref}[6]{$all_menu_items_array[$picknum-1]}) {
+               my $tstt=${$FullMenu}{$MenuUnit_hash_ref}[6]{$all_menu_items_array[$picknum-1]};
+               if ($tstt=~/many/i) {
+                  ${$MenuUnit_hash_ref}{Select}{$picknum_for_display}='many';  
+               } else {
+                  #${$MenuUnit_hash_ref}{Select}{$picknum_for_display}='one';
+               }
+            } else {
+               #${$MenuUnit_hash_ref}{Select}{$picknum_for_display}='one';
+            }
+            if ($mark=~/^ +$/ || (exists $picks{$picknum} ||
                   exists $picks{$picknum_for_display})) {
                ${$_[0]}[$picknum_for_display-1]=
                   $all_menu_items_array[$picknum-1];
-            } $picknum++;
+            }
+            $picknum++;
             $numlist--;
-         } $hidedefaults=1;
+         } $hidedefaults=1;$picknum--;
 #print "WHAT IS MARKNOW5=$mark<==\n";
          if ($Term::Menus::fullauto && (!exists
                ${$MenuUnit_hash_ref}{'NoPlan'} ||
@@ -1874,7 +1957,8 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                } else { print $blanklines }
             } else { print $blanklines }
             print $menu_text;my $ch=0;
-            if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
+            #if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
+            if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
                print "\n";
                unless (keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}) {
                   print "   a.  Select All.";$ch=1;
@@ -1934,10 +2018,14 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
             die($die);
          }
          #if (0) {
-         if ($numbor=~/^[Ff]$/ && (((wantarray && !$no_wantarray
-               && (exists ${$MenuUnit_hash_ref}{Select} &&
-               ${$MenuUnit_hash_ref}{Select} eq 'Many')) ||
-               $Persists->{$MenuUnit_hash_ref}{defaults}) ||
+         #if ($numbor=~/^[Ff]$/ && (((wantarray && !$no_wantarray
+         #      #&& (exists ${$MenuUnit_hash_ref}{Select} &&
+         #      && ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}}))) ||
+         #      #${$MenuUnit_hash_ref}{Select} eq 'Many')) ||
+         #      $Persists->{$MenuUnit_hash_ref}{defaults}) ||
+         #      ($filtered_menu||$sum_menu))) {
+         if ($numbor=~/^[Ff]$/ &&
+               ($Persists->{$MenuUnit_hash_ref}{defaults} ||
                ($filtered_menu||$sum_menu))) {
 #print "GOT HERE AND FILTER_MENU=$filtered_menu && RECURSE_LEVEL=$recurse_level\n";
             # FINISH
@@ -2018,9 +2106,9 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                   ${$FullMenu}{$chosen}[2]{${$_[0]}[$pk-1]}
                   || !keys
                   %{${$FullMenu}{$chosen}[2]{${$_[0]}[$pk-1]}};
-               if (${${$FullMenu}{$parent_menu}[8]}[$pk-1] &&
+               if (${${$FullMenu}{$parent_menu}[10]}[$pk-1] &&
                      !${$_[0]}[$pk-1]) {
-                  my $txt=${${$FullMenu}{$parent_menu}[8]}[$pk-1];
+                  my $txt=${${$FullMenu}{$parent_menu}[10]}[$pk-1];
                   if (-1<index $txt,"__Master_${$}__") {
                      my $lhn=$Term::Menus::local_hostname;
                      $txt=~s/__Master_${$}__/Local-Host: $lhn/sg;
@@ -2091,13 +2179,13 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
             foreach my $line (@all_menu_items_array) {
                $cnt++;
                if (exists $pn{$picknum} &&
-                     exists ${$FullMenu}{$MenuUnit_hash_ref}[6]
+                     exists ${$FullMenu}{$MenuUnit_hash_ref}[8]
                      {$pn{$picknum}[0]} && ${$FullMenu}
-                     {$MenuUnit_hash_ref}[6]{$pn{$picknum}[0]} &&
-                     keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]
+                     {$MenuUnit_hash_ref}[8]{$pn{$picknum}[0]} &&
+                     keys %{${$FullMenu}{$MenuUnit_hash_ref}[8]
                      {$pn{$picknum}[0]} && ${$FullMenu}
-                     {$MenuUnit_hash_ref}[6]{$pn{$picknum}[0]}}) {
-                  $sort{$line}=${$FullMenu}{$MenuUnit_hash_ref}[6]{$line};
+                     {$MenuUnit_hash_ref}[8]{$pn{$picknum}[0]}}) {
+                  $sort{$line}=${$FullMenu}{$MenuUnit_hash_ref}[8]{$line};
                } else { $sort{$line}=$cnt }
             } $cnt=0;
             my $chosen='';
@@ -2183,7 +2271,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU11\n";
@@ -2271,7 +2359,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU12\n";
@@ -2327,9 +2415,9 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
             }
             foreach my $spl (@splice) {
                if ($parent_menu) {
-                  push @spl, ${${$FullMenu}{$parent_menu}[8]}[$spl];
+                  push @spl, ${${$FullMenu}{$parent_menu}[10]}[$spl];
                } else {
-                  push @spl, ${${$FullMenu}{$MenuUnit_hash_ref}[8]}[$spl];
+                  push @spl, ${${$FullMenu}{$MenuUnit_hash_ref}[10]}[$spl];
                }
             }
             my $chosen={
@@ -2407,7 +2495,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU13\n";
@@ -2494,7 +2582,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU14\n";
@@ -2629,7 +2717,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU15\n";
@@ -2712,7 +2800,7 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU16\n";
@@ -2751,7 +2839,6 @@ print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
             } last;
          } elsif (($numbor=~/^\>/ || $ikey eq 'RIGHTARROW') && exists
                   ${$SaveNext}{$MenuUnit_hash_ref}) {
-print "GOT RIGHT ARROW!!!\n";
             $convey=[];
             foreach my $numb (sort numerically keys %picks) {
                push @{$convey}, $all_menu_items_array[$numb-1];
@@ -2826,7 +2913,7 @@ print "GOT RIGHT ARROW!!!\n";
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU17\n";
@@ -2913,7 +3000,7 @@ print "GOT RIGHT ARROW!!!\n";
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU18\n";
@@ -2936,7 +3023,8 @@ return 'DONE_SUB';
             return ']quit['
          } elsif (!keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^[Aa]$/) {
-            if (${$MenuUnit_hash_ref}{Select} eq 'One') {
+            #if (${$MenuUnit_hash_ref}{Select} eq 'One') {
+            if (!$select_many && !(keys %{${$MenuUnit_hash_ref}{Select}})) {
                print "\n   ERROR: Cannot Select All Items\n".
                      "          When 'Select' is NOT set to 'Many'\n";
                sleep 2;next;
@@ -2945,28 +3033,34 @@ return 'DONE_SUB';
                foreach my $num (0..$#all_menu_items_array) {
                   $picks{$num+1}='*';
                }
-               foreach my $key (keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]}) {
+               foreach my $key (keys %{${$FullMenu}{$MenuUnit_hash_ref}[8]}) {
                   ${$SavePick}{$parent_menu}{${$FullMenu}
-                     {$MenuUnit_hash_ref}[6]{$key}}='*';
+                     {$MenuUnit_hash_ref}[8]{$key}}='*';
                }
             } else {
-               my $ch_num=$num_pick;
-               while (1) {
-                  $picks{$ch_num--}='*';
-                  last if $ch_num==0;
+               my $nmp=$num_pick-1;
+               foreach my $pck (0..$nmp) {
+                  if ($select_many || exists ${$FullMenu}{$MenuUnit_hash_ref}[6]->{$all_menu_items_array[$pck]}) {
+                     $picks{$pck+1}='*'
+                  }
                }
+               #my $ch_num=$num_pick;
+               #while (1) {
+               #   $picks{$ch_num--}='*';
+               #   last if $ch_num==0;
+               #}
             }
          } elsif ($numbor=~/^[Cc]$/) {
             ## CLEAR ALL CLEARALL
 #print "WHAT IS SUM_MENU=$sum_menu and FILTERED_MENU=$filtered_menu\n";sleep 2;
             #if ($sum_menu || $filtered_menu) {
-               foreach my $key (keys %{${$FullMenu}{$MenuUnit_hash_ref}[6]}) {
+               foreach my $key (keys %{${$FullMenu}{$MenuUnit_hash_ref}[8]}) {
                   delete ${$SavePick}{$parent_menu}{${$FullMenu}
-                     {$MenuUnit_hash_ref}[6]{$key}};
+                     {$MenuUnit_hash_ref}[8]{$key}};
                }
                foreach my $pick (keys %picks) {
                   if (exists $picks{$pick}) {
-print "PICKKK=$pick\n";
+#print "PICKKK=$pick\n";
                      #if ($picks{$pick} eq '*') {
                         delete $picks{$pick};
                         delete $items{$pick};
@@ -3057,8 +3151,11 @@ print "PICKKK=$pick\n";
             $pn{$numbor}[1]||=1;
 #print "WHAT IS PN1=$pn{$numbor}[1] and NUMBOR=$numbor and WHAT ARE PICKS=",(join ' ',keys %picks)," and FILTERED=$filtered_menu\n";<STDIN>; 
             my $digital_numbor=($numbor=~/^\d+$/) ? $numbor : 1;
-            if (${$MenuUnit_hash_ref}{Select} eq 'Many' && $numbor!~/^[Ff]$/) {
-print "HOWDY DOWDY\n";
+            #if (${$MenuUnit_hash_ref}{Select} eq 'Many' && $numbor!~/^[Ff]$/) {
+#print "WHAT ARE THE KEYS=",keys %{${$MenuUnit_hash_ref}{Select}},"\n";<STDIN>;
+            if (($select_many || (exists ${$MenuUnit_hash_ref}{Select}{$numbor}))
+                  && $numbor!~/^[Ff]$/) {
+#print "HOWDY DOWDY\n";<STDIN>;
                if (exists $picks{$numbor}) {
                   if ($picks{$numbor} eq '*') {
                      delete $picks{$numbor};
@@ -3192,7 +3289,6 @@ print "HOWDY DOWDY\n";
 #print "SO INCREDIBLY AWESOME=",keys %{$mnyou},"\n";<STDIN>;
                   }
                   chomp($numbor);
-#print "WHAT IS PICKS HERE=",keys %picks,"\n";
                   unless ($numbor_is_eff) {
                      if (exists $picks{$numbor}) {
                         ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
@@ -3226,14 +3322,14 @@ print "HOWDY DOWDY\n";
                         }
                      }
                   }
-                  $picks{$numbor}='-' unless keys %picks;
+                  $picks{$numbor}='-' if !(keys %picks) || $numbor!~/^[Ff]$/;
                   ($FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,
                      $convey,$parent_menu)
                      =$get_result->($MenuUnit_hash_ref,
                      \@all_menu_items_array,\%picks,
                      $picks_from_parent,$FullMenu,$Conveyed,$Selected,
                      $SaveNext,$Persists,$parent_menu);
-#print "CONVEYXXXXX=$convey<==\n";<STDIN>;
+#print "CONVEYXXXXX=@{$convey}<==\n";<STDIN>;
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                   ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=[];
                   if (0<$#{[keys %picks]}) {
@@ -3246,7 +3342,7 @@ print "HOWDY DOWDY\n";
                         $all_menu_items_array[$numbor-1];
                   }
 #print "WHAT IS CONVEY=$convey and PICKS=",keys %picks,"\n";
-#print "WAHT IS BEING CONVEYED=${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}\n";
+#print "WAHT IS BEING CONVEYED=",(join " ",@{${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}}),"\n";
 #print "GOING TO NEW MENU AND JUST CONVEYED=",${$MenuUnit_hash_ref}{'Label'},"\n";<STDIN>;
                   my $mcount=0;
                   unless (exists ${$SaveMMap}{$MenuUnit_hash_ref}) {
@@ -3258,8 +3354,14 @@ print "HOWDY DOWDY\n";
                         ${$SaveMMap}{$MenuUnit_hash_ref}=[];
                      }
                   }
-                  push @{${$SaveMMap}{$MenuUnit_hash_ref}},
-                     [ ++$mcount, $convey ];
+#print "WHAT IS ALL THIS=@{$convey}<==\n";<STDIN>;
+                  if (ref $convey eq 'ARRAY') {
+                     push @{${$SaveMMap}{$MenuUnit_hash_ref}},
+                        [ ++$mcount, $convey->[0] ];
+                  } else {
+                     push @{${$SaveMMap}{$MenuUnit_hash_ref}},
+                        [ ++$mcount, $convey ];
+                  }
                   $MenuMap=${$SaveMMap}{$MenuUnit_hash_ref};
                   eval {
                      ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
@@ -3339,7 +3441,7 @@ print "HOWDY DOWDY\n";
                            }
                            @resu=$sub->();
                            if (-1<$#resu) {
-                              if (wantarray && !$no_wantarray) {
+                              if (0<$#resu && wantarray && !$no_wantarray) {
                                  return @resu;
                               } else {
 #print "RETURN RESU1\n";
@@ -3432,7 +3534,7 @@ print "HOWDY DOWDY\n";
                               } else { die $die }
                            }
                         } elsif (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU2\n";
@@ -3461,9 +3563,9 @@ print "HOWDY DOWDY\n";
                   die $die;
                }
             } elsif ($FullMenu && $caller eq $callertest &&
-                  ${$MenuUnit_hash_ref}{Select} eq 'Many') {
+                  ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}}))) {
+                  #${$MenuUnit_hash_ref}{Select} eq 'Many') {
                if ($numbor!~/^[Ff]$/ && exists $picks{$numbor}) {
-print "WOWSER\n";
                   if ($picks{$numbor} eq '*') {
                      delete $picks{$numbor};
                      delete $items{$numbor};
@@ -3477,9 +3579,9 @@ print "WOWSER\n";
                   } last;
                }
                if (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
-print "COWSER\n";
                   $numbor=(keys %picks)[0] if $numbor=~/^[Ff]$/;
                   #if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
+#print "PICKNUM=$picknum and @all_menu_items_array\n";
                   if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$all_menu_items_array[$picknum-1]}
                           eq 'CODE') {
 #print "GOT CODE\n";
@@ -3541,7 +3643,7 @@ print "COWSER\n";
                      }
                      my @resu=$sub->();
                      if (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU3=$resu[0]<==\n";
@@ -3549,7 +3651,9 @@ print "COWSER\n";
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
-                  } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
+                  } elsif (defined $pn{$numbor}[0] &&
+                        exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
+                        substr(${$FullMenu}{$MenuUnit_hash_ref}
                         [2]{$pn{$numbor}[0]},0,1) ne '&') {
                      my $die="The \"Result12 =>\" Setting\n              -> "
                             .${$FullMenu}{$MenuUnit_hash_ref}[2]
@@ -3563,6 +3667,16 @@ print "COWSER\n";
                             ."\n              Cannot Determine "
                             ."if it is a Valid SubRoutine.\n\n";
                      die $die;
+                  } elsif (!defined $pn{$numbor}[0] ||
+                        !exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}) {
+                     my @resu=map { $all_menu_items_array[$_-1] } keys %picks;
+                     if (wantarray && !$no_wantarray) {
+                        return @resu;
+                     } elsif ($#resu==0) {
+                        return @resu;
+                     } else {
+                        return \@resu;
+                     }
                   }
                   if (${$FullMenu}{$MenuUnit_hash_ref}[2]
                                    {$pn{$numbor}[0]}) { }
@@ -3625,7 +3739,7 @@ print "COWSER\n";
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU4\n";
@@ -3714,7 +3828,7 @@ print "COWSER\n";
                         }
                      } else {
                         if (-1<$#resu) {
-                           if (wantarray && !$no_wantarray) {
+                           if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
 #print "RETURN RESU5\n";
@@ -3781,10 +3895,9 @@ print "COWSER\n";
                   }
                   my @resu=$sub->();
                   if (-1<$#resu) {
-                     if (wantarray && !$no_wantarray) {
+                     if (0<$#resu && wantarray && !$no_wantarray) {
                         return @resu;
                      } else {
-#print "RETURN RESU6\n";
                         return return_result($resu[0],
                            $MenuUnit_hash_ref,$Conveyed);
                      }
@@ -3842,7 +3955,7 @@ print "COWSER\n";
                      }
                      @resu=$sub->();
                      if (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU7\n";
@@ -3931,7 +4044,7 @@ print "COWSER\n";
                   } else {
 #print "ARE WE HERE????\n";sleep 10;
                      if (-1<$#resu) {
-                        if (wantarray && !$no_wantarray) {
+                        if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
 #print "RETURN RESU8\n";
@@ -3949,7 +4062,8 @@ print "COWSER\n";
          }
       } last if $done;
    }
-   if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
+   #if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
+   if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
       my @picks=();
       foreach (keys %picks) {
          my $pik=$all_menu_items_array[$_-1];
@@ -4735,9 +4849,9 @@ B<Select> => 'One' --or-- 'Many'
 
 =item
 
-The I<Select> element determines whether this particular menu layer
-allows the selection of multiple items - or a single item. The default
-is 'One'.
+The MENU LEVEL I<Select> element determines whether this particular menu
+layer allows the selection of multiple items - or a single item. The 
+default is 'One'.
 
    Select => 'Many',
 
@@ -4860,6 +4974,53 @@ The user sees ==>
    f.  Finish.
 
    93 Total Choices
+
+   Press ENTER (or "d") to scroll downward
+
+   OR "u" to scroll upward  (Type "quit" to quit)
+
+   PLEASE ENTER A CHOICE:
+
+=back
+
+=item
+
+B<Select> => 'One' --or-- 'Many'
+
+=item
+
+=over 2
+
+=item
+
+The ITEM LEVEL I<Select> element provides a means to inform Term::Menus
+that the specific items of a single ITEM BLOCK (as opposed to full menu)
+are subject to multiple selecting - or just single selection. This is
+useful in particular for Directory Tree navigation - where files can
+be multi-selected (or tagged), yet when a directory is selectedi, it
+forces an immediate navigation and new menu - showing the contents of
+the just selected directory.
+
+B<NOTE:> See the B<RECURSIVELY CALLED MENUS> section for more information.
+
+   Select => 'More',
+
+The user sees ==>
+
+   d  1.        bin
+   d  2.        blib
+   d  3.        dist
+   d  4.        inc
+   d  5.        lib
+   d  6.        Module
+   d  7.        t
+      8.        briangreat2.txt
+   *  9.        ChangeLog
+      10.       close.perl
+
+   a.  Select All.   f.  Finish.
+
+   49 Total Choices
 
    Press ENTER (or "d") to scroll downward
 
@@ -5330,7 +5491,7 @@ This is a helper routine that returns a list of ancestor menu results. This is n
 
 =item
 
-The following code is an example of how to use recursion for navigating a directory tree. (Note: As of 5/31/2011, this is BRAND NEW functionality, and work on this feature continues.):
+The following code is an example of how to use recursion for navigating a directory tree. (Note: As of 6/3/2011, this is BRAND NEW functionality, and work on this feature continues.):
 
    use Term::Menus;
 
@@ -5340,6 +5501,7 @@ The following code is an example of how to use recursion for navigating a direct
       Item_1 => {
 
          Text => "]C[",
+         Mark => "d",
          Convey => sub {
  
             if ("]P[") {
@@ -5374,7 +5536,7 @@ The following code is an example of how to use recursion for navigating a direct
             opendir(DIR,'.') || die $!;
             @files = readdir(DIR);
             closedir(DIR);
-            foreach my $entry (@files) {
+            foreach my $entry (@xfiles) {
                next if $entry eq '.';
                next if $entry eq '..';
                next unless -d $entry;
@@ -5389,6 +5551,7 @@ The following code is an example of how to use recursion for navigating a direct
       Item_2 => {
 
          Text => "]C[",
+         Select => 'Many',
          Convey => sub {
 
             if ("]P[") {
@@ -5422,7 +5585,7 @@ The following code is an example of how to use recursion for navigating a direct
             opendir(DIR,'.') || die $!;
             @files = readdir(DIR);
             closedir(DIR);
-            foreach my $entry (@files) {
+            foreach my $entry (@xfiles) {
                next if $entry eq '.';
                next if $entry eq '..';
                next if -d $entry;
@@ -5432,17 +5595,12 @@ The following code is an example of how to use recursion for navigating a direct
 
          },
       },
-      Item_3 => {
-
-         Text => "=> END SELECTING\n",
-
-      },
 
    );
 
-   my $selection=Menu(\%dir_menu);
+   my @selection=Menu(\%dir_menu);
 
-   print "\nSELECTION=$selection\n";
+   print "\nSELECTION=",(join "\n",@selection,"\n";
 
 =back
 
