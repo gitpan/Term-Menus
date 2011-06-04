@@ -1,5 +1,13 @@
 2011-06-03  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.82 released.
+
+        * Fixed bug when using with FullAuto introduced with
+          recent changes.
+
+
+2011-06-03  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.81 released.
 
         * New ITEM LEVEL Select element. See POD documentation

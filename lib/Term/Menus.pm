@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.81';
+our $VERSION = '1.82';
 
 
 use 5.006;
@@ -39,7 +39,8 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %get_all_hosts %hostname %GetSpeed %get_subs_from_menu
             %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
             %GetControlChars %numerically %rawInput %transform_sicm
-            %return_result $MenuMap);
+            %return_result $MenuMap %get_Menu_map_count %MenuMap
+            %get_Menu_map);
 @EXPORT = qw(pick Menu get_Menu_map);
 use Config ();
 our $canload=sub {};
@@ -3918,6 +3919,7 @@ return 'DONE_SUB';
                }
                if (${$FullMenu}{$MenuUnit_hash_ref}[2]
                                 {$pn{$numbor}[0]}) { }
+               $picks{$numbor}='';
                ($FullMenu,$Conveyed,$SaveNext,$Persists,
                   $Selected,$convey,$parent_menu)
                   =$get_result->($MenuUnit_hash_ref,
