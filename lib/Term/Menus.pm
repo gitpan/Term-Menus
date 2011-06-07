@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.82';
+our $VERSION = '1.83';
 
 
 use 5.006;
@@ -790,8 +790,12 @@ sub Menu
 #print "WHAT IS THIS=$text and NEGATE=",${$Items{$num}}{Negate}," and KEYS=",keys %{$Items{$num}},"\n";
             $negate{$text}=${$Items{$num}}{Negate}
                if exists ${$Items{$num}}{Negate};
-            $result{$text}=${$Items{$num}}{Result}
-               if exists ${$Items{$num}}{Result};
+            if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$text}) {
+               $result{$text}=
+                  ${$FullMenu}{$MenuUnit_hash_ref}[2]{$text};
+            } elsif (exists ${$Items{$num}}{Result}) {
+               $result{$text}=${$Items{$num}}{Result}
+            }
             my $tsttt=${$Items{$num}}{Select};
             $select{$text}=${$Items{$num}}{Select}
                if exists ${$Items{$num}}{Select}
@@ -833,8 +837,14 @@ sub Menu
             if exists ${$Items{$num}}{Default};
          $negate{$text}=${$Items{$num}}{Negate}
             if exists ${$Items{$num}}{Negate};
-         $result{$text}=${$Items{$num}}{Result}
-            if exists ${$Items{$num}}{Result};
+         if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$text}) {
+            $result{$text}=
+               ${$FullMenu}{$MenuUnit_hash_ref}[2]{$text};
+         } elsif (exists ${$Items{$num}}{Result}) {
+            $result{$text}=${$Items{$num}}{Result}
+         }
+         #$result{$text}=${$Items{$num}}{Result}
+         #   if exists ${$Items{$num}}{Result};
          my $tsttt=${$Items{$num}}{Select}||'';
          $select{$text}=${$Items{$num}}{Select}
             if exists ${$Items{$num}}{Select}
@@ -2840,6 +2850,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } last;
          } elsif (($numbor=~/^\>/ || $ikey eq 'RIGHTARROW') && exists
                   ${$SaveNext}{$MenuUnit_hash_ref}) {
+            $MenuMap=${$SaveMMap}{$MenuUnit_hash_ref};
+            my $tyt=${$FullMenu}
+                  {$MenuUnit_hash_ref}[2]
+                  {$all_menu_items_array[(keys %{${$SavePick}{
+                  $MenuUnit_hash_ref}})[0]-1]};
+#print "MENU UNIT REF=$MenuUnit_hash_ref\n";
+#print "MENU FOR NEXT MENU=",&Data::Dump::Streamer::Dump($tyt)->Out(),"\n";<STDIN>;
+#print "MENUMAP FOR NEXT MENU=",&Data::Dump::Streamer::Dump($MenuMap)->Out(),"\n";<STDIN>;
             $convey=[];
             foreach my $numb (sort numerically keys %picks) {
                push @{$convey}, $all_menu_items_array[$numb-1];
@@ -3247,10 +3265,10 @@ return 'DONE_SUB';
                   delete $items{$prev_menu};
                }
             } elsif (($numbor=~/^\d+$/ &&
-                         ref ${$FullMenu}{$MenuUnit_hash_ref}[2]
+                         (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[$digital_numbor-1]||
                          $all_menu_items_array[$pn{$digital_numbor}[1]-1]}
-                         eq 'HASH') || ($numbor=~/^[Ff]$/ &&
+                         eq 'HASH')) || ($numbor=~/^[Ff]$/ &&
                          ref ${$FullMenu}{$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[((keys %picks)[0]||1)-1]}
                          eq 'HASH')) {
@@ -3348,9 +3366,12 @@ return 'DONE_SUB';
                   my $mcount=0;
                   unless (exists ${$SaveMMap}{$MenuUnit_hash_ref}) {
                      if ($parent_menu) {
-                        ${$SaveMMap}{$MenuUnit_hash_ref}=
-                        ${$SaveMMap}{$parent_menu};
-                        $mcount=&get_Menu_map_count(${$SaveMMap}{$MenuUnit_hash_ref});
+                        my $parent_map=&Data::Dump::Streamer::Dump(
+                              ${$SaveMMap}{$parent_menu})->Out();
+                        $parent_map=~s/\$ARRAY\d*\s*=\s*//s;
+                        ${$SaveMMap}{$MenuUnit_hash_ref}=eval $parent_map;
+                        $mcount=&get_Menu_map_count(
+                           ${$SaveMMap}{$MenuUnit_hash_ref});
                      } else {
                         ${$SaveMMap}{$MenuUnit_hash_ref}=[];
                      }
@@ -5547,7 +5568,7 @@ The following code is an example of how to use recursion for navigating a direct
             return @return;
 
          },
-         Result => { 'dir_menu'=>rand() },
+         Result => { 'dir_menu'=>'recurse' },
 
       },
       Item_2 => {
@@ -5600,9 +5621,13 @@ The following code is an example of how to use recursion for navigating a direct
 
    );
 
-   my @selection=Menu(\%dir_menu);
+   my $selection=Menu(\%dir_menu);
 
-   print "\nSELECTION=",(join "\n",@selection,"\n";
+   if (ref $selection eq 'ARRAY') {
+      print "\nSELECTION=",(join " ",@{$selection}),"\n";
+   } else {
+      print "\nSELECTION=$selection\n";
+   }
 
 =back
 
