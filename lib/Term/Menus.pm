@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.83';
+our $VERSION = '1.84';
 
 
 use 5.006;
@@ -742,6 +742,19 @@ sub Menu
 #print "WHAT IS THIS NOW=$eval_convey_code<==\n";
             $eval_convey_code||=sub {};
             @convey=$eval_convey_code->();
+            #eval {
+            #   my $die="\n       FATAL ERROR! - Error in Convey => "
+            #          ."sub{ *CONTENT* },\n                      code block."
+            #          ." To find error, copy the\n                      "
+            #          ."*CONTENT* to a separate script, and\n"
+            #          ."                      test for the error there. "
+            #          ."Use the\n                      'use strict;' pragma."
+            #          ."\n\n";
+            #   @convey=$eval_convey_code->() or die $die;
+            #};
+            #if ($@) {
+            #   die $@;
+            #}
          } elsif (substr(${$Items{$num}}{Convey},0,1) eq '&') {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
@@ -869,9 +882,39 @@ sub Menu
 
    $banner=${$_[0]}{Banner}
       if exists ${$_[0]}{Banner};
-   $banner=&transform_pmsi($banner,
-      $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
-      $picks_from_parent);
+   if (ref $banner eq 'CODE') {
+      my $banner_code=$banner;
+      if ($Term::Menus::data_dump_streamer) {
+         $banner_code=
+            &Data::Dump::Streamer::Dump($banner_code)->Out();
+#print "PICKSFROMPARENTXX=$picks_from_parent AND CONVEY_CODE=$convey_code\n";
+         $banner_code=&transform_pmsi($banner_code,
+            $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
+            $picks_from_parent);
+      }
+#print "WHAT IS CDNOW=$banner_code<==\n";<STDIN>;
+      $banner_code=~s/\$CODE\d*\s*=\s*//s;
+#print "WHAT IS CDREALLYNOW=$banner_code<==\n";<STDIN>;
+      my $eval_banner_code=eval $banner_code;
+#print "WHAT IS THIS NOW=$eval_banner_code<==\n";
+      $eval_banner_code||=sub {};
+      eval {
+         my $die="\n"
+                ."       FATAL ERROR! - Error in Banner => sub{ *CONTENT* },\n"
+                ."                      code block. To find error, copy the\n"
+                ."                      *CONTENT* to a separate script, and\n"
+                ."                      test for the error there. Use the\n"
+                ."                      'use strict;' pragma.\n\n";
+         $banner=$eval_banner_code->() or die $die;
+      };
+      if ($@) {
+         die $@;
+      }
+   } else {
+      $banner=&transform_pmsi($banner,
+         $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
+         $picks_from_parent);
+   }
    if ($banner && unpack('a1',$banner) eq '&' &&
          defined $picks_from_parent &&
          !ref $picks_from_parent) {
@@ -1323,7 +1366,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 
    my $get_result = sub {
 
-#print "GET_RESULT CALLER=",caller,"\n";
+print "GET_RESULT CALLER=",caller,"\n";
 
       # $_[0] => $MenuUnit_hash_ref
       # $_[1] => \@all_menu_items_array
@@ -1414,6 +1457,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       $test_item||='';
       if ($pick &&
             exists ${$FullMenu}{$_[0]}[2]{${$_[1]}[$pick-1]}) {
+print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item}),"\n";
          if ((ref $test_item eq 'HASH' &&
                    exists $test_item->{Item_1})
                    || substr($test_item,0,1) eq '&'
@@ -3289,6 +3333,8 @@ return 'DONE_SUB';
                      my %men_result=%{${$FullMenu}
                          {$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[$digital_numbor-1]}};
+#print "WHAT IS THIS=",(join " ",keys %men_result),"\n";
+                     delete $men_result{Label} if exists $men_result{Label};
                      $menyou=&Data::Dump::Streamer::Dump($labels{
                            (keys %men_result)[0]})->Out();
 #print "MENYOU=$menyou<==\n";<STDIN>;
