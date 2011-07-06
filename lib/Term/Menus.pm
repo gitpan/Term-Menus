@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.84';
+our $VERSION = '1.85';
 
 
 use 5.006;
@@ -1366,7 +1366,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 
    my $get_result = sub {
 
-print "GET_RESULT CALLER=",caller,"\n";
+#print "GET_RESULT CALLER=",caller,"\n";
 
       # $_[0] => $MenuUnit_hash_ref
       # $_[1] => \@all_menu_items_array
@@ -1457,7 +1457,7 @@ print "GET_RESULT CALLER=",caller,"\n";
       $test_item||='';
       if ($pick &&
             exists ${$FullMenu}{$_[0]}[2]{${$_[1]}[$pick-1]}) {
-print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item}),"\n";
+#print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item}),"\n";
          if ((ref $test_item eq 'HASH' &&
                    exists $test_item->{Item_1})
                    || substr($test_item,0,1) eq '&'

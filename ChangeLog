@@ -1,3 +1,10 @@
+2011-07-05  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.85 released.
+
+        * Removed some overlooked error-checking code.
+
+
 2011-07-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.84 released.
