@@ -1,5 +1,14 @@
 2011-07-05  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 1.86 released.
+
+        * Added code to complement FullAuto. New code works
+          with FullAuto to enable user to select and save
+          a default startup meny file.
+
+
+2011-07-05  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 1.85 released.
 
         * Removed some overlooked error-checking code.

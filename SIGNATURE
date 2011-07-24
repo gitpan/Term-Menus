@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.61.
+signed via the Module::Signature module, version 0.68.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,10 +14,10 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 c017f393703cf9f0a604adc2bf6353829213d879 ChangeLog
+SHA1 4712acf37f94069ac3a42b882e3d606a49d3e8e6 ChangeLog
 SHA1 a74125560a260a18a646ef0b3702e1b77a45b931 LICENSE
 SHA1 536d4ce30b1934be585da55e463477877c31fe8c MANIFEST
-SHA1 f99039fbbe624230c017e9ce2fb40ebc79adbcb5 META.yml
+SHA1 f5e050a84c4f9c2753f834c5376b3ce137c7e56d META.yml
 SHA1 14e358b68232b26478c491ba66290d4dc07ae02a Makefile.PL
 SHA1 dd0ef50a94b1bbe303b0f05c353dfe97cda04f3b README
 SHA1 20c73697e1713638140c719d8eaa19a275ed43a5 inc/Module/AutoInstall.pm
@@ -31,13 +31,13 @@ SHA1 b721c93ca5bc9a6aa863b49af15f1b1de6125935 inc/Module/Install/Makefile.pm
 SHA1 026cc0551a0ad399d195e395b46bdf842e115192 inc/Module/Install/Metadata.pm
 SHA1 5457015ea5a50e93465bf2dafa29feebd547f85b inc/Module/Install/Win32.pm
 SHA1 051e7fa8063908befa3440508d0584a2497b97db inc/Module/Install/WriteAll.pm
-SHA1 afeda6d8fcc6e30f94fae47af9bea6272463022d lib/Term/Menus.pm
+SHA1 989a55f7ad790a429195906aa137d4586d8e5f5a lib/Term/Menus.pm
 SHA1 7f2e13f5f6a798d52ea897d24d07b49af4039341 t/0-signature.t
 SHA1 ded9def7d10cf71606da96112acc159e0aa9a582 t/test.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (Cygwin)
 
-iEYEARECAAYFAk4TxJ0ACgkQdsVAdUjO9Ik7owCaApA+3vUrSROgwbDCleBj+8KK
-gxwAn0iSxRzdCEVQW60QLv6FPxXl+RSB
-=11bK
+iEYEARECAAYFAk4rnecACgkQdsVAdUjO9Im9KwCePMCFKnmogoX49vobH8O/YoKr
+l4EAnRHTwDF1rwyWSgF4bANv6YMsSM3g
+=QnyS
 -----END PGP SIGNATURE-----
