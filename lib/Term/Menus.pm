@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.86';
+our $VERSION = '1.87';
 
 
 use 5.006;
@@ -196,12 +196,6 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
-            $menu_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.$menu_config_module_file;
-      }
-      my $mc=substr($menu_config_module_file,0,-3);
-      import $mc;
       $fullauto=1;
 
    }
@@ -560,6 +554,9 @@ sub fa_login
             }
          }
          require $Term::Menus::menu_config_module_file;
+      } elsif (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
+            $Term::Menus::menu_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.$Term::Menus::menu_config_module_file;
       }
       my $mc=substr($Term::Menus::menu_config_module_file,
             (rindex $Term::Menus::menu_config_module_file,'/')+1,-3);
