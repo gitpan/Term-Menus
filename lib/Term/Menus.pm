@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.87';
+our $VERSION = '1.88';
 
 
 use 5.006;
@@ -40,7 +40,8 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
             %GetControlChars %numerically %rawInput %transform_sicm
             %return_result $MenuMap %get_Menu_map_count %MenuMap
-            %get_Menu_map);
+            %get_Menu_map %check_for_dupe_menus %EXPORT_FAIL
+            %import);
 @EXPORT = qw(pick Menu get_Menu_map);
 use Config ();
 our $canload=sub {};
@@ -170,17 +171,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                                                      ###
    #####################################################################
 
-   our $fullauto=0;
    if (defined $main::fa_menu_config) {
 
       if (-1<index $main::fa_menu_config,'/') {
          require $main::fa_menu_config;
-         my $mc=substr($main::fa_menu_config,
-                (rindex $main::fa_menu_config,'/')+1,-3);
-         import $mc;
-         $menu_config_module_file=$mc.'.pm';
-      } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::fa_menu_config;
          my $mc=substr($main::fa_menu_config,
                 (rindex $main::fa_menu_config,'/')+1,-3);
          import $mc;
@@ -191,10 +185,11 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          import $mc;
          $menu_config_module_file=$main::fa_menu_config;
       }
-      $fullauto=1
-         if -1<index caller(2),'FullAuto';
 
-   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
+   }
+
+   our $fullauto=0;
+   if (defined caller(2) && -1<index caller(2),'FullAuto') {
 
       $fullauto=1;
 
@@ -411,73 +406,80 @@ our $MenuMap=[];
 
 our $noclear=1; # set to one to turn off clear for debugging
 
-my $m_flag=0;
-my $s_flag=0;
-foreach my $dir (@INC) {
-   if (!$m_flag && -f "$dir/$Term::Menus::menu_config_module_file") {
-      $m_flag=1;
-      open(FH,"<$dir/$Term::Menus::menu_config_module_file");
-      my $line='';my %menudups=();
-      while ($line=<FH>) {
-         if ($line=~/^[ \t]*\%(.*)\s*=/) {
-            if (!exists $menudups{$1}) {
-               $menudups{$1}='';
-            } else {
-               my $mcmf=$Term::Menus::menu_config_module_file;
-               my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
-                      ."\n              ->  \"%$1\" is defined more than once\n"
-                      ."              in the $dir/$mcmf file.\n\n"
-                      ."       Hint:  delete or comment-out all duplicates\n\n";
-               if ($Term::Menus::fullauto) {
-                  print $die if !$Net::FullAuto::FA_Core::cron;
-                  &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
-               } else { die $die }
-            }
-         }
-      }
-   }
-   if (!$s_flag && -f "$dir/$Term::Menus::custom_code_module_file") {
-      $s_flag=1;
-      open(FH,"<$dir/$Term::Menus::custom_code_module_file");
-      my $line='';my %dups=();
-      while ($line=<FH>) {
-         if ($line=~/^[ \t]*\%(.*)\s*=/) {
-            if (!exists $dups{$1}) {
-               $dups{$1}='';
-            } else {
-               my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
-                      ."\n              ->  \"%$1\" is defined more "
-                      ."than once\n              in the $dir/"
-                      .$Term::Menus::custom_code_module_file
-                      ." file.\n\n       Hint:  delete "
-                      ."or comment-out all duplicates\n\n";
-               if ($Term::Menus::fullauto) {
-                  print $die if !$Net::FullAuto::FA_Core::cron;
-                  &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
-               } else { die $die }
-            }
-         }
-      }
-   }
-}
+sub check_for_dupe_menus {
 
-if ($Term::Menus::fullauto) {
-   foreach my $symname (keys %Term::Menus::) {
-      if (eval "\\%$symname") {
-         my $hashref=eval "\\%$symname";
-         HF: foreach my $key (keys %{$hashref}) {
-            if (ref ${$hashref}{$key} eq 'HASH') {
-               foreach my $ky (keys %{${$hashref}{$key}}) {
-                  if (lc($ky) eq 'text') {
-                     $LookUpMenuName{$hashref}=$symname;
-                     last HF;
+   my $m_flag=0;
+   my $s_flag=0;
+   foreach my $dir (@INC) {
+      if (!$m_flag && -f "$dir/$Term::Menus::menu_config_module_file") {
+         $m_flag=1;
+         open(FH,"<$dir/$Term::Menus::menu_config_module_file");
+         my $line='';my %menudups=();
+         while ($line=<FH>) {
+            if ($line=~/^[ \t]*\%(.*)\s*=/) {
+               if (!exists $menudups{$1}) {
+                  $menudups{$1}='';
+               } else {
+                  my $mcmf=$Term::Menus::menu_config_module_file;
+                  my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
+                         ."\n              ->  \"%$1\" is defined more than once\n"
+                         ."              in the $dir/$mcmf file.\n\n"
+                         ."       Hint:  delete or comment-out all duplicates\n\n";
+                  if ($Term::Menus::fullauto) {
+                     print $die if !$Net::FullAuto::FA_Core::cron;
+                     &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
+                  } else { die $die }
+               }
+            }
+         }
+      }
+      if (!$s_flag && -f "$dir/$Term::Menus::custom_code_module_file") {
+         $s_flag=1;
+         open(FH,"<$dir/$Term::Menus::custom_code_module_file");
+         my $line='';my %dups=();
+         while ($line=<FH>) {
+            if ($line=~/^[ \t]*\%(.*)\s*=/) {
+               if (!exists $dups{$1}) {
+                  $dups{$1}='';
+               } else {
+                  my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
+                         ."\n              ->  \"%$1\" is defined more "
+                         ."than once\n              in the $dir/"
+                         .$Term::Menus::custom_code_module_file
+                         ." file.\n\n       Hint:  delete "
+                         ."or comment-out all duplicates\n\n";
+                  if ($Term::Menus::fullauto) {
+                     print $die if !$Net::FullAuto::FA_Core::cron;
+                     &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
+                  } else { die $die }
+               }
+            }
+         }
+      }
+   }
+
+   if ($Term::Menus::fullauto) {
+      foreach my $symname (keys %Term::Menus::) {
+         if (eval "\\%$symname") {
+            my $hashref=eval "\\%$symname";
+            HF: foreach my $key (keys %{$hashref}) {
+               if (ref ${$hashref}{$key} eq 'HASH') {
+                  foreach my $ky (keys %{${$hashref}{$key}}) {
+                     if (lc($ky) eq 'text') {
+                        $LookUpMenuName{$hashref}=$symname;
+                        last HF;
+                     }
                   }
                }
             }
          }
       }
    }
+
 }
+
+&check_for_dupe_menus() if defined $main::fa_menu_config
+                                && $main::fa_menu_config;
 
 {
    use Sys::Hostname;
@@ -567,6 +569,9 @@ sub fa_login
       if ($fa_code) {
          &run_sub($fa_code,$menu_args);
       } elsif (ref $start_menu_ref eq 'HASH') {
+         unless (keys %LookUpMenuName) {
+            &check_for_dupe_menus();
+         }
          if (!exists $LookUpMenuName{$start_menu_ref}) {
             my $mcmf=$Term::Menus::menu_config_module_file;
             my $die="\n       FATAL ERROR! - The top level menu,"
