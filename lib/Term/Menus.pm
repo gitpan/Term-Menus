@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.88';
+our $VERSION = '1.89';
 
 
 use 5.006;
@@ -558,7 +558,7 @@ sub fa_login
          require $Term::Menus::menu_config_module_file;
       } elsif (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
             $Term::Menus::menu_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.$Term::Menus::menu_config_module_file;
+         require 'Net/FullAuto/Distro/fa_menu_demo.pm';
       }
       my $mc=substr($Term::Menus::menu_config_module_file,
             (rindex $Term::Menus::menu_config_module_file,'/')+1,-3);
@@ -572,19 +572,19 @@ sub fa_login
          unless (keys %LookUpMenuName) {
             &check_for_dupe_menus();
          }
-         if (!exists $LookUpMenuName{$start_menu_ref}) {
-            my $mcmf=$Term::Menus::menu_config_module_file;
-            my $die="\n       FATAL ERROR! - The top level menu,"
-                   ." indicated\n              by the "
-                   ."\$start_menu_ref variable in\n       "
-                   ."       the $mcmf file, is NOT\n"
-                   ."              EXPORTED\n\n       Hint: "
-                   ."\@EXPORT = qw( %Menu_1 %Menu_2 ... )\;"
-                   ."\n\n\tour \$start_menu_ref=\\%Menu_1\;"
-                   ."\n\n       \[ Menu_1 is example - "
-                   ."name you choose is optional \]\n";
-            &Net::FullAuto::FA_Core::handle_error($die);
-         }
+         #if (!exists $LookUpMenuName{$start_menu_ref}) {
+         #   my $mcmf=$Term::Menus::menu_config_module_file;
+         #   my $die="\n       FATAL ERROR! - The top level menu,"
+         #          ." indicated\n              by the "
+         #          ."\$start_menu_ref variable in\n       "
+         #          ."       the $mcmf file, is NOT\n"
+         #          ."              EXPORTED\n\n       Hint: "
+         #          ."\@EXPORT = qw( %Menu_1 %Menu_2 ... )\;"
+         #          ."\n\n\tour \$start_menu_ref=\\%Menu_1\;"
+         #          ."\n\n       \[ Menu_1 is example - "
+         #          ."name you choose is optional \]\n";
+         #   &Net::FullAuto::FA_Core::handle_error($die);
+         #}
          if ($Net::FullAuto::FA_Core::plan) {
             my $plann=shift @{$Net::FullAuto::FA_Core::plan};
             if (${$start_menu_ref}{Label} eq ${$plann}{Label}) {
