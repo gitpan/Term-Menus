@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.89';
+our $VERSION = '1.90';
 
 
 use 5.006;
@@ -41,7 +41,526 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %GetControlChars %numerically %rawInput %transform_sicm
             %return_result $MenuMap %get_Menu_map_count %MenuMap
             %get_Menu_map %check_for_dupe_menus %EXPORT_FAIL
-            %import);
+            %import %DB_LOCK_PUT %DB_ENV_DSYNC_LOG %DB_ENV_STANDALONE
+            %DB_ST_IS_RECNO %DB_JOINENV &DB_JOINENV %DB_LOCK_INHERIT
+            %DB_VERB_REP_SYSTEM %DB_MUTEX_PROCESS_ONLY %DB_VERSION_MISMATCH
+            %DB_LOG_VERIFY_ERR %DB_EVENT_REG_ALIVE %DB_XA_CREATE
+            %DB_VERB_REP_ELECT %DB_REP_JOIN_FAILURE %DB_DELIMITER
+            %DB_ENV_TXN %DB_ENV_RPCCLIENT %DB_MPOOL_CLEAN %DB_BTREEOLDVER
+            %DB_TEMPORARY %DB_REPMGR_ACKS_ONE %DB_OLD_VERSION
+            %DB_TEST_POSTLOGMETA %DB_SET_RECNO %DB_SA_UNKNOWNKEY
+            %DB_MAX_RECORDS %DB_LOCK_CONFLICT %DB_REP_NEWMASTER
+            %DB_LOCK_FREE_LOCKER %DB_POSITIONI %DB_VERB_FILEOPS
+            %DB_LOCK_DEFAULT %DB_REP_ANYWHERE %DB_REPMGR_CONF_2SITE_STRICT
+            %DB_AUTO_COMMIT %DB_TXN_NOWAIT %DB_STAT_LOCK_PARAMS
+            %DB_REP_CONF_NOWAIT %DB_OK_RECNO %DB_SEQ_WRAPPED
+            %DB_MUTEX_LOCKED %DB_BEFORE %DB_EVENT_REP_MASTER_FAILURE
+            %DB_QUEUE %DB_TXN_LOCK_OPTIMISTIC %DB_REP_UNAVAIL
+            %DB_FOREIGN_CASCADE %DB_NOOVERWRITE %DB_REP_CONF_AUTOINIT
+            %LOGREC_OP %DB_RUNRECOVERY %DB_UNREF %DB_REPMGR_ISPEER
+            %DB_VERIFY_BAD %DB_STAT_NOERROR %DB_ENV_LOG_AUTOREMOVE
+            %DB_REP_PAGELOCKED %DB_ST_RECNUM %DB_ORDERCHKONLY
+            %DB_PRIORITY_VERY_LOW %DB_BTREEMAGIC %DB_LOCK_NOTHELD
+            %DB_QAMOLDVER %DB_TEST_POSTSYNC %DB_LOG_AUTO_REMOVE
+            %DB_BTREEVERSION %DB_GET_BOTHC %DB_ENV_RPCCLIENT_GIVEN
+            %DB_CREATE %DB_ARCH_DATA %DB_VERB_WAITSFOR %DB_INIT_REP
+            %DB_ENV_RECOVER_FATAL %DB_LOCK_GET_TIMEOUT %DB_STAT_CLEAR
+            %DB_REP_FULL_ELECTION %DB_VERB_REP_LEASE %DB_REGISTERED
+            %DB_APPLY_LOGREG %DB_REP_HANDLE_DEAD %DB_NOORDERCHK
+%DB_VERIFY_PARTITION
+%DB_THREADID_STRLEN
+%DB_FIRST
+%DB_REPMGR_CONF_ELECTIONS
+%DB_SEQ_DEC
+%DB_REP_CONF_INMEM
+%DB_MUTEX_ALLOCATED
+%DB_JOIN_ITEM
+%DB_REP_CONF_NOAUTOINIT
+%DB_REPMGR_DISCONNECTED
+%DB_DUPSORT
+%DB_TXN_POPENFILES
+%DB_LOCK_RW_N
+%DB_TXN_NOT_DURABLE
+%DB_LOCK_NORUN
+%DB_REP_CONF_BULK
+%DB_STAT_SUBSYSTEM
+%DB_CLIENT
+%DB_USERCOPY_GETDATA
+%DB_COMMIT
+%DB_LOG_AUTOREMOVE
+%DB_MPOOL_TRY
+%DB_WRITEOPEN
+%DB_STAT_LOCK_CONF
+%DB_REPFLAGS_MASK
+%DB_ENV_TIME_NOTGRANTED
+%DB_ENV_NOPANIC
+%DB_LOCK_TRADE
+%DB_DUPCURSOR
+%DB_ENV_APPINIT
+%DB_LOGFILEID_INVALID
+%DB_LOCKMAGIC
+%DB_STAT_MEMP_HASH
+%DB_REP_FULL_ELECTION_TIMEOUT
+%DB_NOCOPY
+%DB_TXN_CKP
+%DB_QAMVERSION
+%DB_EVENT_REP_CLIENT
+%DB_TXNVERSION
+%LOGREC_PGLIST
+%DB_RENAMEMAGIC
+%DB_REP_DUPMASTER
+%DB_OPEN_CALLED
+%DB_PAGE_NOTFOUND
+%DB_VERB_DEADLOCK
+%DB_TXN_FORWARD_ROLL
+%DB_MULTIVERSION
+%DB_LOCK_TIMEOUT
+%DB_JOIN_NOSORT
+%DB_NEEDSPLIT
+%DB_SET_TXN_NOW
+%DB_TXN_OPENFILES
+%DB_TEST_POSTOPEN
+%DB_RECORD_LOCK
+%DB_TEST_PREOPEN
+%DB_RPC_SERVERVERS
+%DB_PRINTABLE
+%DB_VERB_REPLICATION
+%DB_MULTIPLE
+%DB_COMPACT_FLAGS
+%DB_KEYEXIST
+%DB_PRIORITY_VERY_HIGH
+%DB_NOERROR
+%DB_VERSION_RELEASE
+%DB_USE_ENVIRON
+%DB_LOG_VERIFY_DBFILE
+%DB_TEST_ELECTSEND
+%DB_DURABLE_UNKNOWN
+%DB_TXN_REDO
+%DB_ARCH_LOG
+%DB_QAMMAGIC
+%DB_TIMEOUT
+%DB_VERB_REPMGR_MISC
+%DB_REP_PAGEDONE
+%DB_LOCK_PUT_OBJ
+%DB_VERSION_FAMILY
+%DB_OK_BTREE
+%DB_MAX_PAGES
+%DB_RDONLY
+%DB_CACHED_COUNTS
+%DB_CKP_INTERNAL
+%DB_LOG_IN_MEMORY
+%DB_LOCK_GET
+%DB_AGGRESSIVE
+%DB_STAT_LOCK_LOCKERS
+%DB_PRIORITY_DEFAULT
+%DB_ENV_REP_MASTER
+%DB_ENV_LOG_INMEMORY
+%DB_LOG_VERIFY_FORWARD
+%DB_LOG_VERIFY_WARNING
+%DB_IGNORE_LEASE
+%DB_LOCKVERSION
+%DB_ENV_DBLOCAL
+%DB_GET_BOTH_RANGE
+%DB_FOREIGN_ABORT
+%DB_REP_PERMANENT
+%DB_MPOOL_NOFILE
+%DB_LOG_BUFFER_FULL
+%DB_ENV_MULTIVERSION
+%DB_RPC_SERVERPROG
+%DB_MPOOL_DIRTY
+%DB_REP_NOBUFFER
+%DB_USE_ENVIRON_ROOT
+%DB_LOCK_CHECK
+%DB_PREV_NODUP
+%DB_FAILCHK
+%DB_ST_TOPLEVEL
+%DB_PAGEYIELD
+%DB_UPGRADE
+%DB_INORDER
+%DB_YIELDCPU
+%DB_ENV_DSYNC_DB
+%DB_EXCL
+%DB_REP_ELECTION
+%DB_LOCK_RIW_N
+%DB_PAGE_LOCK
+%DB_TXN_SYNC
+%DB_ST_DUPSORT
+%DB_LOG_SILENT_ERR
+%DB_MPOOL_UNLINK
+%LOGREC_PGDBT
+%DB_DIRECT
+%DB_ENV_OVERWRITE
+%DB_CHKSUM
+%DB_TXN_LOG_UNDO
+%DB_INIT_TXN
+%DB_REP_CHECKPOINT_DELAY
+%DB_TEST_ELECTVOTE2
+%DB_TEST_ELECTINIT
+%DB_EID_BROADCAST
+%DB_REPMGR_ACKS_QUORUM
+%DB_DELETED
+%DB_ENV_LOCKDOWN
+%DB_MUTEXDEBUG
+%DB_FREE_SPACE
+%DB_VERB_REGISTER
+%DB_MPOOL_EDIT
+%DB_NORECURSE
+%DB_TEST_ELECTVOTE1
+%DB_PRIORITY_LOW
+%DB_EVENT_REP_PERM_FAILED
+%DB_SET_RANGE
+%DB_FORCE
+%LOGREC_LOCKS
+%DB_REP_CONNECTION_RETRY
+%DB_MPOOL_PRIVATE
+%DB_SEQUENCE_OLDVER
+%DB_LOG_CHKPNT
+%DB_FREELIST_ONLY
+%DB_VERB_REP_MISC
+%DB_ENV_REGION_INIT
+%DB_TXN_BACKWARD_ROLL
+%DB_LOCK_ABORT
+%DB_RENUMBER
+%DB_LOG_RESEND
+%DB_ENV_REF_COUNTED
+%DB_DONOTINDEX
+%DB_NOMMAP
+%DB_LOCK_UPGRADE
+%DB_REP_STARTUPDONE
+%DB_ENV_OPEN_CALLED
+%DB_LOGVERSION_LATCHING
+%DB_REP_ELECTION_RETRY
+%DB_VERB_REP_TEST
+%DB_VERB_REP_MSGS
+%DB_debug_FLAG
+%DB_LOG_DSYNC
+%DB_DSYNC_LOG
+%DB_GET_BOTH_LTE
+%DB_TXN_LOG_VERIFY
+%DB_LOCK_RANDOM
+%DB_KEYEMPTY
+%DB_DIRECT_LOG
+%DB_LOG_ZERO
+%DB_ENV_REP_LOGSONLY
+%DB_LOG_VERIFY_INTERR
+%DB_SHALLOW_DUP
+%DB_LOCK_SET_TIMEOUT
+%DB_UPDATE_SECONDARY
+%DB_THREAD
+%DB_USERCOPY_SETDATA
+%DB_ASSOC_CREATE
+%DB_MUTEXLOCKS
+%DB_LOGOLDVER
+%DB_TXN_LOCK_MASK
+%DB_REGION_NAME
+%DB_NOLOCKING
+%DB_MPOOL_CREATE
+%DB_INIT_MPOOL
+%DB_CURLSN
+%DB_LOG_PERM
+%DB_ENV_FAILCHK
+%DB_NOSYNC
+%DB_JAVA_CALLBACK
+%DB_EVENT_REP_NEWMASTER
+%DB_OVERWRITE_DUP
+%DB_RPCCLIENT
+%DB_ENV_CREATE
+%DB_ENV_THREAD
+%DB_PR_HEADERS
+%DB_TXN_APPLY
+%DB_WRITELOCK
+%DB_VRFY_FLAGMASK
+%DB_REP_LOCKOUT
+%DB_EVENT_NOT_HANDLED
+%DB_TIME_NOTGRANTED
+%DB_LOG_INMEMORY
+%LOGREC_Done
+%DB_LOG_DIRECT
+%DB_ALREADY_ABORTED
+%DB_INCOMPLETE
+%DB_MUTEX_LOGICAL_LOCK
+%DB_TXN_LOG_MASK
+%DB_STAT_MEMP_NOERROR
+%DB_CL_WRITER
+%DB_DSYNC_DB
+%DB_ENV_TXN_NOWAIT
+%DB_REGISTER
+%DB_ODDFILESIZE
+%DB_SET
+%DB_FAST_STAT
+%DB_LOG_NOT_DURABLE
+%DB_CDB_ALLDB
+%DB_LOG_NOCOPY
+%DB_INIT_CDB
+%DB_RECORDCOUNT
+%LOGREC_DATA
+%DB_NEXT_DUP
+%DB_SET_LOCK_TIMEOUT
+%DB_PERMANENT
+%DB_TXN_LOG_REDO
+%DB_CHECKPOINT
+%DB_ENV_CDB_ALLDB
+%DB_EVENT_REP_JOIN_FAILURE
+%DB_LOG_VERIFY_VERBOSE
+%DB_LOGCHKSUM
+%DB_LOG_VERIFY_PARTIAL
+%DB_KEYFIRST
+%DB_TXN_SNAPSHOT
+%DB_REP_ISPERM
+%DB_LOCK_UPGRADE_WRITE
+%DB_FOREIGN_CONFLICT
+%DB_MPOOL_NEW
+%DB_TXN_UNDO
+%DB_REGION_MAGIC
+%DB_BTREE
+%DB_PRIORITY_HIGH
+%DB_ENV_DIRECT_DB
+%DB_RECOVER_FATAL
+%DB_LOCK_REMOVE
+%DB_EXTENT
+%DB_LOGVERSION
+%DB_GID_SIZE
+%DB_NOPANIC
+%DB_PRIORITY_UNCHANGED
+%DB_LOGC_BUF_SIZE
+%DB_REVSPLITOFF
+%DB_LOCK_NOWAIT
+%DB_SEQUENTIAL
+%DB_REGION_ANON
+%DB_SEQUENCE_VERSION
+%DB_SYSTEM_MEM
+%DB_REP_ELECTION_TIMEOUT
+%DB_STAT_ALL
+%LOGREC_HDR
+%DB_HASHVERSION
+%DB_LOCK_OLDEST
+%DB_AFTER
+%DB_XIDDATASIZE
+%DB_VERIFY_FATAL
+%DB_APPEND
+%DB_ASSOC_IMMUTABLE_KEY
+%DB_SEQ_RANGE_SET
+%DB_REGION_INIT
+%DB_ENV_NOMMAP
+%DB_LOCK_MAXLOCKS
+%DB_REP_CONF_DELAYCLIENT
+%DB_NEXT
+%DB_RECOVER
+%DB_EVENT_REP_ELECTION_FAILED
+%DB_ENV_YIELDCPU
+%DB_OK_QUEUE
+%DB_MULTIPLE_KEY
+%DB_PREV
+%DB_DIRECT_DB
+%DB_LOCK_DUMP
+%DB_TEST_PREDESTROY
+%DB_EID_INVALID
+%DB_LOCK_MINLOCKS
+%LOGREC_TIME
+%LOGREC_DBOP
+%DB_ENV_REP_CLIENT
+%DB_SPARE_FLAG
+%DB_TXNMAGIC
+%DB_LOCK_NOTEXIST
+%DB_REP_REREQUEST
+%DB_VERB_REP_SYNC
+%DB_NO_AUTO_COMMIT
+%DB_EVENT_REP_DUPMASTER
+%DB_GET_BOTH
+%DB_TXN_BULK
+%DB_TEST_POSTLOG
+%DB_ENV_TXN_NOT_DURABLE
+%DB_POSITION
+%DB_LOCKDOWN
+%DB_LOG_NO_DATA
+%DB_REP_LOGSONLY
+%DB_ENCRYPT
+%DB_ST_DUPSET
+%DB_REP_HEARTBEAT_SEND
+%DB_SET_TXN_TIMEOUT
+%DB_PR_PAGE
+%DB_REPMGR_ACKS_ALL_PEERS
+%DB_GET_RECNO
+%DB_ARCH_REMOVE
+%DB_LOCK_RECORD
+%DB_EVENT_PANIC
+%DB_LOG_LOCKED
+%DB_LOCK_NOTGRANTED
+%DB_ENV_AUTO_COMMIT
+%DB_NEXT_NODUP
+%DB_LOCK_PUT_READ
+%DB_REP_ACK_TIMEOUT
+%DB_VERB_CHKPOINT
+%DB_LOG_DISK
+%DB_HASHMAGIC
+%DB_HASHOLDVER
+%DB_RECNUM
+%DB_HASH
+%DB_TEST_ELECTWAIT2
+%DB_OK_HASH
+%DB_REP_NEWSITE
+%DB_TEST_POSTRENAME
+%DB_ST_RELEN
+%DB_NOSERVER_ID
+%DB_UNKNOWN
+%DB_TXN_LOCK
+%DB_ENV_DATABASE_LOCKING
+%DB_ENV_LOGGING
+%DB_EVENT_NO_SUCH_EVENT
+%DB_NODUPDATA
+%DB_BUFFER_SMALL
+%DB_APP_INIT
+%DB_ENV_SYSTEM_MEM
+%DB_READ_UNCOMMITTED
+%DB_TXN_FAMILY
+%DB_MPOOL_DISCARD
+%DB_SNAPSHOT
+%DB_NOSERVER
+%DB_REPMGR_CONNECTED
+%DB_VERSION_FULL_STRING
+%DB_SWAPBYTES
+%DB_REP_MASTER
+%DB_SECONDARY_BAD
+%DB_TXN_LOCK_2PL
+%DB_TXN_LOG_UNDOREDO
+%DB_LOG_WRNOSYNC
+%DB_ENV_FATAL
+%DB_TRUNCATE
+%DB_LOCK_PUT_ALL
+%DB_MUTEX_SELF_BLOCK
+%DB_CURSOR_BULK
+%DB_SEQ_WRAP
+%DB_VERSION_PATCH
+%DB_ENV_CDB
+%DB_DATABASE_LOCK
+%DB_HANDLE_LOCK
+%DB_LOG_VERIFY_BAD
+%DB_OPFLAGS_MASK
+%DB_SET_REG_TIMEOUT
+%DB_REP_BULKOVF
+%DB_REP_CONF_LEASE
+%DB_INIT_LOCK
+%DB_NOTFOUND
+%DB_TXN_PRINT
+%DB_INIT_LOG
+%DB_TEST_SUBDB_LOCKS
+%DB_ARCH_ABS
+%DB_ST_DUPOK
+%DB_REP_IGNORE
+%DB_RMW
+%DB_REPMGR_PEER
+%DB_REPMGR_ACKS_NONE
+%DB_WRNOSYNC
+%DB_VERSION_STRING
+%DB_ST_OVFL_LEAF
+%DB_ENV_TXN_NOSYNC
+%DB_SA_SKIPFIRSTKEY
+%DB_REP_EGENCHG
+%DB_MPOOL_NEW_GROUP
+%LOGREC_PGDDBT
+%DB_MPOOL_FREE
+%DB_SET_LTE
+%DB_PAD
+%DB_READ_COMMITTED
+%DB_ENV_NOLOCKING
+%DB_EVENT_REG_PANIC
+%DB_TXN_NOSYNC
+%DB_CONSUME_WAIT
+%DB_REPMGR_ACKS_ALL
+%DB_REP_NOTPERM
+%LOGREC_POINTER
+%DB_REP_OUTDATED
+%DB_RDWRMASTER
+%DB_ENV_USER_ALLOC
+%DB_CURSOR_TRANSIENT
+%DB_FOREIGN_NULLIFY
+%DB_LOCK_SWITCH
+%DB_EVENT_REP_MASTER
+%DB_DIRTY_READ
+%DB_MPOOL_LAST
+%DB_CONSUME
+%DB_KEYLAST
+%DB_LOCK_MINWRITE
+%DB_REP_HEARTBEAT_MONITOR
+%LOGREC_DB
+%DB_CURRENT
+%DB_LOG_COMMIT
+%DB_VERB_RECOVERY
+%DB_LOGMAGIC
+%DB_EVENT_REP_ELECTED
+%DB_VERIFY
+%DB_FILE_ID_LEN
+%DB_DEGREE_2
+%DB_TEST_ELECTWAIT1
+%DB_LOCK_EXPIRE
+%DB_DATABASE_LOCKING
+%DB_FCNTL_LOCKING
+%DB_TXN_WRITE_NOSYNC
+%DB_ENV_NO_OUTPUT_SET
+%DB_user_BEGIN
+%DB_EVENT_WRITE_FAILED
+%DB_FLUSH
+%DB_MPOOL_NOLOCK
+%DB_VERSION_MINOR
+%DB_REP_CREATE
+%DB_REP_DEFAULT_PRIORITY
+%DB_REP_LEASE_TIMEOUT
+%DB_REP_CLIENT
+%LOGREC_DBT
+%DB_TXN_LOCK_OPTIMIST
+%DB_LOCK_DEADLOCK
+%DB_ENCRYPT_AES
+%DB_LOCK_MAXWRITE
+%DB_MUTEX_THREAD
+%DB_ENV_PRIVATE
+%DB_PREV_DUP
+%DB_TEST_PRERENAME
+%DB_PR_RECOVERYTEST
+%DB_MPOOL_EXTENT
+%DB_TXN_WAIT
+%DB_FILEOPEN
+%DB_CXX_NO_EXCEPTIONS
+%DB_LOCK_YOUNGEST
+%DB_VERB_REPMGR_CONNFAIL
+%DB_REP_LOGREADY
+%DB_ENV_TXN_WRITE_NOSYNC
+%DB_ENV_LOCKING
+%DB_IMMUTABLE_KEY
+%DB_MUTEX_SHARED
+%DB_CHKSUM_SHA1
+%DB_ENV_TXN_SNAPSHOT
+%DB_SALVAGE
+%DB_VERSION_MAJOR
+%DB_LAST
+%DB_ENV_HOTBACKUP
+%DB_TEST_POSTDESTROY
+%DB_FORCESYNC
+%DB_NOSERVER_HOME
+%DB_SEQ_INC
+%DB_DUP
+%DB_FIXEDLEN
+%DB_LOG_VERIFY_CAF
+%DB_TXN_TOKEN_SIZE
+%DB_VERB_FILEOPS_ALL
+%LOGREC_ARG
+%DB_REP_LEASE_EXPIRED
+%DB_HOTBACKUP_IN_PROGRESS
+%DB_ENV_DIRECT_LOG
+%DB_RECNO
+%DB_GETREC
+%DB_REPMGR_ACKS_ALL_AVAILABLE
+%DB_WRITECURSOR
+%DB_STAT_LOCK_OBJECTS
+%DB_TEST_RECYCLE
+%DB_TXN_ABORT
+%DB_PANIC_ENVIRONMENT
+%DB_OVERWRITE
+%DB_EVENT_REP_STARTUPDONE
+%DB_PRIVATE
+%DB_REPMGR_ACKS_ONE_PEER
+%DB_REP_HOLDELECTION
+%DB_SURPRISE_KID);
+
 @EXPORT = qw(pick Menu get_Menu_map);
 use Config ();
 our $canload=sub {};
@@ -103,7 +622,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
    ####                                                              ###
    #####################################################################
                                                                      ###
-   our $menu_config_module_file='fa_menu.pm';                        ###
+   our $menu_config_module_file='fa_menu_demo.pm';                   ###
                                                                      ###
    #####################################################################
 
@@ -119,7 +638,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
    ####                                                              ###
    #####################################################################
                                                                      ###
-   our $custom_code_module_file='fa_code.pm';                        ###
+   our $custom_code_module_file='fa_code_demo.pm';                   ###
                                                                      ###
    #####################################################################
 
@@ -171,28 +690,57 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                                                      ###
    #####################################################################
 
-   if (defined $main::fa_menu_config) {
-
-      if (-1<index $main::fa_menu_config,'/') {
-         require $main::fa_menu_config;
-         my $mc=substr($main::fa_menu_config,
-                (rindex $main::fa_menu_config,'/')+1,-3);
-         import $mc;
-         $menu_config_module_file=$mc.'.pm';
-      } else {
-         require $main::fa_menu_config;
-         my $mc=substr($main::fa_menu_config,0,-3);
-         import $mc;
-         $menu_config_module_file=$main::fa_menu_config;
-      }
-
-   }
-
    our $fullauto=0;
+   my $default_modules={};
    if (defined caller(2) && -1<index caller(2),'FullAuto') {
-
+      my $fa_path=$INC{'Net/FullAuto.pm'};
       $fullauto=1;
-
+      my $progname=substr($0,(rindex $0,'/')+1,-3);
+      substr($fa_path,-3)='';
+      if (-f $fa_path.'/fa_defs.pm') {
+         {
+            no strict 'subs';
+            require $fa_path.'/fa_defs.pm';
+            $fa_defs::FA_Secure||='';
+            if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
+               use if (-1<index caller(2),'FullAuto'), "BerkeleyDB";
+               my $dbenv = BerkeleyDB::Env->new(
+                  -Home  => $fa_defs::FA_Secure.'Defaults',
+                  -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
+               ) or die(
+                  "cannot open environment for DB: $BerkeleyDB::Error\n",'','');
+               #&acquire_semaphore(9361,
+               #   "BDB DB Access: ".__LINE__);
+               my $bdb = BerkeleyDB::Btree->new(
+                     -Filename => "${progname}_defaults.db",
+                     -Flags    => DB_CREATE,
+                     -Env      => $dbenv
+                  );
+               unless ($BerkeleyDB::Error=~/Successful/) {
+                  $bdb = BerkeleyDB::Btree->new(
+                     -Filename => "${progname}_defaults.db",
+                     -Flags    => DB_CREATE|DB_RECOVER_FATAL,
+                     -Env      => $dbenv
+                  );
+                  unless ($BerkeleyDB::Error=~/Successful/) {
+                     die "Cannot Open DB ${progname}_defaults.db:".
+                         " $BerkeleyDB::Error\n";
+                  }
+               }
+               my $username=getlogin || getpwuid($<);
+               my $status=$bdb->db_get(
+                     $username,$default_modules);
+               $default_modules||='';
+               $default_modules=~s/\$HASH\d*\s*=\s*//s
+                  if -1<index $default_modules,'$HASH';
+               $default_modules=eval $default_modules;
+               $default_modules||={};
+               undef $bdb;
+               $dbenv->close();
+               undef $dbenv;
+            }
+         }
+      }
    }
 
    if (defined $main::fa_custom_code) {
@@ -217,12 +765,21 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       }
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
-      if (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
+
+      if (defined $default_modules && exists $default_modules->{'fa_code'}) {
+         $Term::Menus::custom_code_module_file=
+            substr($default_modules->{'fa_code'},
+            (rindex $default_modules->{'fa_code'},'/')+1);
+         require $default_modules->{'fa_code'};
+         my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
+         import $cc;
+      } elsif ($Term::Menus::canload->( modules => { 
+            'Net/FullAuto/Distro'.
             $Term::Menus::custom_code_module_file => 0 } )) {
          require 'Net/FullAuto/Distro/'.$Term::Menus::custom_code_module_file;
+         my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
+         import $cc;
       }
-      my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
-      import $cc;
 
    }
 
@@ -249,11 +806,18 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
-            $configuration_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.$configuration_module_file;
+      if (exists $default_modules->{'fa_conf'}) {
+         $Term::Menus::configuration_module_file=
+            substr($default_modules->{'fa_conf'},
+            (rindex $default_modules->{'fa_conf'},'/')+1);
+         require $default_modules->{'fa_conf'};
+      } elsif ($Term::Menus::canload->( modules => {
+            'Net/FullAuto/Distro/'.
+            $Term::Menus::configuration_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.
+            $Term::Menus::configuration_module_file;
       }
-      my $cf=substr($configuration_module_file,0,-3);
+      my $cf=substr($Term::Menus::configuration_module_file,0,-3);
       import $cf;
 
    }
@@ -281,12 +845,19 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
-            $hosts_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.$hosts_config_module_file;
+      if (exists $default_modules->{'fa_host'}) {
+         $Term::Menus::hosts_config_module_file=
+            substr($default_modules->{'fa_host'},
+            (rindex $default_modules->{'fa_host'},'/')+1);
+         require $default_modules->{'fa_host'};
+      } elsif ($Term::Menus::canload->( modules => {
+            'Net/FullAuto/Distro/'.
+            $Term::Menus::hosts_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.
+            $Term::Menus::hosts_config_module_file;
       }
-      my $hc=substr($hosts_config_module_file,0,-3);
-      import $hc;
+      my $hf=substr($Term::Menus::hosts_config_module_file,0,-3);
+      import $hf;
 
    }
 
@@ -313,12 +884,52 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
-            $maps_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.$maps_config_module_file;
+      if (exists $default_modules->{'fa_maps'}) {
+         $Term::Menus::maps_config_module_file=
+            substr($default_modules->{'fa_maps'},
+            (rindex $default_modules->{'fa_maps'},'/')+1);
+         require $default_modules->{'fa_maps'};
+      } elsif ($Term::Menus::canload->( modules => {
+            'Net/FullAuto/Distro/'.
+            $Term::Menus::maps_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.
+            $Term::Menus::maps_config_module_file;
       }
-      my $mp=substr($maps_config_module_file,0,-3);
+      my $mp=substr($Term::Menus::maps_config_module_file,0,-3);
       import $mp;
+
+   }
+
+   if (defined $main::fa_menu_config) {
+
+      if (-1<index $main::fa_menu_config,'/') {
+         require $main::fa_menu_config;
+         my $mc=substr($main::fa_menu_config,
+                (rindex $main::fa_menu_config,'/')+1,-3);
+         import $mc;
+         $menu_config_module_file=$mc.'.pm';
+      } else {
+         require $main::fa_menu_config;
+         my $mc=substr($main::fa_menu_config,0,-3);
+         import $mc;
+         $menu_config_module_file=$main::fa_menu_config;
+      }
+
+   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
+
+      if (exists $default_modules->{'fa_menu'}) {
+         $Term::Menus::menu_config_module_file=
+            substr($default_modules->{'fa_menu'},
+            (rindex $default_modules->{'fa_menu'},'/')+1);
+         require $default_modules->{'fa_menu'};
+      } elsif ($Term::Menus::canload->( modules => {
+            'Net/FullAuto/Distro/'.
+            $Term::Menus::menu_config_module_file => 0 } )) {
+         require 'Net/FullAuto/Distro/'.
+            $Term::Menus::menu_config_module_file;
+      }
+      my $mc=substr($Term::Menus::menu_config_module_file,0,-3);
+      import $mc;
 
    }
 
@@ -633,7 +1244,7 @@ sub fa_login
    if ($@) {
       my $cmdlin=52;
       $cmdlin=47 if $fa_code;
-      &Net::FullAuto::FA_Core::handle_error($@,"-$cmdlin",'__cleanup__');
+      #&Net::FullAuto::FA_Core::handle_error($@,"-$cmdlin",'__cleanup__');
    }
    #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_Core::cron &&
    #      !$Net::FullAuto::FA_Core::stdio;
