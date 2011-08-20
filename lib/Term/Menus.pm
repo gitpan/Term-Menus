@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.91';
+our $VERSION = '1.92';
 
 
 use 5.006;
@@ -405,7 +405,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             require $fa_path.'/fa_defs.pm';
             $fa_defs::FA_Secure||='';
             if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
-               use if (-1<index caller(2),'FullAuto'), "BerkeleyDB";
+               require BerkeleyDB if -1<index caller(2),'FullAuto';
                my $dbenv = BerkeleyDB::Env->new(
                   -Home  => $fa_defs::FA_Secure.'Defaults',
                   -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
@@ -947,6 +947,9 @@ sub fa_login
       my $cmdlin=52;
       $cmdlin=47 if $fa_code;
       #&Net::FullAuto::FA_Core::handle_error($@,"-$cmdlin",'__cleanup__');
+      my $errr=$@;
+      $errr=~s/^\s*/\n       /s;
+      print $errr;
    }
    #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_Core::cron &&
    #      !$Net::FullAuto::FA_Core::stdio;
@@ -2169,24 +2172,34 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     }
                                     eval "\@resu=\&$subfile$sub";
                                     my $firsterr=$@||'';
-                                    if ($firsterr=~/Undefined subroutine/) {
+
+
+                                    if ((-1<index $firsterr,
+                                          'Undefined subroutine') &&
+                                          (-1<index $firsterr,$sub)) {
                                        eval "\@resu=\&main::$sub";
                                        my $seconderr=$@||'';my $die='';
+                                       my $c=
+                                          $Term::Menus::custom_code_module_file;
                                        if ($seconderr=~/Undefined subroutine/) {
-                                          if (${$FullMenu}{$_[0]}
-                                                [2]{${$_[1]}[$_[2]-1]}) {
+                                          if (${$FullMenu}{$MenuUnit_hash_ref}
+                                                [2]{$all_menu_items_array[
+                                                $numbor-1]}) {
                                              $die="The \"Result15 =>\" Setting"
-                                                 ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                                 [2]{${$_[1]}[$_[2]-1]}
-                                                 ."\n\t\tFound in the Menu Unit -> "
-                                                 ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                                 ."\n\t\t-> " . ${$FullMenu}
+                                                 {$MenuUnit_hash_ref}[2]
+                                                 {$all_menu_items_array[
+                                                 $numbor-1]}
+                                                 ."\n\t\tFound in the Menu "
+                                                 ."Unit -> ".
+                                                 ${$Term::Menus::LookUpMenuName}
+                                                 {$MenuUnit_hash_ref}."\n\t\t"
                                                  ."Specifies a Subroutine"
                                                  ." that Does NOT Exist"
-                                                 ."\n\t\tin the User Code "
-                                                 ."File $Term::Menus::custom_code_module_file,"
-                                                 ."\n\t\tnor was a routine with "
-                                                 ."that name\n\t\tlocated in the"
-                                                 ." main:: script.\n";
+                                                 ."\n\t\tin the User Code File "
+                                                 .$c.",\n\t\tnor was a routine "
+                                                 ."with that name\n\t\tlocated"
+                                                 ." in the main:: script.\n";
                                           } else {
                                              $die=
                                                 "$firsterr\n       $seconderr"
@@ -2731,22 +2744,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
-                           if ($firsterr=~/Undefined subroutine/) {
+                           if ((-1<index $firsterr,'Undefined subroutine') &&
+                                 (-1<index $firsterr,$sub)) {
                               eval "\@resu=\&main::$sub";
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
-                                 if (${$FullMenu}{$_[0]}
-                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                 if (${$FullMenu}{$MenuUnit_hash_ref}
+                                       [2]{$all_menu_items_array[$numbor-1]}) {
                                     $die="The \"Result15 =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\t-> " . ${$FullMenu}
+                                        {$MenuUnit_hash_ref}[2]
+                                        {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                        .${$Term::Menus::LookUpMenuName}
+                                        {$MenuUnit_hash_ref}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $Term::Menus::custom_code_module_file,"
-                                        ."\n\t\tnor was a routine with "
+                                        ."\n\t\tin the User Code File "
+                                        .$Term::Menus::custom_code_module_file
+                                        .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
                                  } else { $die="$firsterr\n       $seconderr" }
@@ -2954,22 +2970,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
-                           if ($firsterr=~/Undefined subroutine/) {
+                           if ((-1<index $firsterr,'Undefined subroutine') &&
+                                 (-1<index $firsterr,$sub)) {
                               eval "\@resu=\&main::$sub";
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
-                                 if (${$FullMenu}{$_[0]}
-                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                 if (${$FullMenu}{$MenuUnit_hash_ref}
+                                       [2]{$all_menu_items_array[$numbor-1]}) {
                                     $die="The \"Result15 =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\t-> " . ${$FullMenu}
+                                        {$MenuUnit_hash_ref}[2]
+                                        {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                        .${$Term::Menus::LookUpMenuName}
+                                        {$MenuUnit_hash_ref}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $Term::Menus::custom_code_module_file,"
-                                        ."\n\t\tnor was a routine with "
+                                        ."\n\t\tin the User Code File "
+                                        .$Term::Menus::custom_code_module_file
+                                        .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
                                  } else { $die="$firsterr\n       $seconderr" }
@@ -3176,22 +3195,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
-                           if ($firsterr=~/Undefined subroutine/) {
+                           if ((-1<index $firsterr,'Undefined subroutine') &&
+                                 (-1<index $firsterr,$sub)) {
                               eval "\@resu=\&main::$sub";
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
-                                 if (${$FullMenu}{$_[0]}
-                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                 if (${$FullMenu}{$MenuUnit_hash_ref}
+                                       [2]{$all_menu_items_array[$numbor-1]}) {
                                     $die="The \"Result15 =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\t-> " . ${$FullMenu}
+                                        {$MenuUnit_hash_ref}[2]
+                                        {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                        .${$Term::Menus::LookUpMenuName}
+                                        {$MenuUnit_hash_ref}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $Term::Menus::custom_code_module_file,"
-                                        ."\n\t\tnor was a routine with "
+                                        ."\n\t\tin the User Code File "
+                                        .$Term::Menus::custom_code_module_file
+                                        .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
                                  } else { $die="$firsterr\n       $seconderr" }
@@ -3380,22 +3402,25 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
-                           if ($firsterr=~/Undefined subroutine/) {
+                           if ((-1<index $firsterr,'Undefined subroutine') &&
+                                 (-1<index $firsterr,$sub)) {
                               eval "\@resu=\&main::$sub";
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
-                                 if (${$FullMenu}{$_[0]}
-                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                 if (${$FullMenu}{$MenuUnit_hash_ref}
+                                      [2]{$all_menu_items_array[$numbor-1]}) {
                                     $die="The \"Result15 =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\t-> " . ${$FullMenu}
+                                        {$MenuUnit_hash_ref}[2]
+                                        {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                        .${$Term::Menus::LookUpMenuName}
+                                        {$MenuUnit_hash_ref}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $Term::Menus::custom_code_module_file,"
-                                        ."\n\t\tnor was a routine with "
+                                        ."\n\t\tin the User Code File "
+                                        .$Term::Menus::custom_code_module_file
+                                        .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
                                  } else { $die="$firsterr\n       $seconderr" }
@@ -3913,29 +3938,36 @@ return 'DONE_SUB';
                               }
                               eval "\@resu=\&$subfile$sub";
                               my $firsterr=$@||'';
-                              if ($firsterr=~/Undefined subroutine/) {
+                              if ((-1<index $firsterr,'Undefined subroutine') &&
+                                    (-1<index $firsterr,$sub)) {
                                  eval "\@resu=\&main::$sub";
                                  my $seconderr=$@||'';my $die='';
+                                 my $c=
+                                    $Term::Menus::custom_code_module_file;
                                  if ($seconderr=~/Undefined subroutine/) {
-                                    if (${$FullMenu}{$_[0]}
-                                          [2]{${$_[1]}[$_[2]-1]}) {
+                                    if (${$FullMenu}{$MenuUnit_hash_ref}[2]
+                                          {$all_menu_items_array[$numbor-1]}) {
                                        $die="The \"Result15 =>\" Setting"
-                                           ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                           [2]{${$_[1]}[$_[2]-1]}
+                                           ."\n\t\t-> " . ${$FullMenu}
+                                           {$MenuUnit_hash_ref}[2]
+                                           {$all_menu_items_array[$numbor-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
-                                           ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                           .${$Term::Menus::LookUpMenuName}
+                                           {$MenuUnit_hash_ref}."\n\t\t"
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
-                                           ."\n\t\tin the User Code "
-                                           ."File $Term::Menus::custom_code_module_file,"
-                                           ."\n\t\tnor was a routine with "
+                                           ."\n\t\tin the User Code File "
+                                           .$c.",\n\t\tnor was a routine with "
                                            ."that name\n\t\tlocated in the"
                                            ." main:: script.\n";
-                                    } else { $die="$firsterr\n       $seconderr" }
+                                    } else {
+                                       $die="$firsterr\n       $seconderr"
+                                    }
                                  } else { $die=$seconderr }
                                  &Net::FullAuto::FA_Core::handle_error($die);
                               } elsif ($firsterr) {
-                                 &Net::FullAuto::FA_Core::handle_error($firsterr);
+                                 &Net::FullAuto::FA_Core::handle_error(
+                                    $firsterr);
                               }
                            } else {
                               eval "\@resu=\&main::$sub";
@@ -4211,22 +4243,25 @@ return 'DONE_SUB';
                            }
                            eval "\@resu=\&$subfile$sub";
                            my $firsterr=$@||'';
-                           if ($firsterr=~/Undefined subroutine/) {
+                           if ((-1<index $firsterr,'Undefined subroutine') &&
+                                 (-1<index $firsterr,$sub)) {
                               eval "\@resu=\&main::$sub";
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
-                                 if (${$FullMenu}{$_[0]}
-                                       [2]{${$_[1]}[$_[2]-1]}) {
+                                 if (${$FullMenu}{$MenuUnit_hash_ref}
+                                       [2]{$all_menu_items_array[$numbor-1]}) {
                                     $die="The \"Result15 =>\" Setting"
-                                        ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                        [2]{${$_[1]}[$_[2]-1]}
+                                        ."\n\t\t-> " . ${$FullMenu}
+                                        {$MenuUnit_hash_ref}[2]
+                                        {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                        .${$Term::Menus::LookUpMenuName}
+                                        {$MenuUnit_hash_ref}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
-                                        ."\n\t\tin the User Code "
-                                        ."File $Term::Menus::custom_code_module_file,"
-                                        ."\n\t\tnor was a routine with "
+                                        ."\n\t\tin the User Code File "
+                                        .$Term::Menus::custom_code_module_file
+                                        .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
                                  } else { $die="$firsterr\n       $seconderr" }
@@ -4428,22 +4463,25 @@ return 'DONE_SUB';
                         }
                         eval "\@resu=\&$subfile$sub";
                         my $firsterr=$@||'';
-                        if ($firsterr=~/Undefined subroutine/) {
+                        if ((-1<index $firsterr,'Undefined subroutine') &&
+                              (-1<index $firsterr,$sub)) {
                            eval "\@resu=\&main::$sub";
                            my $seconderr=$@||'';my $die='';
                            if ($seconderr=~/Undefined subroutine/) {
-                              if (${$FullMenu}{$_[0]}
-                                    [2]{${$_[1]}[$_[2]-1]}) {
+                              if (${$FullMenu}{$MenuUnit_hash_ref}
+                                    [2]{$all_menu_items_array[$numbor-1]}) {
                                  $die="The \"Result15 =>\" Setting"
-                                     ."\n\t\t-> " . ${$FullMenu}{$_[0]}
-                                     [2]{${$_[1]}[$_[2]-1]}
+                                     ."\n\t\t-> " . ${$FullMenu}
+                                     {$MenuUnit_hash_ref}[2]
+                                     {$all_menu_items_array[$numbor-1]}
                                      ."\n\t\tFound in the Menu Unit -> "
-                                     ."${$Term::Menus::LookUpMenuName}{$_[0]}\n\t\t"
+                                     .${$Term::Menus::LookUpMenuName}
+                                     {$MenuUnit_hash_ref}."\n\t\t"
                                      ."Specifies a Subroutine"
                                      ." that Does NOT Exist"
-                                     ."\n\t\tin the User Code "
-                                     ."File $Term::Menus::custom_code_module_file,"
-                                     ."\n\t\tnor was a routine with "
+                                     ."\n\t\tin the User Code File "
+                                     .$Term::Menus::custom_code_module_file
+                                     .",\n\t\tnor was a routine with "
                                      ."that name\n\t\tlocated in the"
                                      ." main:: script.\n";
                               } else { $die="$firsterr\n       $seconderr" }
