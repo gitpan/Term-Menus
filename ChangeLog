@@ -1,3 +1,11 @@
+2011-08-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 1.93 released.
+
+        * Added code to complement FullAuto - fixed BerkeleyDB
+          error.
+
+
 2011-08-20  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.92 released.

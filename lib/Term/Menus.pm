@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.92';
+our $VERSION = '1.93';
 
 
 use 5.006;
@@ -393,7 +393,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
    #####################################################################
 
    our $fullauto=0;
-   my $default_modules={};
+   my $default_modules='';
    if (defined caller(2) && -1<index caller(2),'FullAuto') {
       my $fa_path=$INC{'Net/FullAuto.pm'};
       $fullauto=1;
@@ -406,6 +406,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             $fa_defs::FA_Secure||='';
             if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
                require BerkeleyDB if -1<index caller(2),'FullAuto';
+               BerkeleyDB->import() if -1<index caller(2),'FullAuto';
                my $dbenv = BerkeleyDB::Env->new(
                   -Home  => $fa_defs::FA_Secure.'Defaults',
                   -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
@@ -468,7 +469,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (defined $default_modules && exists $default_modules->{'fa_code'}) {
+      if (defined $default_modules
+            && ref $default_modules eq 'HASH'
+            && exists $default_modules->{'fa_code'}) {
          $Term::Menus::custom_code_module_file=
             substr($default_modules->{'fa_code'},
             (rindex $default_modules->{'fa_code'},'/')+1);
@@ -508,7 +511,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (exists $default_modules->{'fa_conf'}) {
+      if (defined $default_modules
+            && ref $default_modules eq 'HASH'
+            && exists $default_modules->{'fa_conf'}) {
          $Term::Menus::configuration_module_file=
             substr($default_modules->{'fa_conf'},
             (rindex $default_modules->{'fa_conf'},'/')+1);
@@ -547,7 +552,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (exists $default_modules->{'fa_host'}) {
+      if (defined $default_modules
+            && ref $default_modules eq 'HASH'
+            && exists $default_modules->{'fa_host'}) {
          $Term::Menus::hosts_config_module_file=
             substr($default_modules->{'fa_host'},
             (rindex $default_modules->{'fa_host'},'/')+1);
@@ -586,7 +593,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (exists $default_modules->{'fa_maps'}) {
+      if (defined $default_modules
+            && ref $default_modules eq 'HASH'
+            && exists $default_modules->{'fa_maps'}) {
          $Term::Menus::maps_config_module_file=
             substr($default_modules->{'fa_maps'},
             (rindex $default_modules->{'fa_maps'},'/')+1);
@@ -619,7 +628,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
 
    } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
 
-      if (exists $default_modules->{'fa_menu'}) {
+      if (defined $default_modules
+            && ref $default_modules eq 'HASH'
+            && exists $default_modules->{'fa_menu'}) {
          $Term::Menus::menu_config_module_file=
             substr($default_modules->{'fa_menu'},
             (rindex $default_modules->{'fa_menu'},'/')+1);
