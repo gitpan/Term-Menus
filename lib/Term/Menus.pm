@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.93';
+our $VERSION = '1.94';
 
 
 use 5.006;
@@ -472,12 +472,63 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       if (defined $default_modules
             && ref $default_modules eq 'HASH'
             && exists $default_modules->{'fa_code'}) {
-         $Term::Menus::custom_code_module_file=
-            substr($default_modules->{'fa_code'},
-            (rindex $default_modules->{'fa_code'},'/')+1);
-         require $default_modules->{'fa_code'};
-         my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
-         import $cc;
+         if (exists $default_modules->{'set'} &&
+               $default_modules->{'set'} ne 'none') {
+            {
+               no strict "subs";
+               my $set=$default_modules->{'set'};
+               my $progname=substr($0,(rindex $0,'/')+1,-3);
+               BerkeleyDB->import() if -1<index caller(2),'FullAuto';
+               my $dbenv = BerkeleyDB::Env->new(
+                  -Home  => $fa_defs::FA_Secure.'Sets',
+                  -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
+               ) or die(
+                  "cannot open environment for DB: $BerkeleyDB::Error\n",'','');
+               #&acquire_semaphore(9361,
+               #   "BDB DB Access: ".__LINE__);
+               my $bdb = BerkeleyDB::Btree->new(
+                     -Filename => "${progname}_sets.db",
+                     -Flags    => DB_CREATE,
+                     -Env      => $dbenv
+                  );
+               unless ($BerkeleyDB::Error=~/Successful/) {
+                  $bdb = BerkeleyDB::Btree->new(
+                     -Filename => "${progname}_sets.db",
+                     -Flags    => DB_CREATE|DB_RECOVER_FATAL,
+                     -Env      => $dbenv
+                  );
+                  unless ($BerkeleyDB::Error=~/Successful/) {
+                     die "Cannot Open DB ${progname}_sets.db:".
+                         " $BerkeleyDB::Error\n";
+                  }
+               }
+               my $username=getlogin || getpwuid($<);
+               my $mysets='';
+               my $status=$bdb->db_get(
+                     $username,$mysets);
+               $mysets||='';
+               $mysets=~s/\$HASH\d*\s*=\s*//s
+                  if -1<index $mysets,'$HASH';
+               $mysets=eval $mysets;
+               $mysets||={};
+               undef $bdb;
+               $dbenv->close();
+               undef $dbenv;
+               $Term::Menus::custom_code_module_file=
+                  substr($mysets->{$set}->{'fa_code'},
+                  (rindex $mysets->{$set}->{'fa_code'},'/')+1);
+               require $mysets->{$set}->{fa_code};
+               my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
+               import $cc;
+            }
+         } else {
+            $Term::Menus::custom_code_module_file=
+               substr($default_modules->{'fa_code'},
+               (rindex $default_modules->{'fa_code'},'/')+1);
+            require $default_modules->{'fa_code'};
+            my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
+            import $cc;
+         }
       } elsif ($Term::Menus::canload->( modules => { 
             'Net/FullAuto/Distro'.
             $Term::Menus::custom_code_module_file => 0 } )) {
