@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.95';
+our $VERSION = '1.96';
 
 
 use 5.006;
@@ -669,32 +669,22 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                   }
                } elsif ($e eq 'code') {
                   $fa_code=$A{$e};
-                  $fa_code='Net/FullAuto/'.$A{$e}
-                     if -1==index $A{$e},'Net/FullAuto';
                   $fa_code=[$fa_code,
                             "From CMD arg: fa --fa_code $A{$e}"];
                } elsif ($e eq 'menu') {
                   $fa_menu=$A{$e};
-                  $fa_menu='Net/FullAuto/'.$A{$e}
-                     if -1==index $A{$e},'Net/FullAuto';
                   $fa_menu=[$fa_menu,
                             "From CMD arg: fa --fa_menu $A{$e}"];
                } elsif ($e eq 'host') {
                   $fa_host=$A{$e};
-                  $fa_host='Net/FullAuto/'.$A{$e}
-                     if -1==index $A{$e},'Net/FullAuto';
                   $fa_host=[$fa_host,
                             "From CMD arg: fa --fa_host $A{$e}"];
                } elsif ($e eq 'conf') {
                   $fa_conf=$A{$e};
-                  $fa_conf='Net/FullAuto/'.$A{$e}
-                     if -1==index $A{$e},'Net/FullAuto';
                   $fa_conf=[$fa_conf,
                             "From CMD arg: fa --fa_conf $A{$e}"];
                } elsif ($e eq 'maps') {
                   $fa_maps=$A{$e};
-                  $fa_maps='Net/FullAuto/'.$A{$e}
-                     if -1==index $A{$e},'Net/FullAuto';
                   $fa_maps=[$fa_maps,
                             "From CMD arg: fa --fa_maps $A{$e}"];
                }
@@ -704,37 +694,27 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             $abspath.='.pl';
             if (defined $main::fa_code && $main::fa_code) {
                $fa_code=$main::fa_code;
-               $fa_code='Net/FullAuto/'.$main::fa_code
-                  if -1==index $main::fa_code,'Net/FullAuto';
                my $p=abs_path($0);
                $fa_code=[$fa_code,
                          "From \$fa_code variable in $abspath"];
             }
             if (defined $main::fa_conf && $main::fa_conf) {
                $fa_conf=$main::fa_conf;
-               $fa_conf='Net/FullAuto/'.$main::fa_conf
-                  if -1==index $main::fa_conf,'Net/FullAuto';
                $fa_conf=[$fa_conf,
                          "From \$fa_conf variable in $abspath"];
             }
             if (defined $main::fa_host && $main::fa_host) {
                $fa_host=$main::fa_host;
-               $fa_host='Net/FullAuto/'.$main::fa_host
-                  if -1==index $main::fa_host,'Net/FullAuto';
                $fa_host=[$fa_host,
                          "From \$fa_host variable in $abspath"];
             }
             if (defined $main::fa_maps && $main::fa_maps) {
                $fa_maps=$main::fa_maps;
-               $fa_maps='Net/FullAuto/'.$main::maps
-                  if -1==index $main::fa_maps,'Net/FullAuto';
                $fa_maps=[$fa_maps,
                          "From \$fa_maps variable in $abspath"];
             }
             if (defined $main::fa_menu && $main::fa_menu) {
                $fa_menu=$main::fa_menu;
-               $fa_menu='Net/FullAuto/'.$main::fa_menu
-                  if -1==index $main::fa_menu,'Net/FullAuto';
                $fa_menu=[$fa_menu,
                          "From \$fa_menu variable in $abspath"];
             }
@@ -743,27 +723,19 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          my $abspath=abs_path($0);
          $abspath=~s/\.exe$//;
          $abspath.='.pl';
-         $fa_code='Net/FullAuto/'.$main::fa_code
-            if -1==index $main::fa_code,'Net/FullAuto';
          $fa_code=[$fa_code,
                    "From \$fa_code variable in $abspath"];
-         $fa_conf='Net/FullAuto/'.$main::fa_conf
-            if -1==index $main::fa_conf,'Net/FullAuto';
          $fa_conf=[$fa_conf,
                    "From \$fa_conf variable in $abspath"];
-         $fa_host='Net/FullAuto/'.$main::fa_host
-            if -1==index $main::fa_host,'Net/FullAuto';
          $fa_host=[$fa_host,
                    "From \$fa_host variable in $abspath"];
-         $fa_maps='Net/FullAuto/'.$main::fa_maps
-            if -1==index $main::fa_maps,'Net/FullAuto';
          $fa_maps=[$fa_maps,
                    "From \$fa_maps variable in $abspath"];
-         $fa_menu='Net/FullAuto/'.$main::fa_menu
-            if -1==index $main::fa_menu,'Net/FullAuto';
          $fa_menu=[$fa_menu,
                    "From \$fa_menu variable in $abspath"];
       }
+      $fa_conf->[0]='Net/FullAuto/'.$fa_conf->[0]
+         if -1==index $fa_conf->[0],'Net/FullAuto';
       if ($Term::Menus::canload->( modules => { $fa_code->[0] => 0 } )) {
          require $fa_code->[0];
          my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
@@ -773,6 +745,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          die "Cannot load module $fa_code->[0]".
              "\n   $fa_code->[1]\n";
       }
+      $fa_conf->[0]='Net/FullAuto/'.$fa_conf->[0]
+         if -1==index $fa_conf->[0],'Net/FullAuto';
       if ($Term::Menus::canload->( modules => { $fa_conf->[0] => 0 } )) {
          require $fa_conf->[0];
          my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
@@ -782,6 +756,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          die "Cannot load module $fa_conf->[0]".
              "\n   $fa_conf->[1]\n";
       }
+      $fa_host->[0]='Net/FullAuto/'.$fa_host->[0]
+         if -1==index $fa_host->[0],'Net/FullAuto';
       if ($Term::Menus::canload->( modules => { $fa_host->[0] => 0 } )) {
          require $fa_host->[0];
          my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
@@ -791,6 +767,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          die "Cannot load module $fa_host->[0]".
              "\n   $fa_host->[1]\n";
       }
+      $fa_maps->[0]='Net/FullAuto/'.$fa_maps->[0]
+         if -1==index $fa_maps->[0],'Net/FullAuto';
       if ($Term::Menus::canload->( modules => { $fa_maps->[0] => 0 } )) {
          require $fa_maps->[0];
          my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
@@ -800,6 +778,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          die "Cannot load module $fa_maps->[0]".
              "\n   $fa_maps->[1]\n";
       }
+      $fa_menu->[0]='Net/FullAuto/'.$fa_menu->[0]
+         if -1==index $fa_menu->[0],'Net/FullAuto';
       if ($Term::Menus::canload->( modules => { $fa_menu->[0] => 0 } )) {
          require $fa_menu->[0];
          my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
