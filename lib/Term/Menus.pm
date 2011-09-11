@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.94';
+our $VERSION = '1.95';
 
 
 use 5.006;
@@ -27,20 +27,19 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
-            %blanklines %maps_config_module_file %parent_menu %Hosts
-            %custom_code_module_file %canload %setsid %EXPORT %log
+            %blanklines %parent_menu %Hosts %fa_code %canload %setsid
             %VERSION %SetTerminalSize %SetControlChars %find_Selected
             %clearpath %noclear %ReadKey %local_hostname %BEGIN %ISA
-            %editor %__ANON__  %data_dump_streamer %Maps %ReadMode
-            %configuration_module_file %transform_pmsi %termwidth %a
+            %editor %__ANON__ %data_dump_streamer %Maps %ReadMode
+            %fa_conf %transform_pmsi %termwidth %a %tm_menu %fa_code
             %DumpVars %DumpLex %fullauto %delete_Selected %timeout
             %pick %termheight %EXPORT_OK %ReadLine %fa_login %Menu
-            %menu_config_module_file %hosts_config_module_file %FH
+            %fa_host %fa_menu %abs_path %fa_maps $fa_code %log %FH
             %get_all_hosts %hostname %GetSpeed %get_subs_from_menu
             %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
             %GetControlChars %numerically %rawInput %transform_sicm
             %return_result $MenuMap %get_Menu_map_count %MenuMap
-            %get_Menu_map %check_for_dupe_menus %EXPORT_FAIL
+            %get_Menu_map %check_for_dupe_menus %EXPORT_FAIL %EXPORT
             %import %DB_LOCK_PUT %DB_ENV_DSYNC_LOG %DB_ENV_STANDALONE
             %DB_ST_IS_RECNO %DB_JOINENV &DB_JOINENV %DB_LOCK_INHERIT
             %DB_VERB_REP_SYSTEM %DB_MUTEX_PROCESS_ONLY %DB_VERSION_MISMATCH
@@ -264,7 +263,29 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_EVENT_REP_CONNECT_BROKEN %DB_INIT_MUTEX);
 
 @EXPORT = qw(pick Menu get_Menu_map);
+
+#####################################################################
+####                                                              ###
+#### DEFAULT MODULE OF  Term::Menus  $tm_menu IS:                 ###
+####                                                              ###
+#### ==> *NONE* <==  If you want a different                      ###
+####                                                              ###
+#### module to be the default, change $tm_menu variable below or  ###
+#### set the $tm_menu variable in the BEGIN { } block             ###
+#### of the top level script invoking &Menu(). (Advised)          ###
+####                                                              ###
+#####################################################################
+
+our $tm_menu='';
+
+    #  Example:  our $tm_menu='my_menus.pm';                      ###
+                                                                  ###
+    #  See documentation for more info                            ###
+                                                                  ###
+    #################################################################
+
 use Config ();
+use Cwd 'abs_path';
 our $canload=sub {};
 BEGIN {
    our $canload=sub {};
@@ -301,6 +322,42 @@ BEGIN {
    }
 }
 
+unless (defined caller(2) && -1<index caller(2),'FullAuto') {
+
+   ### NOTE:  $tm_menu will *NOT* be used when Term::Menus
+   ###        is used with Net::FullAuto. Set $fa_menu (below)
+   ###        or $main::fa_menu when using Net::FullAuto.
+
+   if ($tm_menu) {
+      unless ($Term::Menus::canload->( modules => {
+            $tm_menu => 0 } )) {
+         my $die="\n       FATAL ERROR: The variable \$tm_menu is defined,\n".
+                 "              in the module file:\n\n".
+                 "              $INC{'Term/Menus.pm'}\n\n".
+                 "              but the value: $tm_menu  does not\n".
+                 "              reference a module that can be loaded";
+         die $die;
+      }
+   } elsif (defined $main::tm_menu) {
+      if ($Term::Menus::canload->( modules => {
+            $main::tm_menu => 0 } )) {
+         $tm_menu=$main::tm_menu;
+      } else {
+         my $die="\n       FATAL ERROR: The variable \$tm_menu is defined,\n".
+             "              but the value: $tm_menu  does not\n".
+             "              reference a module that can be loaded";
+         die $die;
+      }
+   }
+   if ($tm_menu) {
+      require $tm_menu;
+      my $tm=substr($tm_menu,
+             (rindex $tm_menu,'/')+1,-3);
+      import $tm;
+   }
+
+}
+
 ##############################################################
 ##############################################################
 #
@@ -312,389 +369,447 @@ BEGIN {
 
 BEGIN { ##  Begin  Net::FullAuto  Settings
 
+   my $vlin=__LINE__;
    #####################################################################
    ####                                                              ###
-   #### DEFAULT NAME OF  Net::FullAuto  menu_config_module_file IS:  ###
+   #### DEFAULT MODULE OF  Net::FullAuto  $fa_code IS:               ###
    ####                                                              ###
-   #### ==> fa_menu.pm <==  If you rename the file, you must either  ###
+   #### ==> Distro/fa_code_demo.pm <==  If you want a different      ###
    ####                                                              ###
-   #### change the setting of $menu_config_module_file as well, or   ###
-   #### set the $fa_menu_config variable in the BEGIN { } block      ###
+   #### module to be the default, change $fa_code variable below or  ###
+   #### set the $fa_code variable in the BEGIN { } block             ###
    #### of the top level script invoking Net::FullAuto. (Advised)    ###
    ####                                                              ###
    #####################################################################
                                                                      ###
-   our $menu_config_module_file='fa_menu_demo.pm';                   ###
+   our $fa_code=['Distro/fa_code_demo.pm', #<== Change Location Here ###
+                 "From $INC{'Term/Menus.pm'}, Line: ".($vlin+13)];   ###
                                                                      ###
    #####################################################################
 
    #####################################################################
    ####                                                              ###
-   #### DEFAULT NAME OF  Net::FullAuto  custom_code_module_file IS:  ###
+   #### DEFAULT MODULE OF  Net::FullAuto  $fa_conf IS:               ###
    ####                                                              ###
-   #### ==> fa_code.pm <==  If you rename the file, you must either  ###
+   #### ==> Distro/fa_conf.pm <==  If you want a differnet           ###
    ####                                                              ###
-   #### change the setting of $custom_code_module_file as well, or   ###
-   #### set the $fa_custom_code variable in the BEGIN { } block      ###
+   #### module to be the default, change $fa_conf variable below or  ###
+   #### set the $fa_conf variable in the BEGIN { } block             ###
    #### of the top level script invoking Net::FullAuto. (Advised)    ###
    ####                                                              ###
    #####################################################################
                                                                      ###
-   our $custom_code_module_file='fa_code_demo.pm';                   ###
+   our $fa_conf=['Distro/fa_conf.pm', #<== Change Location Here      ###
+                 "From $INC{'Term/Menus.pm'}, Line: ".($vlin+30)];   ###
                                                                      ###
    #####################################################################
 
    #####################################################################
    ####                                                              ###
-   #### DEFAULT NAME OF Net::FullAuto configuration_module_file IS:  ###
+   #### DEFAULT MODULE OF  Net::FullAuto  $fa_host IS:               ###
    ####                                                              ###
-   #### ==> fa_conf.pm <==  If you rename the file, you must either  ###
+   #### ==> Distro/fa_host.pm <==  If you want a different           ###
    ####                                                              ###
-   #### change the setting of $custom_code_module_file as well, or   ###
-   #### set the $fa_configuration variable in the BEGIN { } block    ###
-   #### of the top level script invoking Net::FullAuto. (Advised)    ###
-   ####                                                              ###
-   #####################################################################
-                                                                     ###
-   our $configuration_module_file='fa_conf.pm';                      ###
-                                                                     ###
-   #####################################################################
-
-   #####################################################################
-   ####                                                              ###
-   #### DEFAULT NAME OF Net::FullAuto hosts_config_module_file  IS:  ###
-   ####                                                              ###
-   #### ==> fa_host.pm <==  If you rename the file, you must either  ###
-   ####                                                              ###
-   #### change the setting of $hosts_module_file as well, or         ###
+   #### module to be the default, change $fa_host variable below or  ###
    #### set the $fa_hosts_config variable in the BEGIN { } block     ###
    #### of the top level script invoking Net::FullAuto. (Advised)    ###
    ####                                                              ###
    #####################################################################
                                                                      ###
-   our $hosts_config_module_file='fa_host.pm';                       ###
+   our $fa_host=['Distro/fa_host.pm', #<== Change Location Here      ###
+                 "From $INC{'Term/Menus.pm'}, Line: ".($vlin+47)];   ###
                                                                      ###
    #####################################################################
 
    #####################################################################
    ####                                                              ###
-   #### DEFAULT NAME OF  Net::FullAuto  maps_config_module_file IS:  ###
+   #### DEFAULT MODULE OF  Net::FullAuto  $fa_maps IS:               ###
    ####                                                              ###
-   #### ==> fa_maps.pm <==  If you rename the file, you must change  ###
+   #### ==> Distro/fa_maps.pm <==  If you want a different           ###
    ####                                                              ###
-   #### change the setting of $maps_config_module_file as well, or   ###
+   #### module to be the default, change $fa_host variable below or  ###
    #### set the $fa_mapping variable in the BEGIN { } block          ###
    #### of the top level script invoking Net::FullAuto. (Advised)    ###
    ####                                                              ###
    #####################################################################
                                                                      ###
-   our $maps_config_module_file='fa_maps.pm';                        ###
+   our $fa_maps=['Distro/fa_maps.pm', #<== Change Location Here      ###
+                 "From $INC{'Term/Menus.pm'}, Line: ".($vlin+64)];   ###
+                                                                     ###
+   #####################################################################
+
+   #####################################################################
+   ####                                                              ###
+   #### DEFAULT MODULE OF  Net::FullAuto  $fa_menu IS:               ###
+   ####                                                              ###
+   #### ==> Distro/fa_menu_demo.pm <==  If you want a different      ###
+   ####                                                              ###
+   #### module to be the default, change $fa_menu variable below or  ###
+   #### set the $fa_menu variable in the BEGIN { } block             ###
+   #### of the top level script invoking Net::FullAuto. (Advised)    ###
+   ####                                                              ###
+   #####################################################################
+                                                                     ### 
+   our $fa_menu=['Distro/fa_menu_demo.pm', #<== Change Location Here ###
+                 "From $INC{'Term/Menus.pm'}, Line ".($vlin+81)];    ###
                                                                      ###
    #####################################################################
 
    our $fullauto=0;
-   my $default_modules='';
    if (defined caller(2) && -1<index caller(2),'FullAuto') {
-      my $fa_path=$INC{'Net/FullAuto.pm'};
       $fullauto=1;
-      my $progname=substr($0,(rindex $0,'/')+1,-3);
-      substr($fa_path,-3)='';
-      if (-f $fa_path.'/fa_defs.pm') {
-         {
-            no strict 'subs';
-            require $fa_path.'/fa_defs.pm';
-            $fa_defs::FA_Secure||='';
-            if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
-               require BerkeleyDB if -1<index caller(2),'FullAuto';
-               BerkeleyDB->import() if -1<index caller(2),'FullAuto';
-               my $dbenv = BerkeleyDB::Env->new(
-                  -Home  => $fa_defs::FA_Secure.'Defaults',
-                  -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
-               ) or die(
-                  "cannot open environment for DB: $BerkeleyDB::Error\n",'','');
-               #&acquire_semaphore(9361,
-               #   "BDB DB Access: ".__LINE__);
-               my $bdb = BerkeleyDB::Btree->new(
-                     -Filename => "${progname}_defaults.db",
-                     -Flags    => DB_CREATE,
-                     -Env      => $dbenv
-                  );
-               unless ($BerkeleyDB::Error=~/Successful/) {
-                  $bdb = BerkeleyDB::Btree->new(
-                     -Filename => "${progname}_defaults.db",
-                     -Flags    => DB_CREATE|DB_RECOVER_FATAL,
-                     -Env      => $dbenv
-                  );
-                  unless ($BerkeleyDB::Error=~/Successful/) {
-                     die "Cannot Open DB ${progname}_defaults.db:".
-                         " $BerkeleyDB::Error\n";
-                  }
-               }
-               my $username=getlogin || getpwuid($<);
-               my $status=$bdb->db_get(
-                     $username,$default_modules);
-               $default_modules||='';
-               $default_modules=~s/\$HASH\d*\s*=\s*//s
-                  if -1<index $default_modules,'$HASH';
-               $default_modules=eval $default_modules;
-               $default_modules||={};
-               undef $bdb;
-               $dbenv->close();
-               undef $dbenv;
-            }
-         }
-      }
-   }
-
-   if (defined $main::fa_custom_code) {
-
-      if (-1<index $main::fa_custom_code,'/') {
-         require $main::fa_custom_code;
-         my $cc=substr($main::fa_custom_code,
-                (rindex $main::fa_custom_code,'/')+1,-3);
-         import $cc;
-         $Term::Menus::custom_code_module_file=$cc.'.pm';
-      } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::fa_custom_code;
-         my $cc=substr($main::fa_custom_code,
-                (rindex $main::fa_custom_code,'/')+1,-3);
-         import $cc;
-         $Term::Menus::custom_code_module_file=$cc.'.pm';
-      } else {
-         require $main::fa_custom_code;
-         my $cc=substr($main::fa_custom_code,0,-3);
-         import $cc;
-         $Term::Menus::custom_code_module_file=$main::fa_custom_code;
-      }
-
-   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
-
-      if (defined $default_modules
-            && ref $default_modules eq 'HASH'
-            && exists $default_modules->{'fa_code'}) {
-         if (exists $default_modules->{'set'} &&
-               $default_modules->{'set'} ne 'none') {
+      my $default_modules='';
+      unless ($main::fa_code && $main::fa_conf && $main::fa_host
+              && $main::fa_maps && $main::fa_menu) {
+         my $fa_path=$INC{'Net/FullAuto.pm'};
+         my $progname=substr($0,(rindex $0,'/')+1,-3);
+         substr($fa_path,-3)='';
+         if (-f $fa_path.'/fa_defs.pm') {
             {
-               no strict "subs";
-               my $set=$default_modules->{'set'};
-               my $progname=substr($0,(rindex $0,'/')+1,-3);
-               BerkeleyDB->import() if -1<index caller(2),'FullAuto';
-               my $dbenv = BerkeleyDB::Env->new(
-                  -Home  => $fa_defs::FA_Secure.'Sets',
-                  -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
-               ) or die(
-                  "cannot open environment for DB: $BerkeleyDB::Error\n",'','');
-               #&acquire_semaphore(9361,
-               #   "BDB DB Access: ".__LINE__);
-               my $bdb = BerkeleyDB::Btree->new(
-                     -Filename => "${progname}_sets.db",
-                     -Flags    => DB_CREATE,
-                     -Env      => $dbenv
-                  );
-               unless ($BerkeleyDB::Error=~/Successful/) {
-                  $bdb = BerkeleyDB::Btree->new(
-                     -Filename => "${progname}_sets.db",
-                     -Flags    => DB_CREATE|DB_RECOVER_FATAL,
-                     -Env      => $dbenv
-                  );
+               no strict 'subs';
+               require $fa_path.'/fa_defs.pm';
+               $fa_defs::FA_Secure||='';
+               if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
+                  require BerkeleyDB if -1<index caller(2),'FullAuto';
+                  BerkeleyDB->import() if -1<index caller(2),'FullAuto';
+                  my $dbenv = BerkeleyDB::Env->new(
+                     -Home  => $fa_defs::FA_Secure.'Defaults',
+                     -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
+                  ) or die(
+                     "cannot open environment for DB: ".
+                     $BerkeleyDB::Error."\n",'','');
+                  #&acquire_semaphore(9361,
+                  #   "BDB DB Access: ".__LINE__);
+                  my $bdb = BerkeleyDB::Btree->new(
+                        -Filename => "${progname}_defaults.db",
+                        -Flags    => DB_CREATE,
+                        -Env      => $dbenv
+                     );
                   unless ($BerkeleyDB::Error=~/Successful/) {
-                     die "Cannot Open DB ${progname}_sets.db:".
-                         " $BerkeleyDB::Error\n";
+                     $bdb = BerkeleyDB::Btree->new(
+                        -Filename => "${progname}_defaults.db",
+                        -Flags    => DB_CREATE|DB_RECOVER_FATAL,
+                        -Env      => $dbenv
+                     );
+                     unless ($BerkeleyDB::Error=~/Successful/) {
+                        die "Cannot Open DB ${progname}_defaults.db:".
+                            " $BerkeleyDB::Error\n";
+                     }
+                  }
+                  my $username=getlogin || getpwuid($<);
+                  my $status=$bdb->db_get(
+                        $username,$default_modules);
+                  $default_modules||='';
+                  $default_modules=~s/\$HASH\d*\s*=\s*//s
+                     if -1<index $default_modules,'$HASH';
+                  $default_modules=eval $default_modules;
+                  $default_modules||={};
+                  undef $bdb;
+                  $dbenv->close();
+                  undef $dbenv;
+                  if (exists $default_modules->{'set'} &&
+                        $default_modules->{'set'} ne 'none') {
+                     my $setname=$default_modules->{'set'};
+                     my $stenv = BerkeleyDB::Env->new(
+                        -Home  => $fa_defs::FA_Secure.'Sets',
+                        -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
+                     ) or die(
+                        "cannot open environment for DB: ".
+                        $BerkeleyDB::Error."\n",'','');
+                     #&acquire_semaphore(9361,
+                     #   "BDB DB Access: ".__LINE__);
+                     my $std = BerkeleyDB::Btree->new(
+                           -Filename => "${progname}_sets.db",
+                           -Flags    => DB_CREATE,
+                           -Env      => $stenv
+                        );
+                     unless ($BerkeleyDB::Error=~/Successful/) {
+                        $std = BerkeleyDB::Btree->new(
+                           -Filename => "${progname}_sets.db",
+                           -Flags    => DB_CREATE|DB_RECOVER_FATAL,
+                           -Env      => $stenv
+                        );
+                        unless ($BerkeleyDB::Error=~/Successful/) {
+                           die "Cannot Open DB ${progname}_sets.db:".
+                               " $BerkeleyDB::Error\n";
+                        }
+                     }
+                     my $username=getlogin || getpwuid($<);
+                     my $set='';
+                     my $status=$std->db_get(
+                           $username,$set);
+                     $set||='';
+                     $set=~s/\$HASH\d*\s*=\s*//s
+                        if -1<index $set,'$HASH';
+                     $set=eval $set;
+                     $set||={};
+                     undef $std;
+                     $stenv->close();
+                     undef $stenv;
+                     $fa_code=[$set->{$setname}->{'fa_code'},
+                               "From Default Set $setname ".
+                               "(Change with fa --set)"];
+                     $fa_conf=[$set->{$setname}->{'fa_conf'},
+                               "From Default Set $setname ".
+                               "(Change with fa --set)"];
+                     $fa_host=[$set->{$setname}->{'fa_host'},
+                               "From Default Set $setname ".
+                               "(Change with fa --set)"];
+                     $fa_maps=[$set->{$setname}->{'fa_maps'},
+                               "From Default Set $setname ".
+                               "(Change with fa --set)" ];
+                     $fa_menu=[$set->{$setname}->{'fa_menu'},
+                               "From Default Set $setname ".
+                               "(Change with fa --set)"];
+                  } else {
+                     $fa_code=[$default_modules->{'fa_code'},
+                               "From Default Setting ".
+                               "(Change with fa --defaults)"];
+                     $fa_conf=[$default_modules->{'fa_conf'},
+                               "From Default Setting ".
+                               "(Change with fa --defaults)"];
+                     $fa_host=[$default_modules->{'fa_host'},
+                               "From Default Setting ".
+                               "(Change with fa --defaults)"];
+                     $fa_maps=[$default_modules->{'fa_maps'},
+                               "From Default Setting ".
+                               "(Change with fa --defaults)"];
+                     $fa_menu=[$default_modules->{'fa_menu'},
+                               "From Default Setting ".
+                               "(Change with fa --defaults)"];
                   }
                }
-               my $username=getlogin || getpwuid($<);
-               my $mysets='';
-               my $status=$bdb->db_get(
-                     $username,$mysets);
-               $mysets||='';
-               $mysets=~s/\$HASH\d*\s*=\s*//s
-                  if -1<index $mysets,'$HASH';
-               $mysets=eval $mysets;
-               $mysets||={};
-               undef $bdb;
-               $dbenv->close();
-               undef $dbenv;
-               $Term::Menus::custom_code_module_file=
-                  substr($mysets->{$set}->{'fa_code'},
-                  (rindex $mysets->{$set}->{'fa_code'},'/')+1);
-               require $mysets->{$set}->{fa_code};
-               my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
-               import $cc;
             }
-         } else {
-            $Term::Menus::custom_code_module_file=
-               substr($default_modules->{'fa_code'},
-               (rindex $default_modules->{'fa_code'},'/')+1);
-            require $default_modules->{'fa_code'};
-            my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
-            import $cc;
          }
-      } elsif ($Term::Menus::canload->( modules => { 
-            'Net/FullAuto/Distro'.
-            $Term::Menus::custom_code_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.$Term::Menus::custom_code_module_file;
-         my $cc=substr($Term::Menus::custom_code_module_file,0,-3);
-         import $cc;
-      }
-
-   }
-
-   if (defined $main::fa_configuration) {
-
-      if (-1<index $main::fa_configuration,'/') {
-         require $main::fa_configuration;
-         my $cf=substr($main::fa_configuration,
-                (rindex $main::fa_configuration,'/')+1,-3);
-         import $cf;
-         $configuration_module_file=$cf.'.pm';
-      } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::fa_configuration;
-         my $cf=substr($main::fa_configuration,
-                (rindex $main::fa_configuration,'/')+1,-3);
-         import $cf;
-         $configuration_module_file=$cf.'.pm';
+         my @A=();my %A=();
+         push @A,@ARGV;
+         foreach my $a (@A) {
+            if (-1<index $a,'--fa_') {
+               my $k=unpack('x2a*',$a);
+               my $v=pop @A;
+               unless (-1<index $v, '--fa_') {
+                  $A{$k}=$v;
+               } else {
+                  @A=();
+                  last;
+               }
+            } elsif (-1<index $a,'--set') {
+               my $v=pop @A;
+               unless (-1<index $v, '--') {
+                  $A{set}=$v;
+               } else {
+                  @A=();
+                  last;
+               }
+            }
+         }
+         foreach my $e (('set','code','conf','host','maps','menu')) {
+            if (exists $A{$e}) {
+               if ($e eq 'set') {
+                  no strict 'subs';
+                  my $setname=$A{$e};
+                  my $fa_path=$INC{'Net/FullAuto.pm'};
+                  my $progname=substr($0,(rindex $0,'/')+1,-3);
+                  substr($fa_path,-3)='';
+                  if (-f $fa_path.'/fa_defs.pm') {
+                     my $stenv = BerkeleyDB::Env->new(
+                        -Home  => $fa_defs::FA_Secure.'Sets',
+                        -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
+                     ) or die(
+                        "cannot open environment for DB: ".
+                        $BerkeleyDB::Error."\n",'','');
+                     #&acquire_semaphore(9361,
+                     #   "BDB DB Access: ".__LINE__);
+                     my $std = BerkeleyDB::Btree->new(
+                           -Filename => "${progname}_sets.db",
+                           -Flags    => DB_CREATE,
+                           -Env      => $stenv
+                        );
+                     unless ($BerkeleyDB::Error=~/Successful/) {
+                        $std = BerkeleyDB::Btree->new(
+                           -Filename => "${progname}_sets.db",
+                           -Flags    => DB_CREATE|DB_RECOVER_FATAL,
+                           -Env      => $stenv
+                        );
+                        unless ($BerkeleyDB::Error=~/Successful/) {
+                           die "Cannot Open DB ${progname}_sets.db:".
+                               " $BerkeleyDB::Error\n";
+                        }
+                     }
+                     my $username=getlogin || getpwuid($<);
+                     my $set='';
+                     my $status=$std->db_get(
+                           $username,$set);
+                     $set||='';
+                     $set=~s/\$HASH\d*\s*=\s*//s
+                        if -1<index $set,'$HASH';
+                     $set=eval $set;
+                     $set||={};
+                     undef $std;
+                     $stenv->close();
+                     undef $stenv;
+                     $fa_code=[$set->{$setname}->{'fa_code'},
+                               "From CMD arg fa --set $setname line ".__LINE__];
+                     $fa_conf=[$set->{$setname}->{'fa_conf'},
+                               "From CMD arg fa --set $setname line ".__LINE__];
+                     $fa_host=[$set->{$setname}->{'fa_host'},
+                               "From CMD arg fa --set $setname line ".__LINE__];
+                     $fa_maps=[$set->{$setname}->{'fa_maps'},
+                               "From CMD arg fa --set $setname line ".__LINE__];
+                     $fa_menu=[$set->{$setname}->{'fa_menu'},
+                               "From CMD arg fa --set $setname line ".__LINE__];
+                  } else {
+                     my $die="\n       FATAL ERROR: The Set indicated from".
+                             " the CMD arg:\n\n".
+                             "              ==> fa --set $A{$e}n\n".
+                             "              does not exist. To create this\n".
+                             "              set, run fa --set without any\n".
+                             "              other arguments";
+                     die $die;
+                  }
+               } elsif ($e eq 'code') {
+                  $fa_code=$A{$e};
+                  $fa_code='Net/FullAuto/'.$A{$e}
+                     if -1==index $A{$e},'Net/FullAuto';
+                  $fa_code=[$fa_code,
+                            "From CMD arg: fa --fa_code $A{$e}"];
+               } elsif ($e eq 'menu') {
+                  $fa_menu=$A{$e};
+                  $fa_menu='Net/FullAuto/'.$A{$e}
+                     if -1==index $A{$e},'Net/FullAuto';
+                  $fa_menu=[$fa_menu,
+                            "From CMD arg: fa --fa_menu $A{$e}"];
+               } elsif ($e eq 'host') {
+                  $fa_host=$A{$e};
+                  $fa_host='Net/FullAuto/'.$A{$e}
+                     if -1==index $A{$e},'Net/FullAuto';
+                  $fa_host=[$fa_host,
+                            "From CMD arg: fa --fa_host $A{$e}"];
+               } elsif ($e eq 'conf') {
+                  $fa_conf=$A{$e};
+                  $fa_conf='Net/FullAuto/'.$A{$e}
+                     if -1==index $A{$e},'Net/FullAuto';
+                  $fa_conf=[$fa_conf,
+                            "From CMD arg: fa --fa_conf $A{$e}"];
+               } elsif ($e eq 'maps') {
+                  $fa_maps=$A{$e};
+                  $fa_maps='Net/FullAuto/'.$A{$e}
+                     if -1==index $A{$e},'Net/FullAuto';
+                  $fa_maps=[$fa_maps,
+                            "From CMD arg: fa --fa_maps $A{$e}"];
+               }
+            }
+            my $abspath=abs_path($0);
+            $abspath=~s/\.exe$//;
+            $abspath.='.pl';
+            if (defined $main::fa_code && $main::fa_code) {
+               $fa_code=$main::fa_code;
+               $fa_code='Net/FullAuto/'.$main::fa_code
+                  if -1==index $main::fa_code,'Net/FullAuto';
+               my $p=abs_path($0);
+               $fa_code=[$fa_code,
+                         "From \$fa_code variable in $abspath"];
+            }
+            if (defined $main::fa_conf && $main::fa_conf) {
+               $fa_conf=$main::fa_conf;
+               $fa_conf='Net/FullAuto/'.$main::fa_conf
+                  if -1==index $main::fa_conf,'Net/FullAuto';
+               $fa_conf=[$fa_conf,
+                         "From \$fa_conf variable in $abspath"];
+            }
+            if (defined $main::fa_host && $main::fa_host) {
+               $fa_host=$main::fa_host;
+               $fa_host='Net/FullAuto/'.$main::fa_host
+                  if -1==index $main::fa_host,'Net/FullAuto';
+               $fa_host=[$fa_host,
+                         "From \$fa_host variable in $abspath"];
+            }
+            if (defined $main::fa_maps && $main::fa_maps) {
+               $fa_maps=$main::fa_maps;
+               $fa_maps='Net/FullAuto/'.$main::maps
+                  if -1==index $main::fa_maps,'Net/FullAuto';
+               $fa_maps=[$fa_maps,
+                         "From \$fa_maps variable in $abspath"];
+            }
+            if (defined $main::fa_menu && $main::fa_menu) {
+               $fa_menu=$main::fa_menu;
+               $fa_menu='Net/FullAuto/'.$main::fa_menu
+                  if -1==index $main::fa_menu,'Net/FullAuto';
+               $fa_menu=[$fa_menu,
+                         "From \$fa_menu variable in $abspath"];
+            }
+         }
       } else {
-         require $main::fa_configuration;
-         my $cf=substr($main::fa_configuration,0,-3);
-         import $cf;
-         $configuration_module_file=$main::fa_configuration;
+         my $abspath=abs_path($0);
+         $abspath=~s/\.exe$//;
+         $abspath.='.pl';
+         $fa_code='Net/FullAuto/'.$main::fa_code
+            if -1==index $main::fa_code,'Net/FullAuto';
+         $fa_code=[$fa_code,
+                   "From \$fa_code variable in $abspath"];
+         $fa_conf='Net/FullAuto/'.$main::fa_conf
+            if -1==index $main::fa_conf,'Net/FullAuto';
+         $fa_conf=[$fa_conf,
+                   "From \$fa_conf variable in $abspath"];
+         $fa_host='Net/FullAuto/'.$main::fa_host
+            if -1==index $main::fa_host,'Net/FullAuto';
+         $fa_host=[$fa_host,
+                   "From \$fa_host variable in $abspath"];
+         $fa_maps='Net/FullAuto/'.$main::fa_maps
+            if -1==index $main::fa_maps,'Net/FullAuto';
+         $fa_maps=[$fa_maps,
+                   "From \$fa_maps variable in $abspath"];
+         $fa_menu='Net/FullAuto/'.$main::fa_menu
+            if -1==index $main::fa_menu,'Net/FullAuto';
+         $fa_menu=[$fa_menu,
+                   "From \$fa_menu variable in $abspath"];
       }
-
-   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
-
-      if (defined $default_modules
-            && ref $default_modules eq 'HASH'
-            && exists $default_modules->{'fa_conf'}) {
-         $Term::Menus::configuration_module_file=
-            substr($default_modules->{'fa_conf'},
-            (rindex $default_modules->{'fa_conf'},'/')+1);
-         require $default_modules->{'fa_conf'};
-      } elsif ($Term::Menus::canload->( modules => {
-            'Net/FullAuto/Distro/'.
-            $Term::Menus::configuration_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.
-            $Term::Menus::configuration_module_file;
-      }
-      my $cf=substr($Term::Menus::configuration_module_file,0,-3);
-      import $cf;
-
-   }
-
-   if (defined $main::fa_hosts_config) {
-
-      if (-1<index $main::fa_hosts_config,'/') {
-         require $main::fa_hosts_config;
-         my $hc=substr($main::fa_hosts_config,
-                (rindex $main::fa_hosts_config,'/')+1,-3);
-         import $hc;
-         $hosts_config_module_file=$hc.'.pm';
-      } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::fa_hosts_config;
-         my $hc=substr($main::fa_hosts_config,
-                (rindex $main::fa_hosts_config,'/')+1,-3);
-         import $hc;
-         $hosts_config_module_file=$hc.'.pm';
+      if ($Term::Menus::canload->( modules => { $fa_code->[0] => 0 } )) {
+         require $fa_code->[0];
+         my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
+         import $mod;
+         $fa_code=$mod.'.pm';
       } else {
-         require $main::fa_hosts_config;
-         my $hc=substr($main::fa_hosts_config,0,-3);
-         import $hc;
-         $hosts_config_module_file=$main::fa_hosts_config;
+         die "Cannot load module $fa_code->[0]".
+             "\n   $fa_code->[1]\n";
       }
-
-   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
-
-      if (defined $default_modules
-            && ref $default_modules eq 'HASH'
-            && exists $default_modules->{'fa_host'}) {
-         $Term::Menus::hosts_config_module_file=
-            substr($default_modules->{'fa_host'},
-            (rindex $default_modules->{'fa_host'},'/')+1);
-         require $default_modules->{'fa_host'};
-      } elsif ($Term::Menus::canload->( modules => {
-            'Net/FullAuto/Distro/'.
-            $Term::Menus::hosts_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.
-            $Term::Menus::hosts_config_module_file;
-      }
-      my $hf=substr($Term::Menus::hosts_config_module_file,0,-3);
-      import $hf;
-
-   }
-
-   if (defined $main::fa_maps_config) {
-
-      if (-1<index $main::fa_maps_config,'/') {
-         require $main::fa_maps_config;
-         my $mp=substr($main::fa_maps_config,
-                (rindex $main::fa_maps_config,'/')+1,-3);
-         import $mp;
-         $maps_config_module_file=$mp.'.pm';
-      } elsif (-1<index caller(2),'FullAuto') {
-         require 'Net/FullAuto/Custom/'.$main::fa_maps_config;
-         my $mp=substr($main::fa_maps_config,
-                (rindex $main::fa_maps_config,'/')+1,-3);
-         import $mp;
-         $maps_config_module_file=$mp.'.pm';
+      if ($Term::Menus::canload->( modules => { $fa_conf->[0] => 0 } )) {
+         require $fa_conf->[0];
+         my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
+         import $mod;
+         $fa_conf=$mod.'.pm';
       } else {
-         require $main::fa_maps_config;
-         my $mp=substr($main::fa_maps_config,0,-3);
-         import $mp;
-         $maps_config_module_file=$main::fa_maps_config;
+         die "Cannot load module $fa_conf->[0]".
+             "\n   $fa_conf->[1]\n";
       }
-
-   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
-
-      if (defined $default_modules
-            && ref $default_modules eq 'HASH'
-            && exists $default_modules->{'fa_maps'}) {
-         $Term::Menus::maps_config_module_file=
-            substr($default_modules->{'fa_maps'},
-            (rindex $default_modules->{'fa_maps'},'/')+1);
-         require $default_modules->{'fa_maps'};
-      } elsif ($Term::Menus::canload->( modules => {
-            'Net/FullAuto/Distro/'.
-            $Term::Menus::maps_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.
-            $Term::Menus::maps_config_module_file;
-      }
-      my $mp=substr($Term::Menus::maps_config_module_file,0,-3);
-      import $mp;
-
-   }
-
-   if (defined $main::fa_menu_config) {
-
-      if (-1<index $main::fa_menu_config,'/') {
-         require $main::fa_menu_config;
-         my $mc=substr($main::fa_menu_config,
-                (rindex $main::fa_menu_config,'/')+1,-3);
-         import $mc;
-         $menu_config_module_file=$mc.'.pm';
+      if ($Term::Menus::canload->( modules => { $fa_host->[0] => 0 } )) {
+         require $fa_host->[0];
+         my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
+         import $mod;
+         $fa_host=$mod.'.pm';
       } else {
-         require $main::fa_menu_config;
-         my $mc=substr($main::fa_menu_config,0,-3);
-         import $mc;
-         $menu_config_module_file=$main::fa_menu_config;
+         die "Cannot load module $fa_host->[0]".
+             "\n   $fa_host->[1]\n";
       }
-
-   } elsif (defined caller(2) && -1<index caller(2),'FullAuto') {
-
-      if (defined $default_modules
-            && ref $default_modules eq 'HASH'
-            && exists $default_modules->{'fa_menu'}) {
-         $Term::Menus::menu_config_module_file=
-            substr($default_modules->{'fa_menu'},
-            (rindex $default_modules->{'fa_menu'},'/')+1);
-         require $default_modules->{'fa_menu'};
-      } elsif ($Term::Menus::canload->( modules => {
-            'Net/FullAuto/Distro/'.
-            $Term::Menus::menu_config_module_file => 0 } )) {
-         require 'Net/FullAuto/Distro/'.
-            $Term::Menus::menu_config_module_file;
+      if ($Term::Menus::canload->( modules => { $fa_maps->[0] => 0 } )) {
+         require $fa_maps->[0];
+         my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
+         import $mod;
+         $fa_maps=$mod.'.pm';
+      } else {
+         die "Cannot load module $fa_maps->[0]".
+             "\n   $fa_maps->[1]\n";
       }
-      my $mc=substr($Term::Menus::menu_config_module_file,0,-3);
-      import $mc;
-
+      if ($Term::Menus::canload->( modules => { $fa_menu->[0] => 0 } )) {
+         require $fa_menu->[0];
+         my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
+         import $mod;
+         $fa_menu=$mod.'.pm';
+      } else {
+         die "Cannot load module $fa_menu->[0]".
+             "\n   $fa_menu->[1]\n";
+      }
+        
    }
 
 }
@@ -786,16 +901,17 @@ sub check_for_dupe_menus {
    my $m_flag=0;
    my $s_flag=0;
    foreach my $dir (@INC) {
-      if (!$m_flag && -f "$dir/$Term::Menus::menu_config_module_file") {
+      if (!$m_flag && -f "$dir/$Term::Menus::fa_menu") {
          $m_flag=1;
-         open(FH,"<$dir/$Term::Menus::menu_config_module_file");
+print "WHAT IS THIS=$dir/$Term::Menus::fa_menu\n";sleep 10;
+         open(FH,"<$dir/$Term::Menus::fa_menu");
          my $line='';my %menudups=();
          while ($line=<FH>) {
             if ($line=~/^[ \t]*\%(.*)\s*=/) {
                if (!exists $menudups{$1}) {
                   $menudups{$1}='';
                } else {
-                  my $mcmf=$Term::Menus::menu_config_module_file;
+                  my $mcmf=$Term::Menus::fa_menu;
                   my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
                          ."\n              ->  \"%$1\" is defined more than once\n"
                          ."              in the $dir/$mcmf file.\n\n"
@@ -808,9 +924,9 @@ sub check_for_dupe_menus {
             }
          }
       }
-      if (!$s_flag && -f "$dir/$Term::Menus::custom_code_module_file") {
+      if (!$s_flag && -f "$dir/$Term::Menus::fa_code") {
          $s_flag=1;
-         open(FH,"<$dir/$Term::Menus::custom_code_module_file");
+         open(FH,"<$dir/$Term::Menus::fa_code");
          my $line='';my %dups=();
          while ($line=<FH>) {
             if ($line=~/^[ \t]*\%(.*)\s*=/) {
@@ -820,7 +936,7 @@ sub check_for_dupe_menus {
                   my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
                          ."\n              ->  \"%$1\" is defined more "
                          ."than once\n              in the $dir/"
-                         .$Term::Menus::custom_code_module_file
+                         .$Term::Menus::fa_code
                          ." file.\n\n       Hint:  delete "
                          ."or comment-out all duplicates\n\n";
                   if ($Term::Menus::fullauto) {
@@ -853,8 +969,8 @@ sub check_for_dupe_menus {
 
 }
 
-&check_for_dupe_menus() if defined $main::fa_menu_config
-                                && $main::fa_menu_config;
+&check_for_dupe_menus() if defined $main::fa_menu
+                                && $main::fa_menu;
 
 {
    use Sys::Hostname;
@@ -872,32 +988,27 @@ our $parent_menu='';
 sub fa_login
 {
 
-   my $fa_code='';my $menu_args='';my $to='';my $die='';
+   my $code='';my $menu_args='';my $to='';my $die='';
    my $start_menu_ref='';
    my $returned='';
    eval {
-      my $m_c_m_f='';
-      ($fa_code,$menu_args,$to,$m_c_m_f,$die)=
+      ($code,$menu_args,$to)=
          &Net::FullAuto::FA_Core::fa_login(@_);
-      if ($die) {
-         print $die if !$Net::FullAuto::FA_Core::cron;
-         &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
-      }
-      $Term::Menus::menu_config_module_file=$m_c_m_f if $m_c_m_f;
+      my $m_c_m_f='';
       if ($m_c_m_f) {
          my $m_flag=0;
          my $s_flag=0;
          foreach my $dir (@INC) {
-            if (!$m_flag && -f "$dir/$Term::Menus::menu_config_module_file") {
+            if (!$m_flag && -f "$dir/$Term::Menus::fa_menu") {
                $m_flag=1;
-               open(FH,"<$dir/$Term::Menus::menu_config_module_file");
+               open(FH,"<$dir/$Term::Menus::fa_menu");
                my $line='';my %menudups=();
                while ($line=<FH>) {
                   if ($line=~/^[ \t]*\%(.*)\s*=/) {
                      if (!exists $menudups{$1}) {
                         $menudups{$1}='';
                      } else {
-                        my $mcmf=$Term::Menus::menu_config_module_file;
+                        my $mcmf=$Term::Menus::fa_menu;
                         my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
                                ."\n              ->  \"%$1\" is defined more than once\n"
                                ."              in the $dir/$mcmf file.\n\n"
@@ -908,9 +1019,9 @@ sub fa_login
                   }
                }
             }
-            if (!$s_flag && -f "$dir/$Term::Menus::custom_code_module_file") {
+            if (!$s_flag && -f "$dir/$Term::Menus::fa_code") {
                $s_flag=1;
-               open(FH,"<$dir/$Term::Menus::custom_code_module_file");
+               open(FH,"<$dir/$Term::Menus::fa_code");
                my $line='';my %dups=();
                while ($line=<FH>) {
                   if ($line=~/^[ \t]*\%(.*)\s*=/) {
@@ -920,7 +1031,7 @@ sub fa_login
                         my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
                                ."\n              ->  \"%$1\" is defined more "
                                ."than once\n              in the $dir/"
-                               .$Term::Menus::custom_code_module_file
+                               .$Term::Menus::fa_code
                                ." file.\n\n       Hint:  delete "
                                ."or comment-out all duplicates\n\n";
                         print $die if !$Net::FullAuto::FA_Core::cron;
@@ -930,25 +1041,25 @@ sub fa_login
                }
             }
          }
-         require $Term::Menus::menu_config_module_file;
+         require $Term::Menus::fa_menu;
       } elsif (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
-            $Term::Menus::menu_config_module_file => 0 } )) {
+            $Term::Menus::fa_menu => 0 } )) {
          require 'Net/FullAuto/Distro/fa_menu_demo.pm';
       }
-      my $mc=substr($Term::Menus::menu_config_module_file,
-            (rindex $Term::Menus::menu_config_module_file,'/')+1,-3);
+      my $mc=substr($Term::Menus::fa_menu,
+            (rindex $Term::Menus::fa_menu,'/')+1,-3);
       import $mc;
       $start_menu_ref=eval '$'.$mc.'::start_menu_ref';
       $to||=0;
       $timeout=$to if $to;
-      if ($fa_code) {
-         &run_sub($fa_code,$menu_args);
+      if ($code) {
+         &run_sub($code,$menu_args);
       } elsif (ref $start_menu_ref eq 'HASH') {
          unless (keys %LookUpMenuName) {
             &check_for_dupe_menus();
          }
          #if (!exists $LookUpMenuName{$start_menu_ref}) {
-         #   my $mcmf=$Term::Menus::menu_config_module_file;
+         #   my $mcmf=$Term::Menus::fa_menu;
          #   my $die="\n       FATAL ERROR! - The top level menu,"
          #          ." indicated\n              by the "
          #          ."\$start_menu_ref variable in\n       "
@@ -975,7 +1086,7 @@ sub fa_login
          }
          $returned=&Menu($start_menu_ref);
       } elsif ($start_menu_ref) {
-         my $mcmf=$Term::Menus::menu_config_module_file;
+         my $mcmf=$Term::Menus::fa_menu;
          my $die="\n       FATAL ERROR! - The top level menu "
                 ."block indicated\n              by the "
                 ."\$start_menu_ref variable in the\n       "
@@ -990,7 +1101,7 @@ sub fa_login
                 ."...\n       \)\;\n";
          &Net::FullAuto::FA_Core::handle_error($die);
       } else {
-         my $mcmf=$Term::Menus::menu_config_module_file;
+         my $mcmf=$Term::Menus::fa_menu;
          my $die="\n       FATAL ERROR! - The \$start_menu_ref\n"
                 ."              variable in the $mcmf\n"
                 ."              file, is not defined or properly"
@@ -1007,7 +1118,7 @@ sub fa_login
    };
    if ($@) {
       my $cmdlin=52;
-      $cmdlin=47 if $fa_code;
+      $cmdlin=47 if $code;
       #&Net::FullAuto::FA_Core::handle_error($@,"-$cmdlin",'__cleanup__');
       my $errr=$@;
       $errr=~s/^\s*/\n       /s;
@@ -1040,13 +1151,13 @@ sub run_sub
       $pid = &setsid          or die "Can't start a new session: $!";
    }
 
-   my $fa_code=$_[0];
+   my $code=$_[0];
    my $menu_args= (defined $_[1]) ? $_[1] : '';
-   my $subfile=substr($Term::Menus::custom_code_module_file,0,-3).'::'
-         if $Term::Menus::custom_code_module_file;
+   my $subfile=substr($Term::Menus::fa_code,0,-3).'::'
+         if $Term::Menus::fa_code;
    $subfile||='';
    my $return=
-      eval "\&$subfile$fa_code\(\@{\$menu_args}\)";
+      eval "\&$subfile$code\(\@{\$menu_args}\)";
    &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
    return $return;
 }
@@ -1856,7 +1967,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      [4]{${$_[1]}[$pick-1]}}{'Result'}{'Label'};
                   $parent_menu=$Term::Menus::LookUpMenuName{$_[0]};
                } else {
-                  my $mcmf=$Term::Menus::menu_config_module_file;
+                  my $mcmf=$Term::Menus::fa_menu;
                   my $die="The \"Result1 =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
                           "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
@@ -1911,7 +2022,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $Term::Menus::LookUpMenuName{$test_item}=
                      ${$test_item}{'Label'};
                } else {
-                  my $mcmf=$Term::Menus::menu_config_module_file;
+                  my $mcmf=$Term::Menus::fa_menu;
                   my $die="The \"Result2 =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
                           "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
@@ -1964,7 +2075,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                             ."System $Term::Menus::local_hostname Conveyed\n"
                             ."              the Following "
                             ."Unrecoverable Error Condition :\n\n"
-                            ."       $@";
+                            ."       $@\n       line ".__LINE__;
                      if (defined $log_handle &&
                            -1<index $log_handle,'*') {
                         print $log_handle $die;
@@ -2018,7 +2129,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                ${${$FullMenu}{$_[0]}[2]}
                {${$_[1]}[$pick-1]};
          } else {
-            my $mcmf=$Term::Menus::menu_config_module_file;
+            my $mcmf=$Term::Menus::fa_menu;
             my $die="The \"Result4 =>\" Setting".
                    "\n\t\tFound in the Menu Unit -> ".
                    "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
@@ -2165,10 +2276,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
-                           my $subfile=substr(
-                                 $Term::Menus::custom_code_module_file,0,-3)
-                                 .'::'
-                                 if $Term::Menus::custom_code_module_file;
+                           my $subfile=substr($Term::Menus::fa_code,0,-3).'::'
+                                 if $Term::Menus::fa_code;
                            $subfile||='';
                            foreach my $sub (&get_subs_from_menu($Selected)) {
                               my @resu=();
@@ -2241,8 +2350,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                           (-1<index $firsterr,$sub)) {
                                        eval "\@resu=\&main::$sub";
                                        my $seconderr=$@||'';my $die='';
-                                       my $c=
-                                          $Term::Menus::custom_code_module_file;
+                                       my $c=$Term::Menus::fa_code;
                                        if ($seconderr=~/Undefined subroutine/) {
                                           if (${$FullMenu}{$MenuUnit_hash_ref}
                                                 [2]{$all_menu_items_array[
@@ -2292,7 +2400,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                        ."Conveyed\n"
                                        ."              the Following "
                                        ."Unrecoverable Error Condition :\n\n"
-                                       ."       $@";
+                                       ."       $@\n       line ".__LINE__;
                                     if (defined $log_handle &&
                                           -1<index $log_handle,'*') {
                                        print $log_handle $die;
@@ -2741,8 +2849,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($Term::Menus::custom_code_module_file,0,-3)
-                        .'::' if $Term::Menus::custom_code_module_file;
+                  my $subfile=substr($Term::Menus::fa_code,0,-3)
+                        .'::' if $Term::Menus::fa_code;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
@@ -2823,7 +2931,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
-                                        .$Term::Menus::custom_code_module_file
+                                        .$Term::Menus::fa_code
                                         .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
@@ -2851,7 +2959,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               ."System $Term::Menus::local_hostname Conveyed\n"
                               ."              the Following "
                               ."Unrecoverable Error Condition :\n\n"
-                              ."       $@";
+                              ."       $@\n       line ".__LINE__;
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
@@ -2970,8 +3078,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($Term::Menus::custom_code_module_file,0,-3)
-                             .'::' if $Term::Menus::custom_code_module_file;
+                  my $subfile=substr($Term::Menus::fa_code,0,-3)
+                             .'::' if $Term::Menus::fa_code;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
@@ -3049,7 +3157,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
-                                        .$Term::Menus::custom_code_module_file
+                                        .$Term::Menus::fa_code
                                         .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
@@ -3077,7 +3185,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               ."System $Term::Menus::local_hostname Conveyed\n"
                               ."              the Following "
                               ."Unrecoverable Error Condition :\n\n"
-                              ."       $@";
+                              ."       $@\n       line ".__LINE__;
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
@@ -3195,8 +3303,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
-                  my $subfile=substr($Term::Menus::custom_code_module_file,0,-3)
-                             .'::' if $Term::Menus::custom_code_module_file;
+                  my $subfile=substr($Term::Menus::fa_code,0,-3)
+                             .'::' if $Term::Menus::fa_code;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
@@ -3274,7 +3382,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
-                                        .$Term::Menus::custom_code_module_file
+                                        .$Term::Menus::fa_code
                                         .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
@@ -3298,7 +3406,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                   ."Conveyed\n"
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@";
+                                  ."       $@\n       line ".__LINE__;
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
@@ -3402,8 +3510,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                Item   => $pn{$numbor}[0] }
                      }
                   }
-                  my $subfile=substr($Term::Menus::custom_code_module_file,0,-3)
-                             .'::' if $Term::Menus::custom_code_module_file;
+                  my $subfile=substr($Term::Menus::fa_code,0,-3)
+                             .'::' if $Term::Menus::fa_code;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
@@ -3481,7 +3589,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
-                                        .$Term::Menus::custom_code_module_file
+                                        .$Term::Menus::fa_code
                                         .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
@@ -3509,7 +3617,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               ."System $Term::Menus::local_hostname Conveyed\n"
                               ."              the Following "
                               ."Unrecoverable Error Condition :\n\n"
-                              ."       $@";
+                              ."       $@\n       line ".__LINE__;
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
@@ -3936,8 +4044,8 @@ return 'DONE_SUB';
                         }
                      }
                      my $subfile=substr(
-                           $Term::Menus::custom_code_module_file,0,-3).'::'
-                           if $Term::Menus::custom_code_module_file;
+                           $Term::Menus::fa_code,0,-3).'::'
+                           if $Term::Menus::fa_code;
                      $subfile||='';
                      foreach my $sub (&get_subs_from_menu($Selected)) {
                         my @resu=();
@@ -4004,8 +4112,7 @@ return 'DONE_SUB';
                                     (-1<index $firsterr,$sub)) {
                                  eval "\@resu=\&main::$sub";
                                  my $seconderr=$@||'';my $die='';
-                                 my $c=
-                                    $Term::Menus::custom_code_module_file;
+                                 my $c=$Term::Menus::fa_code;
                                  if ($seconderr=~/Undefined subroutine/) {
                                     if (${$FullMenu}{$MenuUnit_hash_ref}[2]
                                           {$all_menu_items_array[$numbor-1]}) {
@@ -4050,7 +4157,7 @@ return 'DONE_SUB';
                                  ."Conveyed\n"
                                  ."              the Following "
                                  ."Unrecoverable Error Condition :\n\n"
-                                 ."       $@";
+                                 ."       $@\n       line ".__LINE__;
                               if (defined $log_handle &&
                                     -1<index $log_handle,'*') {
                                  print $log_handle $die;
@@ -4079,7 +4186,7 @@ return 'DONE_SUB';
  return 'DONE_SUB';
                   }
                } else {
-                  my $mcmf=$Term::Menus::menu_config_module_file;
+                  my $mcmf=$Term::Menus::fa_menu;
                   my $die="The \"Result11 =>\" Setting".
                           "\n\t\tFound in the Menu Unit -> ".
                           "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
@@ -4162,7 +4269,7 @@ return 'DONE_SUB';
                                   ." Conveyed\n"
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@";
+                                  ."       $@\n       line ".__LINE__;
                            if (defined $log_handle &&
                                  -1<index $log_handle,'*') {
                               print $log_handle $die;
@@ -4241,8 +4348,8 @@ return 'DONE_SUB';
                                Item   => $pn{$numbor}[0] }
                      }
                   }
-                  my $subfile=substr($Term::Menus::custom_code_module_file,0,-3)
-                             .'::' if $Term::Menus::custom_code_module_file;
+                  my $subfile=substr($Term::Menus::fa_code,0,-3)
+                             .'::' if $Term::Menus::fa_code;
                   $subfile||='';
                   foreach my $sub (&get_subs_from_menu($Selected)) {
                      my @resu=();
@@ -4322,7 +4429,7 @@ return 'DONE_SUB';
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
-                                        .$Term::Menus::custom_code_module_file
+                                        .$Term::Menus::fa_code
                                         .",\n\t\tnor was a routine with "
                                         ."that name\n\t\tlocated in the"
                                         ." main:: script.\n";
@@ -4346,7 +4453,7 @@ return 'DONE_SUB';
                                   ."Conveyed\n"
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@";
+                                  ."       $@\n       line ".__LINE__;
                            if (defined $log_handle &&
                                 -1<index $log_handle,'*') {
                               print $log_handle $die;
@@ -4417,7 +4524,7 @@ return 'DONE_SUB';
                                ."System $Term::Menus::local_hostname Conveyed\n"
                                ."              the Following "
                                ."Unrecoverable Error Condition :\n\n"
-                               ."       $@";
+                               ."       $@\n       line ".__LINE__;
                         if (defined $log_handle &&
                               -1<index $log_handle,'*') {
                            print $log_handle $die;
@@ -4463,8 +4570,8 @@ return 'DONE_SUB';
                my %pick=();
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
-               my $subfile=substr($Term::Menus::custom_code_module_file,0,-3)
-                  .'::' if $Term::Menus::custom_code_module_file;
+               my $subfile=substr($Term::Menus::fa_code,0,-3)
+                  .'::' if $Term::Menus::fa_code;
                $subfile||='';
                foreach my $sub (&get_subs_from_menu($Selected)) {
                   my @resu=();
@@ -4542,19 +4649,24 @@ return 'DONE_SUB';
                                      ."Specifies a Subroutine"
                                      ." that Does NOT Exist"
                                      ."\n\t\tin the User Code File "
-                                     .$Term::Menus::custom_code_module_file
+                                     .$Term::Menus::fa_code
                                      .",\n\t\tnor was a routine with "
                                      ."that name\n\t\tlocated in the"
                                      ." main:: script.\n";
                               } else { $die="$firsterr\n       $seconderr" }
                            } else { $die=$seconderr }
-                           &Net::FullAuto::FA_Core::handle_error($die);
+                           &Net::FullAuto::FA_Core::handle_error($die.
+                                          "\n\n       line ".__LINE__);
                         } elsif ($firsterr) {
-                           &Net::FullAuto::FA_Core::handle_error($firsterr);
+                           &Net::FullAuto::FA_Core::handle_error($firsterr.
+                                          "\n\n       line ".__LINE__);
                         }
                      } else {
                         eval "\@resu=\&main::$sub";
-                        die $@ if $@;
+                        if ($@) {
+                           my $er=$@."\n       line ";
+                           die $er.__LINE__;
+                        }
                      }
                   };
                   if ($@) {
@@ -4565,7 +4677,7 @@ return 'DONE_SUB';
                                ."System $Term::Menus::local_hostname Conveyed\n"
                                ."              the Following "
                                ."Unrecoverable Error Condition :\n\n"
-                               ."       $@";
+                               ."       $@\n       line ".__LINE__;
                         if (defined $log_handle &&
                               -1<index $log_handle,'*') {
                            print $log_handle $die;
