@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.96';
+our $VERSION = '1.97';
 
 
 use 5.006;
@@ -507,7 +507,19 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                   undef $bdb;
                   $dbenv->close();
                   undef $dbenv;
-                  if (exists $default_modules->{'set'} &&
+                  unless (keys %{$default_modules}) {
+                     $default_modules->{'set'}='none';
+                     $default_modules->{'fa_code'}=
+                        'Net/FullAuto/Distro/fa_code_demo.pm';
+                     $default_modules->{'fa_conf'}=
+                        'Net/FullAuto/Distro/fa_conf.pm';
+                     $default_modules->{'fa_host'}=
+                        'Net/FullAuto/Distro/fa_host.pm';
+                     $default_modules->{'fa_maps'}=
+                        'Net/FullAuto/Distro/fa_maps.pm';
+                     $default_modules->{'fa_menu'}=
+                        'Net/FullAuto/Distro/fa_menu_demo.pm';
+                  } elsif (exists $default_modules->{'set'} &&
                         $default_modules->{'set'} ne 'none') {
                      my $setname=$default_modules->{'set'};
                      my $stenv = BerkeleyDB::Env->new(
@@ -734,8 +746,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          $fa_menu=[$fa_menu,
                    "From \$fa_menu variable in $abspath"];
       }
-      $fa_conf->[0]='Net/FullAuto/'.$fa_conf->[0]
-         if -1==index $fa_conf->[0],'Net/FullAuto';
+      $fa_code->[0]='Net/FullAuto/'.$fa_code->[0]
+         if $fa_code->[0] && -1==index $fa_code->[0],'Net/FullAuto';
+      $fa_code->[0]||='';
       if ($Term::Menus::canload->( modules => { $fa_code->[0] => 0 } )) {
          require $fa_code->[0];
          my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
@@ -746,7 +759,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
              "\n   $fa_code->[1]\n";
       }
       $fa_conf->[0]='Net/FullAuto/'.$fa_conf->[0]
-         if -1==index $fa_conf->[0],'Net/FullAuto';
+         if $fa_conf->[0] && -1==index $fa_conf->[0],'Net/FullAuto';
+      $fa_conf->[0]||='';
       if ($Term::Menus::canload->( modules => { $fa_conf->[0] => 0 } )) {
          require $fa_conf->[0];
          my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
@@ -757,7 +771,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
              "\n   $fa_conf->[1]\n";
       }
       $fa_host->[0]='Net/FullAuto/'.$fa_host->[0]
-         if -1==index $fa_host->[0],'Net/FullAuto';
+         if $fa_host->[0] && -1==index $fa_host->[0],'Net/FullAuto';
+      $fa_host->[0]||='';
       if ($Term::Menus::canload->( modules => { $fa_host->[0] => 0 } )) {
          require $fa_host->[0];
          my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
@@ -768,7 +783,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
              "\n   $fa_host->[1]\n";
       }
       $fa_maps->[0]='Net/FullAuto/'.$fa_maps->[0]
-         if -1==index $fa_maps->[0],'Net/FullAuto';
+         if $fa_maps->[0] && -1==index $fa_maps->[0],'Net/FullAuto';
+      $fa_maps->[0]||='';
       if ($Term::Menus::canload->( modules => { $fa_maps->[0] => 0 } )) {
          require $fa_maps->[0];
          my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
@@ -779,7 +795,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
              "\n   $fa_maps->[1]\n";
       }
       $fa_menu->[0]='Net/FullAuto/'.$fa_menu->[0]
-         if -1==index $fa_menu->[0],'Net/FullAuto';
+         if $fa_menu->[0] && -1==index $fa_menu->[0],'Net/FullAuto';
+      $fa_menu->[0]||='';
       if ($Term::Menus::canload->( modules => { $fa_menu->[0] => 0 } )) {
          require $fa_menu->[0];
          my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
