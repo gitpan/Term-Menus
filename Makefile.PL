@@ -4,10 +4,11 @@ use inc::Module::Install;
 # Define metadata
 name            'Term-Menus';
 sign;
+author          'Brian M. Kelly <Brian.Kelly@fullautosoftware.net>';
+license         'GPL-3.0';
 all_from        'lib/Term/Menus.pm';
 
 requires        'Data::Dump::Streamer'      => 0;
-requires        'Module::Load::Conditional' => 0;
 requires        'Term::ReadKey'             => 0;
 requires        'Term::RawInput'            => 0;
 auto_install;

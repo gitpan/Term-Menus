@@ -9,14 +9,14 @@ package Term::Menus;
 #
 #    You may distribute under the terms of the GNU General
 #    Public License, as specified in the LICENSE file.
-#    (http://www.opensource.org/licenses/gpl-license.php).
+#    (http://opensource.org/licenses/gpl-3.0.html).
 #
 #    http://www.fullautosoftware.net/
 
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.97';
+our $VERSION = '1.98';
 
 
 use 5.006;
@@ -286,40 +286,17 @@ our $tm_menu='';
 
 use Config ();
 use Cwd 'abs_path';
-our $canload=sub {};
+#our $canload=sub {};
 BEGIN {
-   our $canload=sub {};
-   my $installprivlib=$Config::Config{'installprivlib'}||'';
-   my $installsitelib=$Config::Config{'installsitelib'}||'';
-   my $installvendorlib=$Config::Config{'installvendorlib'}||'';
-   if ($installprivlib &&
-         -e $installprivlib."/Module/Load/Conditional.pm") {
-      $canload = sub {
-         require $installprivlib."/Module/Load/Conditional.pm";
-         my $module={};
-         $module=$_[0] if ref $_[0] eq 'HASH';
-         return Module::Load::Conditional::can_load(%$module);
-      };
-   } elsif ($installsitelib &&
-         -e $installsitelib."/Module/Load/Conditional.pm") {
-      $canload = sub {
-         require $installsitelib."/Module/Load/Conditional.pm";
-         my $module={};
-         $module=$_[0] if ref $_[0] eq 'HASH';
-         return Module::Load::Conditional::can_load(%$module);
-      };
-   } elsif ($installvendorlib &&
-         -e $installvendorlib."/Module/Load/Conditional.pm") {
-      $canload = sub {
-         require $installvendorlib.
-            "/Module/Load/Conditional.pm";
-         my $module={};
-         $module=$_[0] if ref $_[0] eq 'HASH';
-         return Module::Load::Conditional::can_load(%$module);
-      };
-   } else {
-      $canload = sub { return 0 };
-   }
+   our $canload = sub {
+      package canloadone;
+      eval { require $_[0] };
+      unless ($@) {
+         return 1;
+      } else {
+         return 0;
+      }
+   };
 }
 
 unless (defined caller(2) && -1<index caller(2),'FullAuto') {
@@ -329,8 +306,7 @@ unless (defined caller(2) && -1<index caller(2),'FullAuto') {
    ###        or $main::fa_menu when using Net::FullAuto.
 
    if ($tm_menu) {
-      unless ($Term::Menus::canload->( modules => {
-            $tm_menu => 0 } )) {
+      unless ($Term::Menus::canload->($tm_menu)) {
          my $die="\n       FATAL ERROR: The variable \$tm_menu is defined,\n".
                  "              in the module file:\n\n".
                  "              $INC{'Term/Menus.pm'}\n\n".
@@ -339,8 +315,7 @@ unless (defined caller(2) && -1<index caller(2),'FullAuto') {
          die $die;
       }
    } elsif (defined $main::tm_menu) {
-      if ($Term::Menus::canload->( modules => {
-            $main::tm_menu => 0 } )) {
+      if ($Term::Menus::canload->($main::tm_menu)) {
          $tm_menu=$main::tm_menu;
       } else {
          my $die="\n       FATAL ERROR: The variable \$tm_menu is defined,\n".
@@ -595,18 +570,21 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          }
          my @A=();my %A=();
          push @A,@ARGV;
+         my $acnt=0;
          foreach my $a (@A) {
-            if (-1<index $a,'--fa_') {
-               my $k=unpack('x2a*',$a);
-               my $v=pop @A;
+            $acnt++;
+            my $aa=$a;
+            if (-1<index $aa,'--fa_') {
+               my $k=unpack('x5a*',$aa);
+               my $v=$A[$acnt]||'';
                unless (-1<index $v, '--fa_') {
                   $A{$k}=$v;
                } else {
                   @A=();
                   last;
                }
-            } elsif (-1<index $a,'--set') {
-               my $v=pop @A;
+            } elsif (-1<index $aa,'--set') {
+               my $v=$A[$acnt]||'';
                unless (-1<index $v, '--') {
                   $A{set}=$v;
                } else {
@@ -749,62 +727,92 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       $fa_code->[0]='Net/FullAuto/'.$fa_code->[0]
          if $fa_code->[0] && -1==index $fa_code->[0],'Net/FullAuto';
       $fa_code->[0]||='';
-      if ($Term::Menus::canload->( modules => { $fa_code->[0] => 0 } )) {
-         require $fa_code->[0];
-         my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
-         import $mod;
-         $fa_code=$mod.'.pm';
+      if ($fa_code->[0]) {
+         if ($Term::Menus::canload->($fa_code->[0])) {
+            require $fa_code->[0];
+            my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
+            import $mod;
+            $fa_code=$mod.'.pm';
+         } else {
+            die "Cannot load module $fa_code->[0]".
+                "\n   $fa_code->[1]\n";
+         }
       } else {
-         die "Cannot load module $fa_code->[0]".
-             "\n   $fa_code->[1]\n";
-      }
+         require 'Net/FullAuto/Distro/fa_code.pm';
+         import fa_code;
+         $fa_code='fa_code.pm';
+      } 
       $fa_conf->[0]='Net/FullAuto/'.$fa_conf->[0]
          if $fa_conf->[0] && -1==index $fa_conf->[0],'Net/FullAuto';
       $fa_conf->[0]||='';
-      if ($Term::Menus::canload->( modules => { $fa_conf->[0] => 0 } )) {
-         require $fa_conf->[0];
-         my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
-         import $mod;
-         $fa_conf=$mod.'.pm';
+      if ($fa_conf->[0]) {
+         if ($Term::Menus::canload->($fa_conf->[0])) {
+            require $fa_conf->[0];
+            my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
+            import $mod;
+            $fa_conf=$mod.'.pm';
+         } else {
+            die "Cannot load module $fa_conf->[0]".
+                "\n   $fa_conf->[1]\n";
+         }
       } else {
-         die "Cannot load module $fa_conf->[0]".
-             "\n   $fa_conf->[1]\n";
+         require 'Net/FullAuto/Distro/fa_conf.pm';
+         import fa_conf;
+         $fa_conf='fa_conf.pm';
       }
       $fa_host->[0]='Net/FullAuto/'.$fa_host->[0]
          if $fa_host->[0] && -1==index $fa_host->[0],'Net/FullAuto';
       $fa_host->[0]||='';
-      if ($Term::Menus::canload->( modules => { $fa_host->[0] => 0 } )) {
-         require $fa_host->[0];
-         my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
-         import $mod;
-         $fa_host=$mod.'.pm';
+      if ($fa_host->[0]) {
+         if ($Term::Menus::canload->($fa_host->[0])) {
+            require $fa_host->[0];
+            my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
+            import $mod;
+            $fa_host=$mod.'.pm';
+         } else {
+            die "Cannot load module $fa_host->[0]".
+                "\n   $fa_host->[1]\n";
+         }
       } else {
-         die "Cannot load module $fa_host->[0]".
-             "\n   $fa_host->[1]\n";
+         require 'Net/FullAuto/Distro/fa_host.pm';
+         import fa_host;
+         $fa_host='fa_host.pm';
       }
       $fa_maps->[0]='Net/FullAuto/'.$fa_maps->[0]
          if $fa_maps->[0] && -1==index $fa_maps->[0],'Net/FullAuto';
       $fa_maps->[0]||='';
-      if ($Term::Menus::canload->( modules => { $fa_maps->[0] => 0 } )) {
-         require $fa_maps->[0];
-         my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
-         import $mod;
-         $fa_maps=$mod.'.pm';
+      if ($fa_maps->[0]) {
+         if ($Term::Menus::canload->($fa_maps->[0])) {
+            require $fa_maps->[0];
+            my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
+            import $mod;
+            $fa_maps=$mod.'.pm';
+         } else {
+            die "Cannot load module $fa_maps->[0]".
+                "\n   $fa_maps->[1]\n";
+         }
       } else {
-         die "Cannot load module $fa_maps->[0]".
-             "\n   $fa_maps->[1]\n";
+         require 'Net/FullAuto/Distro/fa_maps.pm';
+         import fa_maps;
+         $fa_maps='fa_maps.pm';
       }
       $fa_menu->[0]='Net/FullAuto/'.$fa_menu->[0]
          if $fa_menu->[0] && -1==index $fa_menu->[0],'Net/FullAuto';
       $fa_menu->[0]||='';
-      if ($Term::Menus::canload->( modules => { $fa_menu->[0] => 0 } )) {
-         require $fa_menu->[0];
-         my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
-         import $mod;
-         $fa_menu=$mod.'.pm';
+      if ($fa_menu->[0]) {
+         if ($Term::Menus::canload->($fa_menu->[0])) {
+            require $fa_menu->[0];
+            my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
+            import $mod;
+            $fa_menu=$mod.'.pm';
+         } else {
+            die "Cannot load module $fa_menu->[0]".
+                "\n   $fa_menu->[1]\n";
+         }
       } else {
-         die "Cannot load module $fa_menu->[0]".
-             "\n   $fa_menu->[1]\n";
+         require 'Net/FullAuto/Distro/fa_menu_demo.pm';
+         import fa_menu_demo;
+         $fa_menu='fa_menu_demo.pm';
       }
         
    }
@@ -908,11 +916,11 @@ print "WHAT IS THIS=$dir/$Term::Menus::fa_menu\n";sleep 10;
                if (!exists $menudups{$1}) {
                   $menudups{$1}='';
                } else {
-                  my $mcmf=$Term::Menus::fa_menu;
-                  my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
-                         ."\n              ->  \"%$1\" is defined more than once\n"
-                         ."              in the $dir/$mcmf file.\n\n"
-                         ."       Hint:  delete or comment-out all duplicates\n\n";
+                  my $mcmf=$Term::Menus::fa_menu;my $die='';
+                  $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
+                      ."\n              ->  \"%$1\" is defined more than once\n"
+                      ."              in the $dir/$mcmf file.\n\n"
+                      ."       Hint:  delete or comment-out all duplicates\n\n";
                   if ($Term::Menus::fullauto) {
                      print $die if !$Net::FullAuto::FA_Core::cron;
                      &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
@@ -1006,12 +1014,15 @@ sub fa_login
                         $menudups{$1}='';
                      } else {
                         my $mcmf=$Term::Menus::fa_menu;
-                        my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
-                               ."\n              ->  \"%$1\" is defined more than once\n"
-                               ."              in the $dir/$mcmf file.\n\n"
-                               ."       Hint:  delete or comment-out all duplicates\n\n";
+                        my $die="\n"
+                           ."       FATAL ERROR! - Duplicate Hash Blocks:\n"
+                           ."              ->  \"%$1\" is defined more than\n"
+                           ."              once in the $dir/$mcmf file.\n\n"
+                           ."       Hint:  delete or comment-out all duplicates"
+                           ."\n\n";
                         print $die if !$Net::FullAuto::FA_Core::cron;
-                        &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
+                        &Net::FullAuto::FA_Core::handle_error(
+                           $die,'__cleanup__');
                      }
                   }
                }
@@ -1032,15 +1043,16 @@ sub fa_login
                                ." file.\n\n       Hint:  delete "
                                ."or comment-out all duplicates\n\n";
                         print $die if !$Net::FullAuto::FA_Core::cron;
-                        &Net::FullAuto::FA_Core::handle_error($die,'__cleanup__');
+                        &Net::FullAuto::FA_Core::handle_error(
+                           $die,'__cleanup__');
                      }
                   }
                }
             }
          }
          require $Term::Menus::fa_menu;
-      } elsif (!$Term::Menus::canload->( modules => { 'Net/FullAuto/Custom/'.
-            $Term::Menus::fa_menu => 0 } )) {
+      } elsif (!$Term::Menus::canload->(
+            'Net/FullAuto/Custom/'.$Term::Menus::fa_menu)) {
          require 'Net/FullAuto/Distro/fa_menu_demo.pm';
       }
       my $mc=substr($Term::Menus::fa_menu,
@@ -1075,9 +1087,10 @@ sub fa_login
                &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
                return $return;
             } else {
-               my $die="\n       FATAL ERROR! -  Plan Number ${$plann}{PlanID} does"
-                      ."\n                       match the current logic flow."
-                      ."\n\n      ";
+               my $die=
+                  "\n       FATAL ERROR! -  Plan Number ${$plann}{PlanID} does"
+                  ."\n                       match the current logic flow."
+                  ."\n\n      ";
                die($die);
             }
          }
@@ -6585,5 +6598,5 @@ by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License.
-(http://www.opensource.org/licenses/gpl-license.php).
+(http://opensource.org/licenses/gpl-3.0.html).
 
