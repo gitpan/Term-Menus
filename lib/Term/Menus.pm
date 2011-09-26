@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.98';
+our $VERSION = '1.99';
 
 
 use 5.006;
@@ -734,8 +734,12 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             import $mod;
             $fa_code=$mod.'.pm';
          } else {
+            my $ln=__LINE__;
+            $ln-=5;
             die "Cannot load module $fa_code->[0]".
-                "\n   $fa_code->[1]\n";
+                "\n   $fa_code->[1]\n".
+                "\"require $fa_code->[0];\"".
+                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
          }
       } else {
          require 'Net/FullAuto/Distro/fa_code.pm';
@@ -752,8 +756,12 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             import $mod;
             $fa_conf=$mod.'.pm';
          } else {
+            my $ln=__LINE__;
+            $ln-=5;
             die "Cannot load module $fa_conf->[0]".
-                "\n   $fa_conf->[1]\n";
+                "\n   $fa_conf->[1]\n".
+                "\"require $fa_conf->[0];\"".
+                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
          }
       } else {
          require 'Net/FullAuto/Distro/fa_conf.pm';
@@ -770,8 +778,12 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             import $mod;
             $fa_host=$mod.'.pm';
          } else {
+            my $ln=__LINE__;
+            $ln-=5;
             die "Cannot load module $fa_host->[0]".
-                "\n   $fa_host->[1]\n";
+                "\n   $fa_host->[1]\n".
+                "\"require $fa_host->[0];\"".
+                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
          }
       } else {
          require 'Net/FullAuto/Distro/fa_host.pm';
@@ -788,8 +800,12 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             import $mod;
             $fa_maps=$mod.'.pm';
          } else {
+            my $ln=__LINE__;
+            $ln-=5;
             die "Cannot load module $fa_maps->[0]".
-                "\n   $fa_maps->[1]\n";
+                "\n   $fa_maps->[1]\n".
+                "\"require $fa_maps->[0];\"".
+                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
          }
       } else {
          require 'Net/FullAuto/Distro/fa_maps.pm';
@@ -806,8 +822,12 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             import $mod;
             $fa_menu=$mod.'.pm';
          } else {
+            my $ln=__LINE__;
+            $ln-=5;
             die "Cannot load module $fa_menu->[0]".
-                "\n   $fa_menu->[1]\n";
+                "\n   $fa_menu->[1]\n".
+                "\"require $fa_menu->[0];\"".
+                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
          }
       } else {
          require 'Net/FullAuto/Distro/fa_menu_demo.pm';
