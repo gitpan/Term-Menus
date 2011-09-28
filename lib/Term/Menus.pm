@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.0';
+our $VERSION = '2.01';
 
 
 use 5.006;
@@ -262,7 +262,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_NO_CHECKPOINT %DB_EVENT_REP_SITE_REMOVED
             %DB_EVENT_REP_CONNECT_BROKEN %DB_INIT_MUTEX);
 
-@EXPORT = qw(pick Menu get_Menu_map);
+@EXPORT = qw(pick Menu get_Menu_map fa_code fa_conf fa_host fa_maps fa_menu);
 
 #####################################################################
 ####                                                              ###
