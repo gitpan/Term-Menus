@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '1.99';
+our $VERSION = '2.0';
 
 
 use 5.006;
@@ -549,21 +549,31 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                "From Default Set $setname ".
                                "(Change with fa --set)"];
                   } else {
-                     $fa_code=[$default_modules->{'fa_code'},
-                               "From Default Setting ".
-                               "(Change with fa --defaults)"];
-                     $fa_conf=[$default_modules->{'fa_conf'},
-                               "From Default Setting ".
-                               "(Change with fa --defaults)"];
-                     $fa_host=[$default_modules->{'fa_host'},
-                               "From Default Setting ".
-                               "(Change with fa --defaults)"];
-                     $fa_maps=[$default_modules->{'fa_maps'},
-                               "From Default Setting ".
-                               "(Change with fa --defaults)"];
-                     $fa_menu=[$default_modules->{'fa_menu'},
-                               "From Default Setting ".
-                               "(Change with fa --defaults)"];
+                     if (exists $default_modules->{'fa_code'}) {
+                        $fa_code=[$default_modules->{'fa_code'},
+                                  "From Default Setting ".
+                                  "(Change with fa --defaults)"];
+                     }
+                     if (exists $default_modules->{'fa_conf'}) {
+                        $fa_conf=[$default_modules->{'fa_conf'},
+                                  "From Default Setting ".
+                                  "(Change with fa --defaults)"];
+                     }
+                     if (exists $default_modules->{'fa_host'}) {
+                        $fa_host=[$default_modules->{'fa_host'},
+                                  "From Default Setting ".
+                                  "(Change with fa --defaults)"];
+                     }
+                     if (exists $default_modules->{'fa_maps'}) {
+                        $fa_maps=[$default_modules->{'fa_maps'},
+                                  "From Default Setting ".
+                                  "(Change with fa --defaults)"];
+                     }
+                     if (exists $default_modules->{'fa_menu'}) {
+                        $fa_menu=[$default_modules->{'fa_menu'},
+                                  "From Default Setting ".
+                                  "(Change with fa --defaults)"];
+                     }
                   }
                }
             }

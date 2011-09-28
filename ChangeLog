@@ -1,3 +1,14 @@
+2011-09-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.0 released. Ran out numbers and didn't
+          want to go deeper past the decimal. FullAuto is VERY
+          close to it's 1.0 release, so pusing Term::Menus to
+          2.0 now makes sense. The "fanfare" will be saved for
+          the 1.0 release of Net::FullAuto.
+
+        * Fixed a bug in module selection for FullAuto.
+
+
 2011-09-25  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 1.99 released.
