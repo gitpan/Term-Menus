@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.01';
+our $VERSION = '2.02';
 
 
 use 5.006;
@@ -262,7 +262,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_NO_CHECKPOINT %DB_EVENT_REP_SITE_REMOVED
             %DB_EVENT_REP_CONNECT_BROKEN %DB_INIT_MUTEX);
 
-@EXPORT = qw(pick Menu get_Menu_map fa_code fa_conf fa_host fa_maps fa_menu);
+@EXPORT = qw(pick Menu get_Menu_map);
 
 #####################################################################
 ####                                                              ###
@@ -344,6 +344,15 @@ unless (defined caller(2) && -1<index caller(2),'FullAuto') {
 
 BEGIN { ##  Begin  Net::FullAuto  Settings
 
+   unless (exists $INC{'Term/Menus.pm'}) {
+      foreach my $fpath (@INC) {
+         my $f=$fpath;
+         if (-e $f.'/Term/Menus.pm') {
+            $INC{'Term/Menus.pm'}=$f.'/Term/Menus.pm';
+            last;
+         }
+      }
+   }
    my $vlin=__LINE__;
    #####################################################################
    ####                                                              ###
@@ -436,6 +445,15 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       my $default_modules='';
       unless ($main::fa_code && $main::fa_conf && $main::fa_host
               && $main::fa_maps && $main::fa_menu) {
+         unless (exists $INC{'Net/FullAuto.pm'}) {
+            foreach my $fpath (@INC) {
+               my $f=$fpath;
+               if (-e $f.'/Net/FullAuto.pm') {
+                  $INC{'Net/FullAuto.pm'}=$f.'/Net/FullAuto.pm';
+                  last;
+               }
+            }
+         }
          my $fa_path=$INC{'Net/FullAuto.pm'};
          my $progname=substr($0,(rindex $0,'/')+1,-3);
          substr($fa_path,-3)='';
