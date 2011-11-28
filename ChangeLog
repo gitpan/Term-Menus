@@ -1,3 +1,9 @@
+2011-11-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Fix for FullAuto - check user when SSH connection
+          detected.
+
+
 2011-10-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Fix for FullAuto.

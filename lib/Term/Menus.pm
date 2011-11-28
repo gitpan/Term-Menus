@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.02';
+our $VERSION = '2.03';
 
 
 use 5.006;
@@ -490,6 +490,11 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                      }
                   }
                   my $username=getlogin || getpwuid($<);
+                  if (exists $ENV{'SSH_CONNECTION'} &&
+                        exists $ENV{'USER'} && ($ENV{'USER'}
+                        ne $username)) {
+                     $username=$ENV{'USER'};
+                  }
                   my $status=$bdb->db_get(
                         $username,$default_modules);
                   $default_modules||='';
@@ -956,7 +961,6 @@ sub check_for_dupe_menus {
    foreach my $dir (@INC) {
       if (!$m_flag && -f "$dir/$Term::Menus::fa_menu") {
          $m_flag=1;
-print "WHAT IS THIS=$dir/$Term::Menus::fa_menu\n";sleep 10;
          open(FH,"<$dir/$Term::Menus::fa_menu");
          my $line='';my %menudups=();
          while ($line=<FH>) {
