@@ -1,3 +1,8 @@
+2011-12-20  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Fix for FullAuto - added more constants to Export.
+
+
 2011-11-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Fix for FullAuto - check user when SSH connection

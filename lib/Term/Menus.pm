@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.03';
+our $VERSION = '2.04';
 
 
 use 5.006;
@@ -260,7 +260,16 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_FAILCHK_ISALIVE %DB_BOOTSTRAP_HELPER
             %DB_HEAP_FULL %DB_STAT_ALLOC %DB_LOCAL_SITE
             %DB_NO_CHECKPOINT %DB_EVENT_REP_SITE_REMOVED
-            %DB_EVENT_REP_CONNECT_BROKEN %DB_INIT_MUTEX);
+            %DB_EVENT_REP_CONNECT_BROKEN %DB_INIT_MUTEX
+            %DB_VERB_BACKUP %DB_INTERNAL_PERSISTENT_DB
+            %DB_REP_CONF_AUTOROLLBACK %DB2_AM_INTEXCL
+            %DB2_AM_EXCL %DB_INTERNAL_TEMPORARY_DB
+            %DB_BACKUP_UPDATE %DB2_AM_NOWAIT %DB_BACKUP_SIZE
+            %DB_BACKUP_FILES %DB_BACKUP_WRITE_DIRECT
+            %DB_EVENT_REP_WOULD_ROLLBACK &DB_BACKUP_CLEAN
+            %DB_BACKUP_READ_COUNT %DB_BACKUP_SINGLE_DIR
+            %DB_LOCK_IGNORE_REC %DB_BACKUP_READ_SLEEP
+            %DB_BACKUP_NO_LOGS);
 
 @EXPORT = qw(pick Menu get_Menu_map);
 
