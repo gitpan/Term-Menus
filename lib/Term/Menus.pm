@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.04';
+our $VERSION = '2.05';
 
 
 use 5.006;
@@ -2320,7 +2320,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         $convey=${${$FullMenu}{$MenuUnit_hash_ref}[3]
                                       {$all_menu_items_array[$picknum-1]}}[0];
                      } else { $convey=$all_menu_items_array[$picknum-1] }
-                     $SaveNext=$SavePick;
+                     $SaveNext={%{$SavePick}};
                      eval {
                         ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
                            $SaveMMap,$SaveNext,$Persists)=&Menu(${$FullMenu}
@@ -3771,7 +3771,7 @@ return 'DONE_SUB';
                      #} elsif ($picks{$pick} eq '+' || $picks{$pick} eq '-') {
                      #   &delete_Selected($MenuUnit_hash_ref,$pick,
                      #      $Selected,$SavePick,$SaveNext,$Persists);
-                        #$SaveNext=$SavePick;
+                        #$SaveNext={%{$SavePick}};
                      #   delete $picks{$pick};
                      #   delete $items{$pick};
                      #}
@@ -3791,7 +3791,7 @@ return 'DONE_SUB';
             #         } elsif ($picks{$pick} eq '+') {
             #            &delete_Selected($MenuUnit_hash_ref,$pick,
             #               $Selected,$SavePick,$SaveNext,$Persists);
-            #            $SaveNext=$SavePick;
+            #            $SaveNext={%{$SavePick}};
             #            delete $picks{$pick};
             #            delete $items{$pick};
             #         }
@@ -3840,7 +3840,7 @@ return 'DONE_SUB';
                      } elsif ($picks{$pick} eq '+') {
                         &delete_Selected($MenuUnit_hash_ref,$pick,
                            $Selected,$SavePick,$SaveNext,$Persists);
-                        $SaveNext=$SavePick;
+                        $SaveNext={%{$SavePick}};
                         delete $picks{$pick};
                         delete $items{$pick};
                      }
@@ -3865,7 +3865,7 @@ return 'DONE_SUB';
                   } else {
                      &delete_Selected($MenuUnit_hash_ref,$numbor,
                          $Selected,$SavePick,$SaveNext,$Persists);
-                     $SaveNext=$SavePick;
+                     $SaveNext={%{$SavePick}};
                      delete $picks{$numbor};
                      delete $items{$numbor};
                   }
@@ -3883,7 +3883,7 @@ return 'DONE_SUB';
                            } elsif ($picks{$pick} eq '+') {
                               &delete_Selected($parent_menu,$pick,
                                  $Selected,$SavePick,$SaveNext,$Persists);
-                              $SaveNext=$SavePick;
+                              $SaveNext={%{$SavePick}};
                               delete $picks{$pick};
                               delete $items{$pick};
                            }
@@ -3994,7 +3994,7 @@ return 'DONE_SUB';
                      if (exists $picks{$numbor}) {
                         ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
                         $hidedefaults=0;
-                        $SaveNext=$SavePick;
+                        $SaveNext={%{$SavePick}};
                         if ($picks{$numbor} eq '*') {
                            delete $picks{$numbor};
                            delete $items{$numbor};
@@ -4009,7 +4009,7 @@ return 'DONE_SUB';
                      if ($prev_menu && $prev_menu!=$numbor) {
                         ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
                         $hidedefaults=0;
-                        $SaveNext=$SavePick;
+                        $SaveNext={%{$SavePick}};
                         &delete_Selected($MenuUnit_hash_ref,$prev_menu,
                            $Selected,$SavePick,$SaveNext,$Persists);
                         delete $picks{$prev_menu};
@@ -4283,7 +4283,7 @@ return 'DONE_SUB';
                   } else {
                      &delete_Selected($MenuUnit_hash_ref,$numbor,
                         $Selected,$SavePick,$SaveNext,$Persists);
-                     $SaveNext=$SavePick;
+                     $SaveNext={%{$SavePick}};
                      delete $picks{$numbor};
                      delete $items{$numbor};
                   } last;

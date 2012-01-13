@@ -1,3 +1,9 @@
+2012-01-09  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Fixed navigation when going backwards in multi-level
+          menus.
+
+
 2011-12-20  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Fix for FullAuto - added more constants to Export.
