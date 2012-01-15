@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.05';
+our $VERSION = '2.06';
 
 
 use 5.006;
@@ -1609,8 +1609,11 @@ sub Menu
       if ($pick eq ']quit[') {
          return ']quit['
       } elsif ($pick eq '-' || $pick eq '+') {
-#print "PICKMINUSPLUS2=$pick\n";
-         if ($select_many || keys %{${$Selected}{$MenuUnit_hash_ref}}) {
+#print "PICKMINUSPLUS2=$pick and  THIS=",keys %{${$Selected}{$MenuUnit_hash_ref}},"\n";
+         unless (keys %{${$SavePick}{$MenuUnit_hash_ref}}) {
+            return $pick,$FullMenu,$Selected,$Conveyed,
+                       $SavePick,$SaveMMap,$SaveNext,$Persists;
+         } elsif ($select_many || keys %{${$Selected}{$MenuUnit_hash_ref}}) {
             return '+',$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
          } else {
@@ -2153,10 +2156,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         close($log_handle);
                      }
                      if ($parent_menu && wantarray && !$no_wantarray) {
-                        return '',
-                           $FullMenu,$Selected,$Conveyed,
-                           $SavePick,$SaveMMap,$SaveNext,
-                           $Persists,$parent_menu,$die;
+                        return $FullMenu,$Conveyed,
+                           $SaveNext,$Persists,$Selected,
+                           $convey,$parent_menu;
                      } elsif ($Term::Menus::fullauto) {
                         &Net::FullAuto::FA_Core::handle_error($die);
                      } else { die $die }
@@ -2291,7 +2293,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   substr($mark,-1)=$picks{$picknum}=$return_from_child_menu;
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                   $prev_menu=$picknum;
-#print "DO WE GET HERE3 and SEL=${$MenuUnit_hash_ref}{Select}!\n";
+#print "DO WE GET HERE3 and SEL=${$MenuUnit_hash_ref}{Select}! and $return_from_child_menu\n";
                } else {
                   $mark=$mark_blank;
                   substr($mark,-1)=$picks{$picknum};
@@ -3362,8 +3364,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             };
             die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
-#print "WHAT IS MENU8=$menu_output\n";
-            if ($menu_output eq '-' && exists
+#print "WHAT IS MENU8=$menu_output\n";sleep 3;
+            if (($menu_output eq '-') && exists
                   ${$SavePick}{$MenuUnit_hash_ref}) {
                %picks=%{${$SavePick}{$MenuUnit_hash_ref}};
             } elsif ($menu_output eq '+' && exists
@@ -3504,6 +3506,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "NEGATIVE\n";
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
+print "YEP - HERE IS WHERE IT IS HAPPENING\ n";
                $return_from_child_menu='+';
             } elsif ($menu_output) {
 #print "WHAT IS MENU_OUTPUT=${$menu_output}[0]<==\n" if ref $menu_output eq 'ARRAY';
@@ -3518,15 +3521,22 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                return '+',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveMMap,$SaveNext,
-                  $Persists,$parent_menu;
+                  $Persists;
             } else {
+               my %sp_copy=%{$SavePick->{$parent_menu}}
+                     if exists $SavePick->{$parent_menu};
+               foreach my $key (keys %sp_copy) {
+                  $SavePick->{$parent_menu}->{$key}='-' if
+                     $sp_copy{$key} eq '+';
+               }
                return '-',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveMMap,$SaveNext,
-                  $Persists,$parent_menu;
+                  $Persists;
             } last;
          } elsif (($numbor=~/^\>/ || $ikey eq 'RIGHTARROW') && exists
-                  ${$SaveNext}{$MenuUnit_hash_ref}) {
+                  ${$SaveNext}{$MenuUnit_hash_ref} &&
+                  (grep { /-|\+/ } values %picks)) {
             $MenuMap=${$SaveMMap}{$MenuUnit_hash_ref};
             my $tyt=${$FullMenu}
                   {$MenuUnit_hash_ref}[2]
@@ -3535,9 +3545,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "MENU UNIT REF=$MenuUnit_hash_ref\n";
 #print "MENU FOR NEXT MENU=",&Data::Dump::Streamer::Dump($tyt)->Out(),"\n";<STDIN>;
 #print "MENUMAP FOR NEXT MENU=",&Data::Dump::Streamer::Dump($MenuMap)->Out(),"\n";<STDIN>;
-            $convey=[];
-            foreach my $numb (sort numerically keys %picks) {
-               push @{$convey}, $all_menu_items_array[$numb-1];
+            $convey=[]; 
+            if (0<$#{[keys %picks]}) {
+               foreach my $key (sort numerically keys %picks) {
+                  push @{$convey}, $all_menu_items_array[$key-1];
+               }
+            } else {
+               $convey=$all_menu_items_array[(keys %picks)[0]-1];
             }
             eval {
                my ($ignore1,$ignore2,$ignore3)=('','','');
@@ -3711,6 +3725,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "DONE_SUB10\n";
 return 'DONE_SUB';
                } else { return 'DONE' }
+            #} elsif ($menu_output eq 'x') {
+            #   $return_from_child_menu='x';
             } elsif ($menu_output eq '-') {
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
@@ -3958,11 +3974,13 @@ return 'DONE_SUB';
                   $numbor_is_eff=1;
                }
                if (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                         {$all_menu_items_array[$numbor-1]||$all_menu_items_array[$pn{$numbor}[1]-1]}{'Label'}||
+                         {$all_menu_items_array[$numbor-1]||
+                         $all_menu_items_array[$pn{$numbor}[1]-1]}{'Label'}||
                          exists $labels{(keys %{${$FullMenu}
                          {$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[$digital_numbor-1]}})[0]}) {
                   my $menyou='';
+#print "DIGITAL_NUMBER=$digital_numbor<==\n";
                   if (exists $labels{(keys %{${$FullMenu}
                          {$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[$digital_numbor-1]}})[0]}) {
@@ -3994,6 +4012,9 @@ return 'DONE_SUB';
                      if (exists $picks{$numbor}) {
                         ${$FullMenu}{$MenuUnit_hash_ref}[5]='ERASE';
                         $hidedefaults=0;
+                        foreach my $key (keys %{$SaveNext}) {
+                           delete $SaveNext->{$key};
+                        }
                         $SaveNext={%{$SavePick}};
                         if ($picks{$numbor} eq '*') {
                            delete $picks{$numbor};
@@ -4023,6 +4044,12 @@ return 'DONE_SUB';
                         }
                      }
                   }
+                  my $next_menu_ref=${$FullMenu}
+                        {$MenuUnit_hash_ref}[2]
+                        {$all_menu_items_array[$numbor-1]};
+                  $next_menu_ref||='';
+                  delete ${$SavePick}{$next_menu_ref};
+                  %picks=() unless $select_many;
                   $picks{$numbor}='-' if !(keys %picks) || $numbor!~/^[Ff]$/;
                   ($FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,
                      $convey,$parent_menu)
@@ -4069,7 +4096,7 @@ return 'DONE_SUB';
                   $MenuMap=${$SaveMMap}{$MenuUnit_hash_ref};
                   eval {
                      ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                        $SaveMMap,$SaveNext,$Persists,$parent_menu)
+                        $SaveMMap,$SaveNext,$Persists)
                         =&Menu(${$FullMenu}
                         {$MenuUnit_hash_ref}[2]
                         {$all_menu_items_array[$numbor-1]},$convey,
@@ -4081,6 +4108,8 @@ return 'DONE_SUB';
                   die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU12=$menu_output<==\n";
+                  #if ($menu_output eq 'x') {
+                  #   $return_from_child_menu='x';
                   if ($menu_output eq '-') {
                      $return_from_child_menu='-';
                   } elsif ($menu_output eq '+') {
