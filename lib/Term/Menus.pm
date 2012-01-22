@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.07';
+our $VERSION = '2.08';
 
 
 use 5.006;
@@ -97,7 +97,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_AGGRESSIVE %DB_STAT_LOCK_LOCKERS %DB_LOCKVERSION
             %DB_PRIORITY_DEFAULT %DB_ENV_REP_MASTER %DB_FAILCHK
             %DB_ENV_LOG_INMEMORY %DB_LOG_VERIFY_FORWARD
-            %DB_LOG_VERIFY_WARNING %DB_IGNORE_LEASE
+            %DB_LOG_VERIFY_WARNING %DB_IGNORE_LEASE %DB_BACKUP_CLEAN
             %DB_ENV_DBLOCAL %DB_GET_BOTH_RANGE %DB_FOREIGN_ABORT
             %DB_REP_PERMANENT %DB_MPOOL_NOFILE %DB_LOG_BUFFER_FULL
             %DB_ENV_MULTIVERSION %DB_RPC_SERVERPROG %DB_MPOOL_DIRTY
@@ -1594,16 +1594,23 @@ sub Menu
          return @choyce
       } elsif ($pick) { return $pick }
    } else {
+      my @filtered_menu_return=();
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
-              $SaveMMap,$SaveNext,$Persists,$parent_menu)
+              $SaveMMap,$SaveNext,$Persists,$parent_menu,
+              @filtered_menu_return)
               =&pick($picks,$banner,$display_this_many_items,
                        '','',$MenuUnit_hash_ref,++$recurse,
                        $picks_from_parent,$parent_menu,
                        $FullMenu,$Selected,$Conveyed,$SavePick,
                        $SaveMMap,$SaveNext,$Persists,
-                       #\@convey,$no_wantarray,$sorted,
                        $no_wantarray,$sorted,
                        $select_many);
+      if (-1<$#filtered_menu_return) {
+         return $pick,$FullMenu,$Selected,$Conveyed,$SavePick,
+              $SaveMMap,$SaveNext,$Persists,$parent_menu,
+              $filtered_menu_return[0],$filtered_menu_return[1],
+              $filtered_menu_return[2];
+      }
 #print "WAHT IS ALL=$pick and FULL=$FullMenu and SEL=$Selected and CON=$Conveyed and SAVE=$SavePick and LAST=$SaveMMap and NEXT=$SaveNext and PERSISTS=$Persists  and PARENT=$parent_menu<==\n";
       if ($Term::Menus::fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
@@ -1645,7 +1652,7 @@ sub transform_sicm
 #print "TRANSFROM_SCIM_CALLER=",caller,"\n";
    ## sicm - [s]elected [i]tems [c]urrent [m]enu
    my ($text,$sicm_regex,$numbor,$all_menu_items_array,
-       $picks,$return_from_child_menu,$log_handle)=@_;
+       $picks,$pn,$return_from_child_menu,$log_handle)=@_;
    my $selected=[];my $replace='';
    my $expand_array_flag=0;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
@@ -1686,7 +1693,7 @@ sub transform_sicm
          $replace='eval '.$replace;
       }
    } else {
-      $replace=${$all_menu_items_array}[$numbor-1];
+      $replace=${$all_menu_items_array}[$pn->{$numbor}->[1]-1];
    }
    while ($text=~m/($sicm_regex)/g) {
       my $esc_one=$1;
@@ -3369,9 +3376,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             $Term::Menus::LookUpMenuName{$chosen}
                =${$chosen}{'Label'};
             %{${$SavePick}{$chosen}}=%picks;
+            my @return_from_filtered_menu=();
             eval {
                ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                  $SaveMMap,$SaveNext,$Persists)=&Menu(
+                  $SaveMMap,$SaveNext,$Persists,
+                  @return_from_filtered_menu)=&Menu(
                   $chosen,$picks_from_parent,
                   $recurse_level,$FullMenu,
                   $Selected,$Conveyed,$SavePick,
@@ -3379,6 +3388,20 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $MenuUnit_hash_ref,$no_wantarray);
             };
             die $@ if $@;
+            if (-1<$#return_from_filtered_menu) {
+               eval {
+                  ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                     $SaveMMap,$SaveNext,$Persists)=&Menu(
+                     $menu_output,$FullMenu,
+                     $Selected,$Conveyed,$SavePick,
+                     $SaveMMap,$SaveNext,$Persists,
+                     $return_from_filtered_menu[0],
+                     $MenuUnit_hash_ref,
+                     $return_from_filtered_menu[2] 
+                     );
+               };
+               die $@ if $@;
+            }
             chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU8=$menu_output\n";sleep 3;
             if (($menu_output eq '-') && exists
@@ -4142,13 +4165,21 @@ return 'DONE_SUB';
                         ${$SaveMMap}{$cur_menu}=[];
                      }
                   }
-#print "WHAT IS ALL THIS=@{$convey}<==\n";<STDIN>;
                   if (ref $convey eq 'ARRAY') {
                      push @{${$SaveMMap}{$cur_menu}},
                         [ ++$mcount, $convey->[0] ];
                   } else {
                      push @{${$SaveMMap}{$cur_menu}},
                         [ ++$mcount, $convey ];
+                  }
+                  if ($filtered_menu) {
+                     return ${$FullMenu}
+                        {$cur_menu}[2]
+                        {$all_menu_items_array[$numbor-1]},$convey,
+                        $recurse_level,$FullMenu,
+                        $Selected,$Conveyed,$SavePick,
+                        $SaveMMap,$SaveNext,$Persists,
+                        $cur_menu,$no_wantarray;
                   }
                   $MenuMap=${$SaveMMap}{$cur_menu};
                   eval {
@@ -4675,7 +4706,7 @@ return 'DONE_SUB';
                   if ($Term::Menus::data_dump_streamer) {
                      $cd=&Data::Dump::Streamer::Dump($sub)->Out();
                      $cd=&transform_sicm($cd,$sicm_regex,$numbor,
-                            \@all_menu_items_array,\%picks,
+                            \@all_menu_items_array,\%picks,\%pn,
                             $return_from_child_menu,$log_handle);
                      $cd=&transform_pmsi($cd,
                             $Conveyed,$SaveMMap,$pmsi_regex,

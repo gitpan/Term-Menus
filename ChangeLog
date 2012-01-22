@@ -1,3 +1,8 @@
+2012-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Navigation Search is fixed for multi-level menus.
+
+
 2012-01-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * More fixes for navigation markers when going
