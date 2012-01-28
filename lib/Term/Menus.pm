@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.08';
+our $VERSION = '2.09';
 
 
 use 5.006;
@@ -1633,13 +1633,24 @@ sub Menu
          return $pick,$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
       } elsif (ref $pick eq 'ARRAY') {
+         my $topmenu=pop @{$pick} if 1==$recurse;
+         my $savpick=pop @{$pick} if 1==$recurse;
          if (wantarray && 1==$recurse) {
             my @choyce=@{$pick};undef @{$pick};undef $pick;
             return @choyce
          } elsif (!$picks_from_parent &&
                !(keys %{${$MenuUnit_hash_ref}{Select}})) {
-               #${$MenuUnit_hash_ref}{Select} eq 'One') {
-            return $pick->[0];
+            if ((keys %{${$topmenu}{Select}} &&
+                  ${$topmenu}{Select} eq 'Many') ||
+                  exists ${$topmenu}{Select}->{(keys %{$savpick})[0]}) {
+               if (wantarray) {
+                  return @{$pick}
+               } else {
+                  return $pick; 
+               }
+            } else {
+               return $pick->[0];
+            }
          } else { return $pick }
       } elsif ($pick) { return $pick }
    }
@@ -4238,8 +4249,8 @@ return 'DONE_SUB';
                            $Net::FullAuto::FA_Core::makeplan->{'Title'}
                               =$all_menu_items_array[$numbor-1];
                         }
-                     unless ($got_default) {
-                        push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
+                        unless ($got_default) {
+                           push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
                              { Label  => ${$MenuUnit_hash_ref}{'Label'},
                                Number => $numbor,
                                PlanID =>
@@ -4386,7 +4397,7 @@ return 'DONE_SUB';
                            }
                         }
                      }
-#print "DONE_SUB12\n";
+print "DONE_SUB12\n";
  return 'DONE_SUB';
                   }
                } else {
@@ -4511,8 +4522,11 @@ return 'DONE_SUB';
                             ."if it is a Valid SubRoutine.\n\n";
                      die $die;
                   } elsif (!defined $pn{$numbor}[0] ||
-                        !exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}) {
-                     my @resu=map { $all_menu_items_array[$_-1] } keys %picks;
+                        !exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{
+                        $pn{$numbor}[0]}) {
+                     my @resu=map { $all_menu_items_array[$_-1] }
+                           sort numerically keys %picks;
+                     push @resu,\%picks,$MenuUnit_hash_ref;
                      if (wantarray && !$no_wantarray) {
                         return @resu;
                      } elsif ($#resu==0) {
@@ -4917,6 +4931,7 @@ return 'DONE_SUB';
          }
       } last if $done;
    }
+print "DO WE GET HERE MAYBE\n";
    #if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
    if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
       my @picks=();
@@ -4942,6 +4957,7 @@ return 'DONE_SUB';
                 $SavePick,$SaveMMap,$SaveNext,
                 $Persists,$parent_menu;
       } else {
+print "RETURNING PICKS HERE\n";
          return @picks;
       }
    }
@@ -4970,6 +4986,7 @@ return 'DONE_SUB';
           $SavePick,$SaveMMap,$SaveNext,
           $Persists,$parent_menu;
    } else {
+print "RETURNING REALLY HERE\n";
       return $pick;
    }
 
@@ -6346,11 +6363,11 @@ This is a helper routine that returns a list of ancestor menu results. This is n
 
 =item
 
-The following code is an example of how to use recursion for navigating a directory tree. (Note: As of 6/3/2011, this is BRAND NEW functionality, and work on this feature continues.):
+The following code is an example of how to use recursion for navigating a directory tree. (Note: Updated 1/28/2012; this is maturing functionality, and work on this feature continues.):
 
    use Term::Menus;
 
-   %dir_menu=(
+   my %dir_menu=(
 
       Label => 'dir_menu',
       Item_1 => {
@@ -6358,44 +6375,49 @@ The following code is an example of how to use recursion for navigating a direct
          Text => "]C[",
          Mark => "d",
          Convey => sub {
- 
+
             if ("]P[") {
 
                my $dir="]P[";
-               if (substr($dir,0,1) eq '[') {
-                  $dir=${eval $dir}[0];
+               if ($^O eq 'cygwin') {
+                  $dir='/cygdrive/c/';
+               } else {
+                  $dir='/';
                }
-               $dir||='.';
-               my @files=();
+               my @xfiles=();
                my @return=();
                my @map=get_Menu_map;
                my $path=join "/", @map;
-               opendir(DIR,"./$path") || die $!;
-               @files = readdir(DIR);
+               opendir(DIR,"$dir$path") || die $!;
+               @xfiles = readdir(DIR);
                closedir(DIR);
-               foreach my $entry (@files) {
+               foreach my $entry (sort @xfiles) {
                   next if $entry eq '.';
                   next if $entry eq '..';
                   if (-1<$#map) {
-                     next unless -d "$path/$entry";
+                     next unless -d "$dir$path/$entry";
                   } else {
-                     next unless -d $entry;
-                  } 
-                  push @return, $entry;
+                     next unless -d "$dir/$entry";
+                  }
+                  push @return, "$entry";
                }
                return @return;
 
             }
-            my @files=();
+            my @xfiles=();
             my @return=();
-            opendir(DIR,'.') || die $!;
-            @files = readdir(DIR);
+            if ($^O eq 'cygwin') {
+               opendir(DIR,'/cygdrive/c/') || die $!;
+            } else {
+               opendir(DIR,'/') || die $!;
+            }
+            @xfiles = readdir(DIR);
             closedir(DIR);
             foreach my $entry (@xfiles) {
                next if $entry eq '.';
                next if $entry eq '..';
-               next unless -d $entry;
-               push @return, $entry;
+               next unless -d "$entry";
+               push @return, "$entry";
             }
             return @return;
 
@@ -6410,46 +6432,54 @@ The following code is an example of how to use recursion for navigating a direct
          Convey => sub {
 
             if ("]P[") {
+
                my $dir="]P[";
-               if (substr($dir,0,1) eq '[') {
-                  $dir=${eval $dir}[0];
+               if ($^O eq 'cygwin') {
+                  $dir='/cygdrive/c/';
+               } else {
+                  $dir='/';
                }
-               $dir||='.';
-               my @files=();
+
+               my @xfiles=();
                my @return=();
                my @map=get_Menu_map;
                my $path=join "/", @map;
-               opendir(DIR,"./$path") || die $!;
-               @files = readdir(DIR);
+               opendir(DIR,"$dir/$path") || die $!;
+               @xfiles = readdir(DIR);
                closedir(DIR);
-               foreach my $entry (@files) {
+               foreach my $entry (sort @xfiles) {
                   next if $entry eq '.';
                   next if $entry eq '..';
                   if (-1<$#map) {
-                     next if -d "$path/$entry";
+                     next if -d "$dir/$path/$entry";
                   } else {
-                     next if -d $entry;
+                     next if -d "$dir/$entry";
                   }
-                  push @return, $entry;
+                  push @return, "$entry";
                }
                return @return;
 
             }
-            my @files=();
+            my @xfiles=();
             my @return=();
-            opendir(DIR,'.') || die $!;
-            @files = readdir(DIR);
+            if ($^O eq 'cygwin') {
+               opendir(DIR,'/cygdrive/c/') || die $!;
+            } else {
+               opendir(DIR,'/') || die $!;
+            }
+            @xfiles = readdir(DIR);
             closedir(DIR);
             foreach my $entry (@xfiles) {
                next if $entry eq '.';
                next if $entry eq '..';
-               next if -d $entry;
-               push @return, $entry;
+               next if -d "$entry";
+               push @return, "$entry";
             }
             return @return;
 
          },
       },
+      Banner => "   Current Directory: ]P[\n",
 
    );
 

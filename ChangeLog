@@ -1,3 +1,11 @@
+2012-01-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Recursive Menus now properly return accurate results.
+
+        * Recursive Menus example updated. The example menu
+          dynamically navigates the file system.
+
+
 2012-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Navigation Search is fixed for multi-level menus.
