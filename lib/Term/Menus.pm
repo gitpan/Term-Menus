@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.09';
+our $VERSION = '2.10';
 
 
 use 5.006;
@@ -1633,16 +1633,20 @@ sub Menu
          return $pick,$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
       } elsif (ref $pick eq 'ARRAY') {
-         my $topmenu=pop @{$pick} if 1==$recurse;
-         my $savpick=pop @{$pick} if 1==$recurse;
+         my $topmenu='';
+         my $savpick='';
+         if (1==$recurse && ref $pick->[$#{$pick}] eq 'HASH') {
+            $topmenu=pop @{$pick};
+            $savpick=pop @{$pick};
+         }
          if (wantarray && 1==$recurse) {
             my @choyce=@{$pick};undef @{$pick};undef $pick;
             return @choyce
          } elsif (!$picks_from_parent &&
                !(keys %{${$MenuUnit_hash_ref}{Select}})) {
-            if ((keys %{${$topmenu}{Select}} &&
-                  ${$topmenu}{Select} eq 'Many') ||
-                  exists ${$topmenu}{Select}->{(keys %{$savpick})[0]}) {
+            if (ref $topmenu eq 'HASH' && (keys %{${$topmenu}{Select}} &&
+                  ${$topmenu}{Select} eq 'Many') || (ref $savpick eq 'HASH' &&
+                  exists ${$topmenu}{Select}->{(keys %{$savpick})[0]})) {
                if (wantarray) {
                   return @{$pick}
                } else {
@@ -2097,8 +2101,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          if $pick;
       $test_item||='';
       if ($pick &&
-            exists ${$FullMenu}{$_[0]}[2]{${$_[1]}[$pick-1]}) {
-#print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item}),"\n";
+            exists ${$FullMenu}{$_[0]}[2]{${$_[1]}[$pick-1]} &&
+            (ref $test_item eq 'HASH' &&
+            (values %{$test_item})[0] ne 'recurse')) {
+#print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";
          if ((ref $test_item eq 'HASH' &&
                    exists $test_item->{Item_1})
                    || substr($test_item,0,1) eq '&'
@@ -3400,6 +3406,15 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             };
             die $@ if $@;
             if (-1<$#return_from_filtered_menu) {
+print "RETURNED FROM FILTERED and ",keys %{$menu_output},"\n";
+               if ((values %{$menu_output})[0] eq 'recurse') {
+                  my %k=%{$menu_output};
+                  delete $k{Label};
+                  my $lab=(keys %k)[0];
+print "WHAT IS LAB=$lab and FULLMENU=$FullMenu\n";
+                  $menu_output=$labels{$lab};
+               }
+               $MenuMap=${$Persists}{$MenuUnit_hash_ref};
                eval {
                   ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
                      $SaveMMap,$SaveNext,$Persists)=&Menu(
@@ -4165,7 +4180,19 @@ return 'DONE_SUB';
 #print "GOING TO NEW MENU AND JUST CONVEYED=",${$MenuUnit_hash_ref}{'Label'},"\n";<STDIN>;
                   my $mcount=0;
                   unless (exists ${$SaveMMap}{$cur_menu}) {
-                     if ($parent_menu) {
+                     if ($filtered_menu) {
+                        my $pmap=[];
+                        foreach my $kee (keys %{$SaveMMap}) {
+                           my $map=&Data::Dump::Streamer::Dump(
+                              ${$SaveMMap}{$kee})->Out();
+                           $map=~s/\$ARRAY\d*\s*=\s*//s;
+                           my $m=eval $map;
+                           $pmap=$m if $#{$pmap}<$#{$m};
+                        }
+                        ${$SaveMMap}{$cur_menu}=$pmap;
+                        $mcount=&get_Menu_map_count(
+                           ${$SaveMMap}{$cur_menu});
+                     } elsif ($parent_menu) {
                         my $parent_map=&Data::Dump::Streamer::Dump(
                               ${$SaveMMap}{$parent_menu})->Out();
                         $parent_map=~s/\$ARRAY\d*\s*=\s*//s;
@@ -4182,6 +4209,7 @@ return 'DONE_SUB';
                   } else {
                      push @{${$SaveMMap}{$cur_menu}},
                         [ ++$mcount, $convey ];
+#print "MCOUNT=$mcount and CONVEY=$convey\n";
                   }
                   if ($filtered_menu) {
                      return ${$FullMenu}
@@ -4756,7 +4784,11 @@ print "DONE_SUB12\n";
                   my @resu=$sub->();
                   if (-1<$#resu) {
                      if (0<$#resu && wantarray && !$no_wantarray) {
-                        return @resu;
+                        if (1==$recurse_level) {
+                           return @resu;
+                        } else {
+                           return \@resu;
+                        }
                      } else {
                         return return_result($resu[0],
                            $MenuUnit_hash_ref,$Conveyed);
@@ -4931,11 +4963,10 @@ print "DONE_SUB12\n";
          }
       } last if $done;
    }
-print "DO WE GET HERE MAYBE\n";
-   #if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
-   if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
+#print "DO WE GET HERE MAYBE and SM=$select_many\n";
+   if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) { 
       my @picks=();
-      foreach (keys %picks) {
+      foreach (sort numerically keys %picks) {
          my $pik=$all_menu_items_array[$_-1];
          push @picks, $pik;
       } undef @all_menu_items_array;
@@ -4952,6 +4983,8 @@ print "DO WE GET HERE MAYBE\n";
          #      } else { print "SEVEN\n";print $blanklines }
          #   } else { print "EIGHT\n";print $blanklines }
          #}
+         push @picks,\%picks;
+         push @picks,$MenuUnit_hash_ref;
          return \@picks,
                 $FullMenu,$Selected,$Conveyed,
                 $SavePick,$SaveMMap,$SaveNext,
