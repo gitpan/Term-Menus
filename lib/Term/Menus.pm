@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.10';
+our $VERSION = '2.11';
 
 
 use 5.006;
@@ -1591,6 +1591,8 @@ sub Menu
       } elsif (ref $pick eq 'ARRAY' && wantarray
             && !$no_wantarray && 1==$recurse) {
          my @choyce=@{$pick};undef @{$pick};undef $pick;
+         pop @choyce;
+         pop @choyce;
          return @choyce
       } elsif ($pick) { return $pick }
    } else {

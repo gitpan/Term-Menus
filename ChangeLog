@@ -1,4 +1,22 @@
+2012-02-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.11 released.
+
+        * Fixed bug returning hashes when when select is many
+          on single level menu.
+
+
+2012-01-30  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.10 released.
+
+        * Recursive Menus now properly return accurate results
+          when select is many, and no dirs in topmenu.
+
+
 2012-01-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.9 released.
 
         * Recursive Menus now properly return accurate results.
 
@@ -8,10 +26,14 @@
 
 2012-01-21  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.8 released.
+
         * Navigation Search is fixed for multi-level menus.
 
 
 2012-01-17  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.7 released.
 
         * More fixes for navigation markers when going
           backwards in multi-level menus.
@@ -19,11 +41,15 @@
 
 2012-01-14  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.6 released.
+
         * Fixed navigation markers when going backwards in
           multi-level menus.
 
 
 2012-01-09  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.5 released.
 
         * Fixed navigation when going backwards in multi-level
           menus.
@@ -31,10 +57,14 @@
 
 2011-12-20  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.4 released.
+
         * Fix for FullAuto - added more constants to Export.
 
 
 2011-11-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.3 released.
 
         * Fix for FullAuto - check user when SSH connection
           detected.
@@ -42,10 +72,14 @@
 
 2011-10-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.2 released.
+
         * Fix for FullAuto.
 
 
 2011-09-30  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.1 released.
 
         * Fix for FullAuto.
 
