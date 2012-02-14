@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.11';
+our $VERSION = '2.12';
 
 
 use 5.006;
@@ -4996,7 +4996,12 @@ print "RETURNING PICKS HERE\n";
          return @picks;
       }
    }
-   my $pick=$all_menu_items_array[$numbor-1];
+   my $pick='';
+   if ($filtered_menu) {
+      $pick=${$FullMenu}{$MenuUnit_hash_ref}[10]->[$numbor-1];
+   } else {
+      $pick=$all_menu_items_array[$numbor-1];
+   }
    undef @all_menu_items_array;
    if ($Term::Menus::fullauto && (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
          !${$MenuUnit_hash_ref}{'NoPlan'}) &&
