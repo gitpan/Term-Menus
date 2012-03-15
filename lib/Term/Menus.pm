@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.13';
+our $VERSION = '2.14';
 
 
 use 5.006;
@@ -3401,12 +3401,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             };
             die $@ if $@;
             if (-1<$#return_from_filtered_menu) {
-print "RETURNED FROM FILTERED and ",keys %{$menu_output},"\n";
                if ((values %{$menu_output})[0] eq 'recurse') {
                   my %k=%{$menu_output};
                   delete $k{Label};
                   my $lab=(keys %k)[0];
-print "WHAT IS LAB=$lab and FULLMENU=$FullMenu\n";
                   $menu_output=$labels{$lab};
                }
                $MenuMap=${$Persists}{$MenuUnit_hash_ref};
@@ -3817,7 +3815,9 @@ return 'DONE_SUB';
             } else {
                my $nmp=$num_pick-1;
                foreach my $pck (0..$nmp) {
-                  if ($select_many || exists ${$FullMenu}{$MenuUnit_hash_ref}[6]->{$all_menu_items_array[$pck]}) {
+                  if ($select_many ||
+                         exists ${$FullMenu}{$MenuUnit_hash_ref}[6]->{
+                         $all_menu_items_array[$pck]}) {
                      $picks{$pck+1}='*'
                   }
                }
@@ -4425,7 +4425,7 @@ return 'DONE_SUB';
                            }
                         }
                      }
-print "DONE_SUB12\n";
+#print "DONE_SUB12\n";
  return 'DONE_SUB';
                   }
                } else {
@@ -4990,7 +4990,7 @@ print "DONE_SUB12\n";
                 $SavePick,$SaveMMap,$SaveNext,
                 $Persists,$parent_menu;
       } else {
-print "RETURNING PICKS HERE\n";
+#print "RETURNING PICKS HERE\n";
          return @picks;
       }
    }
@@ -5024,7 +5024,6 @@ print "RETURNING PICKS HERE\n";
           $SavePick,$SaveMMap,$SaveNext,
           $Persists,$parent_menu;
    } else {
-print "RETURNING REALLY HERE\n";
       return $pick;
    }
 
