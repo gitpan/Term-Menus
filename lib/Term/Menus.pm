@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.14';
+our $VERSION = '2.15';
 
 
 use 5.006;
@@ -269,7 +269,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_EVENT_REP_WOULD_ROLLBACK &DB_BACKUP_CLEAN
             %DB_BACKUP_READ_COUNT %DB_BACKUP_SINGLE_DIR
             %DB_LOCK_IGNORE_REC %DB_BACKUP_READ_SLEEP
-            %DB_BACKUP_NO_LOGS);
+            %DB_BACKUP_NO_LOGS %DB_REP_WOULDROLLBACK);
 
 @EXPORT = qw(pick Menu get_Menu_map);
 
@@ -1060,65 +1060,8 @@ sub fa_login
    eval {
       ($code,$menu_args,$to)=
          &Net::FullAuto::FA_Core::fa_login(@_);
-      my $m_c_m_f='';
-      if ($m_c_m_f) {
-         my $m_flag=0;
-         my $s_flag=0;
-         foreach my $dir (@INC) {
-            if (!$m_flag && -f "$dir/$Term::Menus::fa_menu") {
-               $m_flag=1;
-               open(FH,"<$dir/$Term::Menus::fa_menu");
-               my $line='';my %menudups=();
-               while ($line=<FH>) {
-                  if ($line=~/^[ \t]*\%(.*)\s*=/) {
-                     if (!exists $menudups{$1}) {
-                        $menudups{$1}='';
-                     } else {
-                        my $mcmf=$Term::Menus::fa_menu;
-                        my $die="\n"
-                           ."       FATAL ERROR! - Duplicate Hash Blocks:\n"
-                           ."              ->  \"%$1\" is defined more than\n"
-                           ."              once in the $dir/$mcmf file.\n\n"
-                           ."       Hint:  delete or comment-out all duplicates"
-                           ."\n\n";
-                        print $die if !$Net::FullAuto::FA_Core::cron;
-                        &Net::FullAuto::FA_Core::handle_error(
-                           $die,'__cleanup__');
-                     }
-                  }
-               }
-            }
-            if (!$s_flag && -f "$dir/$Term::Menus::fa_code") {
-               $s_flag=1;
-               open(FH,"<$dir/$Term::Menus::fa_code");
-               my $line='';my %dups=();
-               while ($line=<FH>) {
-                  if ($line=~/^[ \t]*\%(.*)\s*=/) {
-                     if (!exists $dups{$1}) {
-                        $dups{$1}='';
-                     } else {
-                        my $die="\n       FATAL ERROR! - Duplicate Hash Blocks:"
-                               ."\n              ->  \"%$1\" is defined more "
-                               ."than once\n              in the $dir/"
-                               .$Term::Menus::fa_code
-                               ." file.\n\n       Hint:  delete "
-                               ."or comment-out all duplicates\n\n";
-                        print $die if !$Net::FullAuto::FA_Core::cron;
-                        &Net::FullAuto::FA_Core::handle_error(
-                           $die,'__cleanup__');
-                     }
-                  }
-               }
-            }
-         }
-         require $Term::Menus::fa_menu;
-      } elsif (!$Term::Menus::canload->(
-            'Net/FullAuto/Custom/'.$Term::Menus::fa_menu)) {
-         require 'Net/FullAuto/Distro/fa_menu_demo.pm';
-      }
       my $mc=substr($Term::Menus::fa_menu,
-            (rindex $Term::Menus::fa_menu,'/')+1,-3);
-      import $mc;
+             (rindex $Term::Menus::fa_menu,'/')+1,-3);
       $start_menu_ref=eval '$'.$mc.'::start_menu_ref';
       $to||=0;
       $timeout=$to if $to;
