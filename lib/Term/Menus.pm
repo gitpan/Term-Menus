@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.15';
+our $VERSION = '2.16';
 
 
 use 5.006;
@@ -503,6 +503,10 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                         exists $ENV{'USER'} && ($ENV{'USER'}
                         ne $username)) {
                      $username=$ENV{'USER'};
+                  } elsif ($username eq 'SYSTEM' &&
+                        exists $ENV{'IWUSER'} && ($ENV{'IWUSER'}
+                        ne $username)) {
+                     $username=$ENV{'IWUSER'};
                   }
                   my $status=$bdb->db_get(
                         $username,$default_modules);
