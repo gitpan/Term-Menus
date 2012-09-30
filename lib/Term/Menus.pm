@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.16';
+our $VERSION = '2.17';
 
 
 use 5.006;
@@ -2653,8 +2653,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                print "\n   $num_pick Total Choices\n",
                      "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
                      "\n   OR \"u\" to scroll upward  ",
-                     "\(Type \"quit\" to quit\)\n";
-            } else { print"\n   \(Type \"quit\" to quit\)\n" }
+                     "\(Type \"quit\" to Quit\)\n";
+            } else { print"\n   \(Type \"quit\" to Quit\)\n" }
+            if ($Term::Menus::fullauto) {
+               if (exists $Net::FullAuto::FA_Core::admin_menus{
+                     $MenuUnit_hash_ref->{'Label'}}) {
+                  print "\n   (Type \"help\" for Help)\n";
+               } else {
+                  print "\n   (Type \"help\" for Help)".
+                        "  (Type \"admin\" for Admin Menu)\n";
+               }
+            }
             if ($Term::Menus::term_input) {
                print "\n";
                ($numbor,$ikey)=rawInput("   PLEASE ENTER A CHOICE: ");
@@ -3743,6 +3752,12 @@ return 'DONE_SUB';
             }
          } elsif ($numbor=~/^quit$/i) {
             return ']quit['
+         } elsif ($Term::Menus::fullauto and $numbor=~/^help$/i) {
+            system('man Net::FullAuto');
+         } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i
+               && !exists $Net::FullAuto::FA_Core::admin_menus{
+               $MenuUnit_hash_ref->{Label}}) {
+            Menu($Net::FullAuto::FA_Core::admin_menu->());
          } elsif (!keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^[Aa]$/) {
             #if (${$MenuUnit_hash_ref}{Select} eq 'One') {
