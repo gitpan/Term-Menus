@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.17';
+our $VERSION = '2.18';
 
 
 use 5.006;
@@ -509,7 +509,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                      $username=$ENV{'IWUSER'};
                   }
                   my $status=$bdb->db_get(
-                        $username,$default_modules);
+                        $username,$default_modules) if $bdb;
                   $default_modules||='';
                   $default_modules=~s/\$HASH\d*\s*=\s*//s
                      if -1<index $default_modules,'$HASH';
@@ -2652,11 +2652,30 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             if ($display_this_many_items<$num_pick) {
                print "\n   $num_pick Total Choices\n",
                      "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
-                     "\n   OR \"u\" to scroll upward  ",
-                     "\(Type \"quit\" to Quit\)\n";
+                     "\n   OR \"u\" to scroll upward  ";
+               if ($Term::Menus::fullauto) {
+                  if (exists $MenuUnit_hash_ref->{'Label'} &&
+                        exists $Net::FullAuto::FA_Core::admin_menus{
+                        $MenuUnit_hash_ref->{'Label'}}) {
+                     print "\(Type \"quit\" to Quit Admin Menu\)\n";
+                  } else {
+                     print "\(Type \"quit\" to Quit FullAuto\)\n";
+                  }
+               } else {
+                  print "\n   \(Type \"quit\" to Quit\)\n";
+               }
+            } elsif ($Term::Menus::fullauto) {
+               if ($MenuUnit_hash_ref->{'Label'} &&
+                     exists $Net::FullAuto::FA_Core::admin_menus{
+                     $MenuUnit_hash_ref->{'Label'}}) {
+                  print "\n   \(Type \"quit\" to Quit Admin Menu\)\n";
+               } else {
+                  print "\n   \(Type \"quit\" to Quit FullAuto\)\n";
+               }
             } else { print"\n   \(Type \"quit\" to Quit\)\n" }
             if ($Term::Menus::fullauto) {
-               if (exists $Net::FullAuto::FA_Core::admin_menus{
+               if ($MenuUnit_hash_ref->{'Label'} &&
+                     exists $Net::FullAuto::FA_Core::admin_menus{
                      $MenuUnit_hash_ref->{'Label'}}) {
                   print "\n   (Type \"help\" for Help)\n";
                } else {
@@ -3755,6 +3774,7 @@ return 'DONE_SUB';
          } elsif ($Term::Menus::fullauto and $numbor=~/^help$/i) {
             system('man Net::FullAuto');
          } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i
+               && exists $MenuUnit_hash_ref->{'Label'}
                && !exists $Net::FullAuto::FA_Core::admin_menus{
                $MenuUnit_hash_ref->{Label}}) {
             Menu($Net::FullAuto::FA_Core::admin_menu->());
