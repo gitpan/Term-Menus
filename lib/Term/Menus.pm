@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.18';
+our $VERSION = '2.19';
 
 
 use 5.006;
@@ -253,7 +253,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_LEGACY %DB_GROUP_CREATOR %DB_EID_MASTER
             %DB_HEAPVERSION %DB_OK_HEAP %DB_MEM_TRANSACTION
             %DB_EVENT_REP_CONNECT_TRY_FAILED %DB_NOFLUSH
-            %DB_STAT_SUMMARY %DB_MEM_TRANSACTION
+            %DB_STAT_SUMMARY %DB_MEM_TRANSACTION %CARP_NOT
             %DB_HEAPMAGIC %DB_REPMGR_NEED_RESPONSE
             %DB_MEM_LOCKOBJECT %DB_MEM_LOGID %DB_MEM_LOCKER
             %DB_INTERNAL_DB %DB_MEM_LOCK %DB_HEAPOLDVER

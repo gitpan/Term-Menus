@@ -1,3 +1,11 @@
+2012-10-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.19 released.
+
+        * Added new BerkeleyDB variable to import list
+          (needed for FullAuto).
+
+
 2012-10-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.18 released.
