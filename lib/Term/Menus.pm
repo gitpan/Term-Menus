@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.19';
+our $VERSION = '2.20';
 
 
 use 5.006;
@@ -1059,11 +1059,12 @@ sub fa_login
 {
 
    my $code='';my $menu_args='';my $to='';my $die='';
-   my $start_menu_ref='';
+   my $start_menu_ref='';my $cache='';
    my $returned='';
    eval {
-      ($code,$menu_args,$to)=
+      ($code,$menu_args,$to,$cache)=
          &Net::FullAuto::FA_Core::fa_login(@_);
+      $main::cache=$cache if $cache;
       my $mc=substr($Term::Menus::fa_menu,
              (rindex $Term::Menus::fa_menu,'/')+1,-3);
       $start_menu_ref=eval '$'.$mc.'::start_menu_ref';
