@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.20';
+our $VERSION = '2.21';
 
 
 use 5.006;
@@ -38,7 +38,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %get_all_hosts %hostname %GetSpeed %get_subs_from_menu
             %passwd_file_loc %run_sub %GetTerminalSize %escape_quotes
             %GetControlChars %numerically %rawInput %transform_sicm
-            %return_result $MenuMap %get_Menu_map_count %MenuMap
+            %return_result $MenuMap %get_Menu_map_count %MenuMap %facall
             %get_Menu_map %check_for_dupe_menus %EXPORT_FAIL %EXPORT
             %import %DB_LOCK_PUT %DB_ENV_DSYNC_LOG %DB_ENV_STANDALONE
             %DB_ST_IS_RECNO %DB_JOINENV &DB_JOINENV %DB_LOCK_INHERIT
@@ -295,7 +295,6 @@ our $tm_menu='';
 
 use Config ();
 use Cwd 'abs_path';
-#our $canload=sub {};
 BEGIN {
    our $canload = sub {
       package canloadone;
@@ -472,16 +471,16 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                require $fa_path.'/fa_defs.pm';
                $fa_defs::FA_Secure||='';
                if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
-                  require BerkeleyDB if -1<index caller(2),'FullAuto';
-                  BerkeleyDB->import() if -1<index caller(2),'FullAuto';
+                  BEGIN { $Term::Menus::facall=caller(2);
+                          $Term::Menus::facall||='' };
+                  use if (-1<index $Term::Menus::facall,'FullAuto'),
+                      "BerkeleyDB";
                   my $dbenv = BerkeleyDB::Env->new(
                      -Home  => $fa_defs::FA_Secure.'Defaults',
                      -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
                   ) or die(
                      "cannot open environment for DB: ".
                      $BerkeleyDB::Error."\n",'','');
-                  #&acquire_semaphore(9361,
-                  #   "BDB DB Access: ".__LINE__);
                   my $bdb = BerkeleyDB::Btree->new(
                         -Filename => "${progname}_defaults.db",
                         -Flags    => DB_CREATE,
@@ -539,8 +538,6 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                      ) or die(
                         "cannot open environment for DB: ".
                         $BerkeleyDB::Error."\n",'','');
-                     #&acquire_semaphore(9361,
-                     #   "BDB DB Access: ".__LINE__);
                      my $std = BerkeleyDB::Btree->new(
                            -Filename => "${progname}_sets.db",
                            -Flags    => DB_CREATE,
@@ -654,8 +651,6 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                      ) or die(
                         "cannot open environment for DB: ".
                         $BerkeleyDB::Error."\n",'','');
-                     #&acquire_semaphore(9361,
-                     #   "BDB DB Access: ".__LINE__);
                      my $std = BerkeleyDB::Btree->new(
                            -Filename => "${progname}_sets.db",
                            -Flags    => DB_CREATE,
@@ -1065,6 +1060,7 @@ sub fa_login
       ($code,$menu_args,$to,$cache)=
          &Net::FullAuto::FA_Core::fa_login(@_);
       $main::cache=$cache if $cache;
+      undef $main::cache unless $cache;
       my $mc=substr($Term::Menus::fa_menu,
              (rindex $Term::Menus::fa_menu,'/')+1,-3);
       $start_menu_ref=eval '$'.$mc.'::start_menu_ref';
@@ -1076,19 +1072,6 @@ sub fa_login
          unless (keys %LookUpMenuName) {
             &check_for_dupe_menus();
          }
-         #if (!exists $LookUpMenuName{$start_menu_ref}) {
-         #   my $mcmf=$Term::Menus::fa_menu;
-         #   my $die="\n       FATAL ERROR! - The top level menu,"
-         #          ." indicated\n              by the "
-         #          ."\$start_menu_ref variable in\n       "
-         #          ."       the $mcmf file, is NOT\n"
-         #          ."              EXPORTED\n\n       Hint: "
-         #          ."\@EXPORT = qw( %Menu_1 %Menu_2 ... )\;"
-         #          ."\n\n\tour \$start_menu_ref=\\%Menu_1\;"
-         #          ."\n\n       \[ Menu_1 is example - "
-         #          ."name you choose is optional \]\n";
-         #   &Net::FullAuto::FA_Core::handle_error($die);
-         #}
          if ($Net::FullAuto::FA_Core::plan) {
             my $plann=shift @{$Net::FullAuto::FA_Core::plan};
             if (${$start_menu_ref}{Label} eq ${$plann}{Label}) {
@@ -1138,13 +1121,10 @@ sub fa_login
    if ($@) {
       my $cmdlin=52;
       $cmdlin=47 if $code;
-      #&Net::FullAuto::FA_Core::handle_error($@,"-$cmdlin",'__cleanup__');
       my $errr=$@;
       $errr=~s/^\s*/\n       /s;
       print $errr;
    }
-   #print "\n==> DONE!!!!!!!!!" if !$Net::FullAuto::FA_Core::cron &&
-   #      !$Net::FullAuto::FA_Core::stdio;
    &Net::FullAuto::FA_Core::cleanup(1,$returned);
 
 }
@@ -3778,7 +3758,8 @@ return 'DONE_SUB';
                && exists $MenuUnit_hash_ref->{'Label'}
                && !exists $Net::FullAuto::FA_Core::admin_menus{
                $MenuUnit_hash_ref->{Label}}) {
-            Menu($Net::FullAuto::FA_Core::admin_menu->());
+            Menu($Net::FullAuto::FA_Core::admin_menu->())
+               if $Net::FullAuto::FA_Core::admin_menu;
          } elsif (!keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^[Aa]$/) {
             #if (${$MenuUnit_hash_ref}{Select} eq 'One') {
