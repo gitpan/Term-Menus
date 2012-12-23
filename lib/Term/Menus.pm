@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.21';
+our $VERSION = '2.22';
 
 
 use 5.006;
