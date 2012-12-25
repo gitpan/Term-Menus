@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.22';
+our $VERSION = '2.23';
 
 
 use 5.006;
@@ -768,112 +768,123 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       $fa_code->[0]='Net/FullAuto/'.$fa_code->[0]
          if $fa_code->[0] && -1==index $fa_code->[0],'Net/FullAuto';
       $fa_code->[0]||='';
-      if ($fa_code->[0]) {
-         if ($Term::Menus::canload->($fa_code->[0])) {
-            require $fa_code->[0];
-            my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
-            import $mod;
-            $fa_code=$mod.'.pm';
+      my $argv=join " ",@ARGV;
+      if ($argv!~/--edit |-e[a-z]/) {
+         if ($fa_code->[0]) {
+            if ($Term::Menus::canload->($fa_code->[0])) {
+               require $fa_code->[0];
+               my $mod=substr($fa_code->[0],(rindex $fa_code->[0],'/')+1,-3);
+               import $mod;
+               $fa_code=$mod.'.pm';
+            } else {
+               my $ln=__LINE__;
+               $ln-=5;
+               die "Cannot load module $fa_code->[0]".
+                   "\n   $fa_code->[1]\n".
+                   "\"require $fa_code->[0];\"".
+                   "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            }
          } else {
-            my $ln=__LINE__;
-            $ln-=5;
-            die "Cannot load module $fa_code->[0]".
-                "\n   $fa_code->[1]\n".
-                "\"require $fa_code->[0];\"".
-                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
-         }
-      } else {
-         require 'Net/FullAuto/Distro/fa_code.pm';
-         import fa_code;
-         $fa_code='fa_code.pm';
-      } 
+            require 'Net/FullAuto/Distro/fa_code.pm';
+            import fa_code;
+            $fa_code='fa_code.pm';
+         } 
+      }
       $fa_conf->[0]='Net/FullAuto/'.$fa_conf->[0]
          if $fa_conf->[0] && -1==index $fa_conf->[0],'Net/FullAuto';
       $fa_conf->[0]||='';
-      if ($fa_conf->[0]) {
-         if ($Term::Menus::canload->($fa_conf->[0])) {
-            require $fa_conf->[0];
-            my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
-            import $mod;
-            $fa_conf=$mod.'.pm';
+      if ($argv!~/--edit |-e[a-z]/) {
+         if ($fa_conf->[0]) {
+            if ($Term::Menus::canload->($fa_conf->[0])) {
+               require $fa_conf->[0];
+               my $mod=substr($fa_conf->[0],(rindex $fa_conf->[0],'/')+1,-3);
+               import $mod;
+               $fa_conf=$mod.'.pm';
+            } else {
+               my $ln=__LINE__;
+               $ln-=5;
+               die "Cannot load module $fa_conf->[0]".
+                   "\n   $fa_conf->[1]\n".
+                   "\"require $fa_conf->[0];\"".
+                   "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            }
          } else {
-            my $ln=__LINE__;
-            $ln-=5;
-            die "Cannot load module $fa_conf->[0]".
-                "\n   $fa_conf->[1]\n".
-                "\"require $fa_conf->[0];\"".
-                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            require 'Net/FullAuto/Distro/fa_conf.pm';
+            import fa_conf;
+            $fa_conf='fa_conf.pm';
          }
-      } else {
-         require 'Net/FullAuto/Distro/fa_conf.pm';
-         import fa_conf;
-         $fa_conf='fa_conf.pm';
       }
       $fa_host->[0]='Net/FullAuto/'.$fa_host->[0]
          if $fa_host->[0] && -1==index $fa_host->[0],'Net/FullAuto';
       $fa_host->[0]||='';
-      if ($fa_host->[0]) {
-         if ($Term::Menus::canload->($fa_host->[0])) {
-            require $fa_host->[0];
-            my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
-            import $mod;
-            $fa_host=$mod.'.pm';
+      if ($argv!~/--edit |-e[a-z]/) {
+         if ($fa_host->[0]) {
+            if ($Term::Menus::canload->($fa_host->[0])) {
+               require $fa_host->[0];
+               my $mod=substr($fa_host->[0],(rindex $fa_host->[0],'/')+1,-3);
+               import $mod;
+               $fa_host=$mod.'.pm';
+            } else {
+               my $ln=__LINE__;
+               $ln-=5;
+               die "Cannot load module $fa_host->[0]".
+                   "\n   $fa_host->[1]\n".
+                   "\"require $fa_host->[0];\"".
+                   "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            }
          } else {
-            my $ln=__LINE__;
-            $ln-=5;
-            die "Cannot load module $fa_host->[0]".
-                "\n   $fa_host->[1]\n".
-                "\"require $fa_host->[0];\"".
-                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            require 'Net/FullAuto/Distro/fa_host.pm';
+            import fa_host;
+            $fa_host='fa_host.pm';
          }
-      } else {
-         require 'Net/FullAuto/Distro/fa_host.pm';
-         import fa_host;
-         $fa_host='fa_host.pm';
       }
       $fa_maps->[0]='Net/FullAuto/'.$fa_maps->[0]
          if $fa_maps->[0] && -1==index $fa_maps->[0],'Net/FullAuto';
       $fa_maps->[0]||='';
-      if ($fa_maps->[0]) {
-         if ($Term::Menus::canload->($fa_maps->[0])) {
-            require $fa_maps->[0];
-            my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
-            import $mod;
-            $fa_maps=$mod.'.pm';
+      if ($argv!~/--edit |-e[a-z]/) {
+         if ($fa_maps->[0]) {
+            if ($Term::Menus::canload->($fa_maps->[0])) {
+               require $fa_maps->[0];
+               my $mod=substr($fa_maps->[0],(rindex $fa_maps->[0],'/')+1,-3);
+               import $mod;
+               $fa_maps=$mod.'.pm';
+            } else {
+               my $ln=__LINE__;
+               $ln-=5;
+               die "Cannot load module $fa_maps->[0]".
+                   "\n   $fa_maps->[1]\n".
+                   "\"require $fa_maps->[0];\"".
+                   "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            }
          } else {
-            my $ln=__LINE__;
-            $ln-=5;
-            die "Cannot load module $fa_maps->[0]".
-                "\n   $fa_maps->[1]\n".
-                "\"require $fa_maps->[0];\"".
-                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            require 'Net/FullAuto/Distro/fa_maps.pm';
+            import fa_maps;
+            $fa_maps='fa_maps.pm';
          }
-      } else {
-         require 'Net/FullAuto/Distro/fa_maps.pm';
-         import fa_maps;
-         $fa_maps='fa_maps.pm';
       }
       $fa_menu->[0]='Net/FullAuto/'.$fa_menu->[0]
          if $fa_menu->[0] && -1==index $fa_menu->[0],'Net/FullAuto';
       $fa_menu->[0]||='';
-      if ($fa_menu->[0]) {
-         if ($Term::Menus::canload->($fa_menu->[0])) {
-            require $fa_menu->[0];
-            my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
-            import $mod;
-            $fa_menu=$mod.'.pm';
+      if ($argv!~/--edit |-e[a-z]/) {
+         if ($fa_menu->[0]) {
+            if ($Term::Menus::canload->($fa_menu->[0])) {
+               require $fa_menu->[0];
+               my $mod=substr($fa_menu->[0],(rindex $fa_menu->[0],'/')+1,-3);
+               import $mod;
+               $fa_menu=$mod.'.pm';
+            } else {
+               my $ln=__LINE__;
+               $ln-=5;
+               die "Cannot load module $fa_menu->[0]".
+                   "\n   $fa_menu->[1]\n".
+                   "\"require $fa_menu->[0];\"".
+                   "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            }
          } else {
-            my $ln=__LINE__;
-            $ln-=5;
-            die "Cannot load module $fa_menu->[0]".
-                "\n   $fa_menu->[1]\n".
-                "\"require $fa_menu->[0];\"".
-                "--failed at ".$INC{'Term/Menus.pm'}." line $ln\.\n$@\n";
+            require 'Net/FullAuto/Distro/fa_menu_demo.pm';
+            import fa_menu_demo;
+            $fa_menu='fa_menu_demo.pm';
          }
-      } else {
-         require 'Net/FullAuto/Distro/fa_menu_demo.pm';
-         import fa_menu_demo;
-         $fa_menu='fa_menu_demo.pm';
       }
         
    }
