@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.23';
+our $VERSION = '2.24';
 
 
 use 5.006;
@@ -505,7 +505,18 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                   } elsif ($username eq 'SYSTEM' &&
                         exists $ENV{'IWUSER'} && ($ENV{'IWUSER'}
                         ne $username)) {
-                     $username=$ENV{'IWUSER'};
+                     my $login_flag=0;
+                     foreach (@ARGV) {
+                        my $argv=$_;
+                        if ($login_flag) {
+                           $username=$argv;
+                           last;
+                        } elsif (lc($argv) eq '--login') {
+                           $login_flag=1;
+                        }
+
+                     }
+                     $username=$ENV{'IWUSER'} unless $login_flag;
                   }
                   my $status=$bdb->db_get(
                         $username,$default_modules) if $bdb;
