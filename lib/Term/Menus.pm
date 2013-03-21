@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.24';
+our $VERSION = '2.25';
 
 
 use 5.006;
@@ -466,160 +466,166 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          my $progname=substr($0,(rindex $0,'/')+1,-3);
          substr($fa_path,-3)='';
          if (-f $fa_path.'/fa_defs.pm') {
-            {
-               no strict 'subs';
-               require $fa_path.'/fa_defs.pm';
-               $fa_defs::FA_Secure||='';
-               if ($fa_defs::FA_Secure && -d $fa_defs::FA_Secure.'Defaults') {
-                  BEGIN { $Term::Menus::facall=caller(2);
-                          $Term::Menus::facall||='' };
-                  use if (-1<index $Term::Menus::facall,'FullAuto'),
-                      "BerkeleyDB";
-                  my $dbenv = BerkeleyDB::Env->new(
-                     -Home  => $fa_defs::FA_Secure.'Defaults',
-                     -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
-                  ) or die(
-                     "cannot open environment for DB: ".
-                     $BerkeleyDB::Error."\n",'','');
-                  my $bdb = BerkeleyDB::Btree->new(
-                        -Filename => "${progname}_defaults.db",
-                        -Flags    => DB_CREATE,
-                        -Env      => $dbenv
-                     );
-                  unless ($BerkeleyDB::Error=~/Successful/) {
-                     $bdb = BerkeleyDB::Btree->new(
-                        -Filename => "${progname}_defaults.db",
-                        -Flags    => DB_CREATE|DB_RECOVER_FATAL,
-                        -Env      => $dbenv
-                     );
-                     unless ($BerkeleyDB::Error=~/Successful/) {
-                        die "Cannot Open DB ${progname}_defaults.db:".
-                            " $BerkeleyDB::Error\n";
-                     }
-                  }
-                  my $username=getlogin || getpwuid($<);
-                  if (exists $ENV{'SSH_CONNECTION'} &&
-                        exists $ENV{'USER'} && ($ENV{'USER'}
-                        ne $username)) {
-                     $username=$ENV{'USER'};
-                  } elsif ($username eq 'SYSTEM' &&
-                        exists $ENV{'IWUSER'} && ($ENV{'IWUSER'}
-                        ne $username)) {
-                     my $login_flag=0;
-                     foreach (@ARGV) {
-                        my $argv=$_;
-                        if ($login_flag) {
-                           $username=$argv;
-                           last;
-                        } elsif (lc($argv) eq '--login') {
-                           $login_flag=1;
-                        }
-
-                     }
-                     $username=$ENV{'IWUSER'} unless $login_flag;
-                  }
-                  my $status=$bdb->db_get(
-                        $username,$default_modules) if $bdb;
-                  $default_modules||='';
-                  $default_modules=~s/\$HASH\d*\s*=\s*//s
-                     if -1<index $default_modules,'$HASH';
-                  $default_modules=eval $default_modules;
-                  $default_modules||={};
-                  undef $bdb;
-                  $dbenv->close();
-                  undef $dbenv;
-                  unless (keys %{$default_modules}) {
-                     $default_modules->{'set'}='none';
-                     $default_modules->{'fa_code'}=
-                        'Net/FullAuto/Distro/fa_code_demo.pm';
-                     $default_modules->{'fa_conf'}=
-                        'Net/FullAuto/Distro/fa_conf.pm';
-                     $default_modules->{'fa_host'}=
-                        'Net/FullAuto/Distro/fa_host.pm';
-                     $default_modules->{'fa_maps'}=
-                        'Net/FullAuto/Distro/fa_maps.pm';
-                     $default_modules->{'fa_menu'}=
-                        'Net/FullAuto/Distro/fa_menu_demo.pm';
-                  } elsif (exists $default_modules->{'set'} &&
-                        $default_modules->{'set'} ne 'none') {
-                     my $setname=$default_modules->{'set'};
-                     my $stenv = BerkeleyDB::Env->new(
-                        -Home  => $fa_defs::FA_Secure.'Sets',
+            if (-r $fa_path.'/fa_defs.pm') {
+               {
+                  no strict 'subs';
+                  require $fa_path.'/fa_defs.pm';
+                  $fa_defs::FA_Secure||='';
+                  if ($fa_defs::FA_Secure &&
+                        -d $fa_defs::FA_Secure.'Defaults') {
+                     BEGIN { $Term::Menus::facall=caller(2);
+                             $Term::Menus::facall||='' };
+                     use if (-1<index $Term::Menus::facall,'FullAuto'),
+                         "BerkeleyDB";
+                     my $dbenv = BerkeleyDB::Env->new(
+                        -Home  => $fa_defs::FA_Secure.'Defaults',
                         -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
                      ) or die(
                         "cannot open environment for DB: ".
                         $BerkeleyDB::Error."\n",'','');
-                     my $std = BerkeleyDB::Btree->new(
-                           -Filename => "${progname}_sets.db",
+                     my $bdb = BerkeleyDB::Btree->new(
+                           -Filename => "${progname}_defaults.db",
                            -Flags    => DB_CREATE,
-                           -Env      => $stenv
+                           -Env      => $dbenv
                         );
                      unless ($BerkeleyDB::Error=~/Successful/) {
-                        $std = BerkeleyDB::Btree->new(
-                           -Filename => "${progname}_sets.db",
+                        $bdb = BerkeleyDB::Btree->new(
+                           -Filename => "${progname}_defaults.db",
                            -Flags    => DB_CREATE|DB_RECOVER_FATAL,
-                           -Env      => $stenv
+                           -Env      => $dbenv
                         );
                         unless ($BerkeleyDB::Error=~/Successful/) {
-                           die "Cannot Open DB ${progname}_sets.db:".
+                           die "Cannot Open DB ${progname}_defaults.db:".
                                " $BerkeleyDB::Error\n";
                         }
                      }
                      my $username=getlogin || getpwuid($<);
-                     my $set='';
-                     my $status=$std->db_get(
-                           $username,$set);
-                     $set||='';
-                     $set=~s/\$HASH\d*\s*=\s*//s
-                        if -1<index $set,'$HASH';
-                     $set=eval $set;
-                     $set||={};
-                     undef $std;
-                     $stenv->close();
-                     undef $stenv;
-                     $fa_code=[$set->{$setname}->{'fa_code'},
-                               "From Default Set $setname ".
-                               "(Change with fa --set)"];
-                     $fa_conf=[$set->{$setname}->{'fa_conf'},
-                               "From Default Set $setname ".
-                               "(Change with fa --set)"];
-                     $fa_host=[$set->{$setname}->{'fa_host'},
-                               "From Default Set $setname ".
-                               "(Change with fa --set)"];
-                     $fa_maps=[$set->{$setname}->{'fa_maps'},
-                               "From Default Set $setname ".
-                               "(Change with fa --set)" ];
-                     $fa_menu=[$set->{$setname}->{'fa_menu'},
-                               "From Default Set $setname ".
-                               "(Change with fa --set)"];
-                  } else {
-                     if (exists $default_modules->{'fa_code'}) {
-                        $fa_code=[$default_modules->{'fa_code'},
-                                  "From Default Setting ".
-                                  "(Change with fa --defaults)"];
+                     if (exists $ENV{'SSH_CONNECTION'} &&
+                           exists $ENV{'USER'} && ($ENV{'USER'}
+                           ne $username)) {
+                        $username=$ENV{'USER'};
+                     } elsif ($username eq 'SYSTEM' &&
+                           exists $ENV{'IWUSER'} && ($ENV{'IWUSER'}
+                           ne $username)) {
+                        my $login_flag=0;
+                        foreach (@ARGV) {
+                           my $argv=$_;
+                           if ($login_flag) {
+                              $username=$argv;
+                              last;
+                           } elsif (lc($argv) eq '--login') {
+                              $login_flag=1;
+                           }
+                        }
+                        $username=$ENV{'IWUSER'} unless $login_flag;
                      }
-                     if (exists $default_modules->{'fa_conf'}) {
-                        $fa_conf=[$default_modules->{'fa_conf'},
-                                  "From Default Setting ".
-                                  "(Change with fa --defaults)"];
-                     }
-                     if (exists $default_modules->{'fa_host'}) {
-                        $fa_host=[$default_modules->{'fa_host'},
-                                  "From Default Setting ".
-                                  "(Change with fa --defaults)"];
-                     }
-                     if (exists $default_modules->{'fa_maps'}) {
-                        $fa_maps=[$default_modules->{'fa_maps'},
-                                  "From Default Setting ".
-                                  "(Change with fa --defaults)"];
-                     }
-                     if (exists $default_modules->{'fa_menu'}) {
-                        $fa_menu=[$default_modules->{'fa_menu'},
-                                  "From Default Setting ".
-                                  "(Change with fa --defaults)"];
+                     my $status=$bdb->db_get(
+                           $username,$default_modules) if $bdb;
+                     $default_modules||='';
+                     $default_modules=~s/\$HASH\d*\s*=\s*//s
+                        if -1<index $default_modules,'$HASH';
+                     $default_modules=eval $default_modules;
+                     $default_modules||={};
+                     undef $bdb;
+                     $dbenv->close();
+                     undef $dbenv;
+                     unless (keys %{$default_modules}) {
+                        $default_modules->{'set'}='none';
+                        $default_modules->{'fa_code'}=
+                           'Net/FullAuto/Distro/fa_code_demo.pm';
+                        $default_modules->{'fa_conf'}=
+                           'Net/FullAuto/Distro/fa_conf.pm';
+                        $default_modules->{'fa_host'}=
+                           'Net/FullAuto/Distro/fa_host.pm';
+                        $default_modules->{'fa_maps'}=
+                           'Net/FullAuto/Distro/fa_maps.pm';
+                        $default_modules->{'fa_menu'}=
+                           'Net/FullAuto/Distro/fa_menu_demo.pm';
+                     } elsif (exists $default_modules->{'set'} &&
+                           $default_modules->{'set'} ne 'none') {
+                        my $setname=$default_modules->{'set'};
+                        my $stenv = BerkeleyDB::Env->new(
+                           -Home  => $fa_defs::FA_Secure.'Sets',
+                           -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
+                        ) or die(
+                           "cannot open environment for DB: ".
+                           $BerkeleyDB::Error."\n",'','');
+                        my $std = BerkeleyDB::Btree->new(
+                              -Filename => "${progname}_sets.db",
+                              -Flags    => DB_CREATE,
+                              -Env      => $stenv
+                           );
+                        unless ($BerkeleyDB::Error=~/Successful/) {
+                           $std = BerkeleyDB::Btree->new(
+                              -Filename => "${progname}_sets.db",
+                              -Flags    => DB_CREATE|DB_RECOVER_FATAL,
+                              -Env      => $stenv
+                           );
+                           unless ($BerkeleyDB::Error=~/Successful/) {
+                              die "Cannot Open DB ${progname}_sets.db:".
+                                  " $BerkeleyDB::Error\n";
+                           }
+                        }
+                        my $username=getlogin || getpwuid($<);
+                        my $set='';
+                        my $status=$std->db_get(
+                              $username,$set);
+                        $set||='';
+                        $set=~s/\$HASH\d*\s*=\s*//s
+                           if -1<index $set,'$HASH';
+                        $set=eval $set;
+                        $set||={};
+                        undef $std;
+                        $stenv->close();
+                        undef $stenv;
+                        $fa_code=[$set->{$setname}->{'fa_code'},
+                                  "From Default Set $setname ".
+                                  "(Change with fa --set)"];
+                        $fa_conf=[$set->{$setname}->{'fa_conf'},
+                                  "From Default Set $setname ".
+                                  "(Change with fa --set)"];
+                        $fa_host=[$set->{$setname}->{'fa_host'},
+                                  "From Default Set $setname ".
+                                  "(Change with fa --set)"];
+                        $fa_maps=[$set->{$setname}->{'fa_maps'},
+                                  "From Default Set $setname ".
+                                  "(Change with fa --set)" ];
+                        $fa_menu=[$set->{$setname}->{'fa_menu'},
+                                  "From Default Set $setname ".
+                                  "(Change with fa --set)"];
+                     } else {
+                        if (exists $default_modules->{'fa_code'}) {
+                           $fa_code=[$default_modules->{'fa_code'},
+                                     "From Default Setting ".
+                                     "(Change with fa --defaults)"];
+                        }
+                        if (exists $default_modules->{'fa_conf'}) {
+                           $fa_conf=[$default_modules->{'fa_conf'},
+                                     "From Default Setting ".
+                                     "(Change with fa --defaults)"];
+                        }
+                        if (exists $default_modules->{'fa_host'}) {
+                           $fa_host=[$default_modules->{'fa_host'},
+                                     "From Default Setting ".
+                                     "(Change with fa --defaults)"];
+                        }
+                        if (exists $default_modules->{'fa_maps'}) {
+                           $fa_maps=[$default_modules->{'fa_maps'},
+                                     "From Default Setting ".
+                                     "(Change with fa --defaults)"];
+                        }
+                        if (exists $default_modules->{'fa_menu'}) {
+                           $fa_menu=[$default_modules->{'fa_menu'},
+                                     "From Default Setting ".
+                                     "(Change with fa --defaults)"];
+                        }
                      }
                   }
                }
+            } else {
+               warn("WARNING: Cannot read defaults file $fa_path/fa_defs.pm".
+                    " - permission denied (Hint: Perhaps you need to 'Run as ".
+                    "Administrator'?)");
             }
          }
          my @A=();my %A=();
