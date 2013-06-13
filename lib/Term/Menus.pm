@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.25';
+our $VERSION = '2.26';
 
 
 use 5.006;
@@ -4900,8 +4900,12 @@ return 'DONE_SUB';
                            &Net::FullAuto::FA_Core::handle_error($die.
                                           "\n\n       line ".__LINE__);
                         } elsif ($firsterr) {
-                           &Net::FullAuto::FA_Core::handle_error($firsterr.
-                                          "\n\n       line ".__LINE__);
+                           if ($Term::Menus::fullauto) {
+                              &Net::FullAuto::FA_Core::handle_error($firsterr.
+                                             "\n\n       line ".__LINE__);
+                           } else {
+                              die "$firsterr\n\n       line ".__LINE__;
+                           }
                         }
                      } else {
                         eval "\@resu=\&main::$sub";
@@ -5431,7 +5435,7 @@ You want to use a perl subroutine to create the text items or banner:
       my @textlines=();
       push @textlines, "$previous is a Good Utility";
       push @textlines, "$previous is a Bad Utility";
-      return @testlines;
+      return @textlines;
              ## return value must NOT be an array
              ## not an array reference
 
