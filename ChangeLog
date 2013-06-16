@@ -1,3 +1,12 @@
+2013-06-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.27 released.
+
+        * Fixed all items for tickets 84173 and 72041.
+          Result block now works correctly for predefined
+          subroutines, as explained in the documentation.
+
+
 2013-06-13  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.26 released.

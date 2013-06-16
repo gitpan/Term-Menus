@@ -297,7 +297,7 @@ DESCRIPTION
             my @textlines=();
             push @textlines, "$previous is a Good Utility";
             push @textlines, "$previous is a Bad Utility";
-            return @testlines;
+            return @textlines;
                    ## return value must NOT be an array
                    ## not an array reference
 

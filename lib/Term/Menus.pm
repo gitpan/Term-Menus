@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.26';
+our $VERSION = '2.27';
 
 
 use 5.006;
@@ -1542,9 +1542,13 @@ sub Menu
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
       } elsif (ref $pick eq 'ARRAY' && wantarray
             && !$no_wantarray && 1==$recurse) {
+         if (ref $pick->[$#{$pick}] eq 'HASH') {
+            my @choyce=@{$pick};undef @{$pick};undef $pick;
+            pop @choyce;
+            pop @choyce;
+            return @choyce
+         }
          my @choyce=@{$pick};undef @{$pick};undef $pick;
-         pop @choyce;
-         pop @choyce;
          return @choyce
       } elsif ($pick) { return $pick }
    } else {
@@ -1615,13 +1619,25 @@ sub Menu
 
 }
 
+sub list_module {
+   my $module = shift;
+   no strict 'refs';
+   return grep { defined &{"$module\::$_"} } keys %{"$module\::"}
+}
+
 sub transform_sicm
 {
 
 #print "TRANSFROM_SCIM_CALLER=",caller,"\n";
    ## sicm - [s]elected [i]tems [c]urrent [m]enu
-   my ($text,$sicm_regex,$numbor,$all_menu_items_array,
-       $picks,$pn,$return_from_child_menu,$log_handle)=@_;
+   my $text=$_[0]||'';
+   my $sicm_regex=$_[1]||'';
+   my $numbor=$_[2]||'';
+   my $all_menu_items_array=$_[3]||'';
+   my $picks=$_[4]||'';
+   my $pn=$_[5]||'';
+   my $return_from_child_menu=$_[6]||'';
+   my $log_handle=$_[7]||'';
    my $selected=[];my $replace='';
    my $expand_array_flag=0;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
@@ -1651,22 +1667,30 @@ sub transform_sicm
       }
       $expand_array_flag=1;
    }
-   if (keys %{$picks} && !$return_from_child_menu) {
+   my @pks=keys %{$picks};
+   if (0<$#pks && !$return_from_child_menu) {
       foreach my $key (sort numerically keys %{$picks}) {
          push @{$selected},${$all_menu_items_array}[$key-1];
       }
       $replace=&Data::Dump::Streamer::Dump($selected)->Out();
       $replace=~s/\$ARRAY\d*\s*=\s*//s;
-      $replace=~s/\'/\\\'/sg;
+      $replace=~s/\;\s*$//s;
       if ($expand_array_flag) {
          $replace='eval '.$replace;
       }
    } else {
       $replace=${$all_menu_items_array}[$pn->{$numbor}->[1]-1];
    }
+   if ($text=~/^&*(\w+)\s*[(].*[)]\s*$/ &&
+         grep { $1 eq $_ } list_module('main')) {
+      $replace=~s/\'/\\\'/g;
+      $replace=~s/\"/\\\"/g;
+      $replace='"'.$replace.'"';
+   }
    while ($text=~m/($sicm_regex)/g) {
       my $esc_one=$1;
-      $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+      $esc_one=~s/\[/\\\[/;$esc_one=~s/\]/\\\]/;
+      $replace=~s/\s*//s if $text=~/[)]\s*$/s;
       $text=~s/$esc_one/$replace/g;
    }
    return $text;
@@ -1678,8 +1702,13 @@ sub transform_pmsi
 
 #print "TRANSFORM_PMSI CALLER=",caller,"\n";
    ## pmsi - [p]revious [m]enu [s]elected [i]tems 
-   my ($text,$Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
-       $picks_from_parent,$log_handle)=@_;
+   my $text=$_[0]||'';
+   my $Conveyed=$_[1]||'';
+   my $SaveMMap=$_[2]||'';
+   my $pmsi_regex=$_[3]||'';
+   my $amlm_regex=$_[4]||'';
+   my $picks_from_parent=$_[5]||'';
+   my $log_handle=$_[6]||'';
 #print "CONVEYED=$Conveyed and PICKS=$picks_from_parent<==\n";
    my $expand_array_flag=0;
    $text=~s/\s?$//s;
@@ -1762,6 +1791,12 @@ sub transform_pmsi
                $replace='eval '.$replace;
             }
          }
+         if ($text=~/^&*(\w+)\s*[(].*[)]\s*$/ &&
+               grep { $1 eq $_ } list_module('main')) {
+            $replace=~s/\'/\\\'/g;
+            $replace=~s/\"/\\\"/g;
+            $replace='"'.$replace.'"';
+         }
          $text=~s/$esc_one/$replace/se;
       }
       my $replace='';
@@ -1775,6 +1810,12 @@ sub transform_pmsi
          }
       } else {
          $replace=$picks_from_parent;
+      }
+      if ($text=~/^&*(\w+)\s*[(].*[)]\s*$/ &&
+            grep { $1 eq $_ } list_module('main')) {
+         $replace=~s/\'/\\\'/g;
+         $replace=~s/\"/\\\"/g;
+         $replace='"'.$replace.'"';
       }
       $text=~s/$esc_one/$replace/s;
    }
@@ -1960,7 +2001,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                push @subs, ${$Selected}{$key}{$item};
             } 
          }
-      } return @subs;
+      }
+      return @subs;
    }
 
    my $get_result = sub {
@@ -2399,7 +2441,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     }
                                     eval "\@resu=\&$subfile$sub";
                                     my $firsterr=$@||'';
-
 
                                     if ((-1<index $firsterr,
                                           'Undefined subroutine') &&
@@ -4368,10 +4409,18 @@ return 'DONE_SUB';
                                        $die="$firsterr\n       $seconderr"
                                     }
                                  } else { $die=$seconderr }
-                                 &Net::FullAuto::FA_Core::handle_error($die);
+                                 if ($Term::Menus::fullauto) {
+                                    &Net::FullAuto::FA_Core::handle_error($die);
+                                 } else {
+                                    die $die;
+                                 }
                               } elsif ($firsterr) {
-                                 &Net::FullAuto::FA_Core::handle_error(
-                                    $firsterr);
+                                 if ($Term::Menus::fullauto) {
+                                    &Net::FullAuto::FA_Core::handle_error(
+                                       $firsterr);
+                                 } else {
+                                    die $firsterr;
+                                 }
                               }
                            } else {
                               eval "\@resu=\&main::$sub";
@@ -4725,18 +4774,18 @@ return 'DONE_SUB';
             } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]} 
                   && exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
                   {$pn{$numbor}[0]}) {
+               my $sicm_regex=
+                  qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
+                     *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
+               my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
+                  *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
+               my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
+                  *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
                if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
                      eq 'CODE') {
 #print "GOT CODE\n";
                   my $cd='';
                   my $sub=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
-                  my $sicm_regex=
-                     qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
-                        *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
-                  my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
-                     *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
-                  my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
-                     *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
                   if ($Term::Menus::data_dump_streamer) {
                      $cd=&Data::Dump::Streamer::Dump($sub)->Out();
                      $cd=&transform_sicm($cd,$sicm_regex,$numbor,
@@ -4812,9 +4861,9 @@ return 'DONE_SUB';
                my %pick=();
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
-               my $subfile=substr($Term::Menus::fa_code,0,-3)
-                  .'::' if $Term::Menus::fa_code;
-               $subfile||='';
+               my $subfile=($Term::Menus::fullauto)
+                          ?substr($Term::Menus::fa_code,0,-3).'::'
+                          :'';
                foreach my $sub (&get_subs_from_menu($Selected)) {
                   my @resu=();
                   if (ref $sub eq 'CODE') {
@@ -4908,7 +4957,14 @@ return 'DONE_SUB';
                            }
                         }
                      } else {
-                        eval "\@resu=\&main::$sub";
+                        $sub=&transform_sicm($sub,$sicm_regex,$numbor,
+                            \@all_menu_items_array,\%picks,\%pn,
+                            $return_from_child_menu,$log_handle);
+                        $sub=&transform_pmsi($sub,
+                            $Conveyed,$SaveMMap,$pmsi_regex,
+                            $amlm_regex,$picks_from_parent);
+                        $sub="\@resu=\&main::$sub";
+                        eval $sub;
                         if ($@) {
                            my $er=$@."\n       line ";
                            die $er.__LINE__;
@@ -4944,7 +5000,7 @@ return 'DONE_SUB';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU8\n";
+#print "RETURN RESU8=$resu[0]\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
@@ -5044,6 +5100,7 @@ sub return_result {
             $elem=unpack('x5 a*',$elem);
             push @{$result_array}, eval $elem;
          } else {
+print "ELEM=$elem\n";
             push @{$result_array}, $elem;
          }
       }
