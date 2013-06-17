@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.27';
+our $VERSION = '2.28';
 
 
 use 5.006;
@@ -1296,6 +1296,7 @@ sub Menu
       }
       my $con_regex=qr/\]c(o+nvey)*\[/i;
       if (exists ${$Items{$num}}{Convey}) {
+         my $convey_test=${$Items{$num}}{Convey};
          if (ref ${$Items{$num}}{Convey} eq 'ARRAY') {
             foreach my $line (@{${$Items{$num}}{Convey}}) {
                push @convey, $line;
@@ -1330,7 +1331,8 @@ sub Menu
             #if ($@) {
             #   die $@;
             #}
-         } elsif (substr(${$Items{$num}}{Convey},0,1) eq '&') {
+         } elsif ($convey_test=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+               grep { $1 eq $_ } list_module('main')) {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
                my $transformed_convey=
@@ -1339,7 +1341,11 @@ sub Menu
                                      $pmsi_regex,
                                      $amlm_regex,
                                      $picks_from_parent);
-               @convey=eval $transformed_convey;
+               if ($transformed_convey!~/::/) {
+                  eval "\@convey=main::$transformed_convey";
+               } else {
+                  eval "\@convey=$transformed_convey";
+               }
             }
          } else {
             push @convey, ${$Items{$num}}{Convey};
@@ -1488,10 +1494,16 @@ sub Menu
          $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
          $picks_from_parent);
    }
-   if ($banner && unpack('a1',$banner) eq '&' &&
+   if ($banner && ($banner=~/^&?(\w+)\s*[(]?.*[)]?\s*$/
+         && grep { $1 eq $_ } list_module('main')) &&
          defined $picks_from_parent &&
          !ref $picks_from_parent) {
-      my @banner=eval $banner;
+      my @banner=();
+      if ($banner!~/::/) {
+         eval "\@banner=main::$banner";
+      } else {
+         eval "\@banner=$banner";
+      }
       $banner=join '',@banner;
    }
    $display_this_many_items=${$_[0]}{Display}
@@ -1681,11 +1693,12 @@ sub transform_sicm
    } else {
       $replace=${$all_menu_items_array}[$pn->{$numbor}->[1]-1];
    }
-   if ($text=~/^&*(\w+)\s*[(].*[)]\s*$/ &&
+   if ($text=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
          grep { $1 eq $_ } list_module('main')) {
       $replace=~s/\'/\\\'/g;
       $replace=~s/\"/\\\"/g;
-      $replace='"'.$replace.'"';
+      $replace='"'.$replace.'"' unless
+         $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
    }
    while ($text=~m/($sicm_regex)/g) {
       my $esc_one=$1;
@@ -1700,7 +1713,7 @@ sub transform_sicm
 sub transform_pmsi
 {
 
-#print "TRANSFORM_PMSI CALLER=",caller,"\n";
+print "TRANSFORM_PMSI CALLER=",caller,"\n";
    ## pmsi - [p]revious [m]enu [s]elected [i]tems 
    my $text=$_[0]||'';
    my $Conveyed=$_[1]||'';
@@ -1791,15 +1804,17 @@ sub transform_pmsi
                $replace='eval '.$replace;
             }
          }
-         if ($text=~/^&*(\w+)\s*[(].*[)]\s*$/ &&
+         if ($text=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
                grep { $1 eq $_ } list_module('main')) {
             $replace=~s/\'/\\\'/g;
             $replace=~s/\"/\\\"/g;
-            $replace='"'.$replace.'"';
+            $replace='"'.$replace.'"' unless
+               $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
          }
          $text=~s/$esc_one/$replace/se;
       }
       my $replace='';
+print "WHAT IS PICKS=$picks_from_parent and WHAT IS TEXT=$text\n";
       if (ref $picks_from_parent eq 'ARRAY') {
          $replace=&Data::Dump::Streamer::Dump($picks_from_parent)->Out();
          my $type=ref $picks_from_parent;
@@ -1811,11 +1826,12 @@ sub transform_pmsi
       } else {
          $replace=$picks_from_parent;
       }
-      if ($text=~/^&*(\w+)\s*[(].*[)]\s*$/ &&
+      if ($text=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
             grep { $1 eq $_ } list_module('main')) {
          $replace=~s/\'/\\\'/g;
          $replace=~s/\"/\\\"/g;
-         $replace='"'.$replace.'"';
+         $replace='"'.$replace.'"' unless
+            $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
       }
       $text=~s/$esc_one/$replace/s;
    }
@@ -1824,6 +1840,7 @@ sub transform_pmsi
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
       $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
       my $replace=${$Conveyed}{$1};
+print "WHAT IS BIGGO REPLACE=$replace\n";
       if (ref $replace) {
          $replace=&Data::Dump::Streamer::Dump(${$Conveyed}{$1})->Out();
          my $type=ref ${$Conveyed}{$1};
@@ -1971,7 +1988,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $Selected=$_[2];
       if ($_[1]) {
          my $result=${$Selected}{$_[0]}{$_[1]};
-         if (substr($result,0,1) eq '&') {
+         #if (substr($result,0,1) eq '&') {
+         if ($result=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+                  grep { $1 eq $_ } list_module('main')) {
             return 0;
          } else {
             return &find_Selected($result,'',$Selected);
@@ -1980,7 +1999,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          if (keys %{${$Selected}{$_[0]}}) {
             foreach my $key (keys %{${$Selected}{$_[0]}}) {
                my $result=${$Selected}{$_[0]}{$key};
-               return '+' if substr($result,0,1) eq '&';
+               #return '+' if substr($result,0,1) eq '&';
+               if ($result=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+                  grep { $1 eq $_ } list_module('main')) {
+                  return '+';
+               }
                my $output=&find_Selected($result,'',$Selected);
                return '+' if $output eq '+';
             }
@@ -1994,11 +2017,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my @subs=();
       foreach my $key (keys %{$Selected}) {
          foreach my $item (keys %{${$Selected}{$key}}) {
-            if (substr(${$Selected}{$key}{$item},0,1) eq '&') {
-               push @subs, escape_quotes(
-                  unpack('x1 a*',${$Selected}{$key}{$item}));
-            } elsif (ref ${$Selected}{$key}{$item} eq 'CODE') {
-               push @subs, ${$Selected}{$key}{$item};
+            my $seltext=${$Selected}{$key}{$item};
+            if ($seltext=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+                  grep { $1 eq $_ } list_module('main')) {
+               push @subs, escape_quotes($seltext);
+            } elsif (ref $seltext eq 'CODE') {
+               push @subs, $seltext;
             } 
          }
       }
@@ -2052,6 +2076,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "ARE WE HEREEEEEEEEEEEEEEEEE\n";<STDIN>;
             ${$Conveyed}{${$Term::Menus::LookUpMenuName}{$_[0]}}=$convey;
             $parent_menu=${$Term::Menus::LookUpMenuName}{$_[0]};
+            my $test_result=${$_[0]}{${$FullMenu}{$_[0]}
+                  [4]{${$_[1]}[$pick-1]}}{'Result'};
             if (ref ${$_[0]}{${$FullMenu}{$_[0]}
                   [4]{${$_[1]}[$pick-1]}}{'Result'} eq 'HASH') {
                if (exists ${$_[0]}{${$FullMenu}{$_[0]}
@@ -2077,10 +2103,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
                   die $die;
                }
-            } elsif (unpack('a1',
-                  ${$_[0]}{${$FullMenu}{$_[0]}
-                  [4]{${$_[1]}[$pick-1]}}{'Result'})
-                  ne '&') {
+            } elsif ($test_result!~/^&?(\w+)\s*[(]?.*[)]?\s*$/ ||
+                     !grep { $1 eq $_ } list_module('main')) {
+
+            #} elsif (unpack('a1',
+            #      ${$_[0]}{${$FullMenu}{$_[0]}
+            #      [4]{${$_[1]}[$pick-1]}}{'Result'})
+            #      ne '&') {
+
             }
          }
          ${$Conveyed}{${$_[0]}{'Label'}}=$convey;
@@ -2103,7 +2133,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";
          if ((ref $test_item eq 'HASH' &&
                    exists $test_item->{Item_1})
-                   || substr($test_item,0,1) eq '&'
+                   || ($test_item=~/^&?(\w+)\s*[(]?.*[)]?\s*$/
+                   && grep { $1 eq $_ } list_module('main'))
+#substr($test_item,0,1) eq '&'
                    || ref $test_item eq 'CODE') {
             my $con_regex=qr/\]c(o+nvey)*\[/i;
             my $sicm_regex=
@@ -4505,13 +4537,14 @@ return 'DONE_SUB';
                   $numbor=(keys %picks)[0] if $numbor=~/^[Ff]$/;
                   #if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
 #print "PICKNUM=$picknum and @all_menu_items_array\n";
+                  my $test_result=
+                        ${$FullMenu}{$MenuUnit_hash_ref}[2]{$all_menu_items_array[$picknum-1]};
                   if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$all_menu_items_array[$picknum-1]}
                           eq 'CODE') {
 #print "GOT CODE\n";
                      my $cd='';
                      my $sub=${$FullMenu}{$MenuUnit_hash_ref}[2]
                               {$all_menu_items_array[$picknum-1]};
-                     #        {$pn{$numbor}[0]};
                      my $sicm_regex=
                         qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
                            *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
@@ -4574,19 +4607,23 @@ return 'DONE_SUB';
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
-                  } elsif (defined $pn{$numbor}[0] &&
-                        exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
-                        substr(${$FullMenu}{$MenuUnit_hash_ref}
-                        [2]{$pn{$numbor}[0]},0,1) ne '&') {
+                  #} elsif (defined $pn{$numbor}[0] &&
+                  #      exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
+                  } elsif ($test_result!~/^&?(\w+)\s*[(]?.*[)]?\s*$/ ||
+                        !grep { $1 eq $_ } list_module('main')) {
+                        #substr(${$FullMenu}{$MenuUnit_hash_ref}
+                        #[2]{$pn{$numbor}[0]},0,1) ne '&') {
+
                      my $die="The \"Result12 =>\" Setting\n              -> "
-                            .${$FullMenu}{$MenuUnit_hash_ref}[2]
-                            {$pn{$numbor}[0]}
-                            ."\n              Found in the Menu Unit -> "
+                            #.${$FullMenu}{$MenuUnit_hash_ref}[2]
+                            #{$pn{$numbor}[0]}
+                            ."$test_result\n              Found in the Menu Unit -> "
                             .$MenuUnit_hash_ref
-                            ."\n              is not a Menu Unit\,"
-                            ." and Because it Does Not Have"
-                            ."\n              an \"&\" as"
-                            ." the Lead Character, $0"
+                            ."\n              is NOT a Menu Unit\,"
+                            #." and Because it Does Not Have"
+                            #."\n              an \"&\" as"
+                            #." the Lead Character, $0"
+                            ."\ and it is NOT a Valid Subroutine.\n\n"
                             ."\n              Cannot Determine "
                             ."if it is a Valid SubRoutine.\n\n";
                      die $die;
@@ -4781,11 +4818,11 @@ return 'DONE_SUB';
                   *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
                my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
-               if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
-                     eq 'CODE') {
+               my $test_result=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
+               if (ref $test_result eq 'CODE') {
 #print "GOT CODE\n";
                   my $cd='';
-                  my $sub=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
+                  my $sub=$test_result;
                   if ($Term::Menus::data_dump_streamer) {
                      $cd=&Data::Dump::Streamer::Dump($sub)->Out();
                      $cd=&transform_sicm($cd,$sicm_regex,$numbor,
@@ -4835,18 +4872,14 @@ return 'DONE_SUB';
                            $MenuUnit_hash_ref,$Conveyed);
                      }
                   }
-               } elsif (substr(${$FullMenu}{$MenuUnit_hash_ref}
-                     [2]{$pn{$numbor}[0]},0,1) ne '&') {
+               } elsif ($test_result!~/^&?(\w+)\s*[(]?.*[)]?\s*$/ ||
+                     !grep { $1 eq $_ } list_module('main')) {
                   my $die="The \"Result14 =>\" Setting\n              -> "
-                         .${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
+                         .$test_result
                          ."\n              Found in the Menu Unit -> "
                          .$MenuUnit_hash_ref
                          ."\n              is not a Menu Unit\,"
-                         ." and Because it Does Not Have"
-                         ."\n              an \"&\" as"
-                         ." the Lead Character, $0"
-                         ."\n              Cannot Determine "
-                         ."if it is a Valid SubRoutine.\n\n";
+                         ." and not a Valid SubRoutine.\n\n";
                   die $die;
                }
                if (${$FullMenu}{$MenuUnit_hash_ref}[2]
@@ -5405,6 +5438,7 @@ You need sub-menus:
 
          Text   => "]Previous[ is a ]Convey[ Utility",
          Convey => [ 'Good','Bad' ]
+
       },
 
       Select => 'One',
@@ -5426,8 +5460,8 @@ You need sub-menus:
       Banner => "\n   Choose a /bin Utility :"
    );
 
-   my @selections=&Menu(\%Menu_1);
-   print "SELECTIONS=@selections\n";
+   my $selection=&Menu(\%Menu_1);
+   print "\n   SELECTION=$selection\n";
 
 The user sees ==>
 
@@ -5474,15 +5508,7 @@ The user sees ==>
 
 =item *
 
-You want to use a perl subroutine to create the text items or banner:
-
-(Note: READ THE COMMENTS embedded in the Menu_2 sample following.
-       The syntax is a bit tricky and MUST be created exactly as
-       described - otherwise it will NOT work!)
-
-   package current_package_name; # Qualify subroutine calls with
-                                 # &main:: if not using
-                                 # a package architechture
+You want to use perl subroutines to create the text items and/or banner:
 
    use Term::Menus;
 
@@ -5512,35 +5538,13 @@ You want to use a perl subroutine to create the text items or banner:
       Item_1 => {
 
          Text   => "]Convey[",
-         Convey => "&current_package_name::create_items(\"]Previous[\")",
-
-                   # IMPORTANT! '&' *must* be used to denote subroutine
-                   #            as the first character
-
-                   #      &current_package_name:: qualifier or &main::
-                   #      quaifiler MUST be used - otherwise
-                   #      Term::Menus cannot locate it
-
-                   #      embedded quote characters must be escaped
-
-                   #      enclosing double quotes MUST be used - this is
-                   #      a STRING being passed to Term::Menus that will
-                   #      then be internally eval-ed during runtime
-                   #      after the macro ]Previous[ is substituted
-
-                   #      other macros and values can be passed as
-                   #      arguments as follows:
-
-                   #      (\"]Previous[\",\"AnyString\")
+         Convey => "create_items(]Previous[)",
 
       },
 
       Select => 'One',
-      Banner => "&current_package_name::create_banner(\"]Previous[\")",
+      Banner => "create_banner(]Previous[)",
 
-                ## or "&main::create_banner(\"]Previous[\")",
-                ## if using in top level script (file does NOT
-                ## have .pm extension)
    );
 
    my %Menu_1=(
@@ -5558,8 +5562,8 @@ You want to use a perl subroutine to create the text items or banner:
       Banner => "\n   Choose a /bin Utility :"
    );
 
-   my @selections=&Menu(\%Menu_1);
-   print "SELECTIONS=@selections\n";
+   my @selection=&Menu(\%Menu_1);
+   print "\n   SELECTION=@selection\n";
 
 The user sees ==>
 
@@ -5602,7 +5606,108 @@ The user sees ==>
 
 The user sees ==>
 
-   SELECTIONS = bash is a Good Utility
+   SELECTION = bash is a Good Utility
+
+=item *
+
+You want to use perl closures to create the text items and/or banner:
+
+   use Term::Menus;
+
+   my $create_items = sub {
+
+      my $previous=shift;
+      my @textlines=();
+      push @textlines, "$previous is a Good Utility";
+      push @textlines, "$previous is a Bad Utility";
+      return \@textlines;
+             ## return value must an array reference
+
+   };
+
+   my $create_banner = sub {
+
+      my $previous=shift;
+      return "\n   Choose an Answer for $previous :"
+             ## return value MUST be a string for banner
+
+   };
+
+   my %Menu_2=(
+
+      Label  => 'Menu_2',
+      Item_1 => {
+
+         Text   => "]Convey[",
+         Convey => $create_items->(']Previous['),
+
+      },
+
+      Select => 'One',
+      Banner => $create_banner->("]Previous["),
+
+   );
+
+   my %Menu_1=(
+
+      Label  => 'Menu_1',
+      Item_1 => {
+
+         Text   => "/bin/Utility - ]Convey[",
+         Convey => [ `ls -1 /bin` ],
+         Result => \%Menu_2,
+
+      },
+
+      Select => 'One',
+      Banner => "\n   Choose a /bin Utility :"
+   );
+
+   my @selection=&Menu(\%Menu_1);
+   print "\n   SELECTION=@selection\n";
+
+The user sees ==>
+
+   Choose a /bin Utility :
+
+      1.        /bin Utility - arch
+      2.        /bin Utility - ash
+      3.        /bin Utility - awk
+      4.        /bin Utility - basename
+      5.        /bin Utility - bash
+      6.        /bin Utility - cat
+      7.        /bin Utility - chgrp
+      8.        /bin Utility - chmod
+      9.        /bin Utility - chown
+      10.       /bin Utility - cp
+
+   a.  Select All.   c.  Clear All.
+   f.  Finish.
+
+   93 Total Choices
+
+   Press ENTER (or "d") to scroll downward
+
+   OR "u" to scroll upward  (Type "quit" to quit)
+
+   PLEASE ENTER A CHOICE:
+
+--< 5 >-<ENTER>----------------------------------
+
+   Choose an Answer for bash :
+
+      1.        bash is a Good Utility
+      2.        bash is a Bad Utility
+
+   (Type "quit" to quit)
+
+   PLEASE ENTER A CHOICE:
+
+--< 1 >-<ENTER>----------------------------------
+
+The user sees ==>
+
+   SELECTION = bash is a Good Utility
 
 =back
 
@@ -5722,8 +5827,6 @@ list supported key names and ther associated value types:
 
 B<Display> => 'Integer'
 
-=item
-
 =over 2
 
 =item
@@ -5742,8 +5845,6 @@ number utilizes in the most practical fashion. The default number is 10.
 
 B<Label> => 'Char String consisting of ASCII Characters'
 
-=item
-
 =over 2
 
 =item
@@ -5760,8 +5861,6 @@ unique Label element> Otherwise C<&Menu()> will throw an error.
 
 B<Item_E<lt>intE<gt>> => { Item Configuration Hash
 Structure }
-
-=item
 
 =over 2
 
@@ -5805,8 +5904,6 @@ Structures>> below.
 
 B<Select> => 'One' --or-- 'Many'
 
-=item
-
 =over 2
 
 =item
@@ -5822,8 +5919,6 @@ default is 'One'.
 =item
 
 B<Banner> => 'Char String consisting of ASCII Characters'
-
-=item
 
 =over 2
 
@@ -5857,8 +5952,6 @@ value types:
 
 B<Text> => 'Char String consisting of ASCII Characters'
 
-=item
-
 =over 2
 
 =item
@@ -5873,8 +5966,6 @@ It is the text the user will see displayed, describing the selection.
 =item
 
 B<Convey> => [ List ] --or-- @List --or-- $Scalar --or-- 'ASCII String'
-
-=item
 
 =over 2
 
@@ -5900,8 +5991,6 @@ below for more information.
 =item
 
 B<Default> => 'Char String' --or-- Perl regular expression - qr/.../
-
-=item
 
 =over 2
 
@@ -5949,8 +6038,6 @@ The user sees ==>
 
 B<Select> => 'One' --or-- 'Many'
 
-=item
-
 =over 2
 
 =item
@@ -5996,8 +6083,6 @@ The user sees ==>
 
 B<Exclude> => 'Char String' --or-- Perl regular expression - qr/.../
 
-=item
-
 =over 2
 
 =item
@@ -6016,8 +6101,6 @@ constructs - simple string or pre-compiled regular expression.
 =item
 
 B<Include> => 'Char String' --or-- Perl regular expression - qr/.../
-
-=item
 
 =over 2
 
@@ -6041,8 +6124,6 @@ two value constructs - simple string or pre-compiled regular expression.
 =item
 
 B<Result> => \%Menu_2  --or --  "&any_method()",
-
-=item
 
 =over 2
 
@@ -6101,8 +6182,6 @@ available Macros:
 =item
 
 B<]Convey[>
-
-=item
 
 =over 2
 
@@ -6169,8 +6248,6 @@ B<NOTE:>     C<]C[>  can be used as a shorthand for  C<]Convey[>.
 =item
 
 B<]Previous[>
-
-=item
 
 =over 2
 
@@ -6266,8 +6343,6 @@ B<NOTE:>     C<]P[>  can be used as a shorthand for  C<]Previous[>.
 =item
 
 B<]Previous[{> <I<Menu_Label>> B<}>
-
-=item
 
 =over 2
 
@@ -6385,8 +6460,6 @@ C<]C[> can be used as a shorthand for C<]Convey[>.
 =item
 
 B<]Selected[>
-
-=item
 
 =over 2
 
@@ -6905,9 +6978,7 @@ Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2000, 2001, 2002, 2003, 2004,
-              2005, 2006, 2007, 2008, 2010,
-              2011
+Copyright (C) 2000-2013
 by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or

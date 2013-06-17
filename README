@@ -1,12 +1,15 @@
 NAME
+
     Term::Menus - Create Powerful Terminal, Console and CMD Enviroment Menus
 
 SYNOPSIS
+
     "use Term::Menus;"
 
     see METHODS section below
 
 DESCRIPTION
+
     Term::Menus allows you to create powerful Terminal, Console and CMD
     environment menus. Any perl script used in a Terminal, Console or CMD
     environment can now include a menu facility that includes sub-menus,
@@ -212,6 +215,7 @@ DESCRIPTION
 
                Text   => "]Previous[ is a ]Convey[ Utility",
                Convey => [ 'Good','Bad' ]
+
             },
 
             Select => 'One',
@@ -233,8 +237,8 @@ DESCRIPTION
             Banner => "\n   Choose a /bin Utility :"
          );
 
-         my @selections=&Menu(\%Menu_1);
-         print "SELECTIONS=@selections\n";
+         my $selection=&Menu(\%Menu_1);
+         print "\n   SELECTION=$selection\n";
 
       The user sees ==>
 
@@ -279,15 +283,8 @@ DESCRIPTION
 
          SELECTIONS = bash is a Good Utility
 
-    * You want to use a perl subroutine to create the text items or banner:
-
-      (Note: READ THE COMMENTS embedded in the Menu_2 sample following. The
-      syntax is a bit tricky and MUST be created exactly as described -
-      otherwise it will NOT work!)
-
-         package current_package_name; # Qualify subroutine calls with
-                                       # &main:: if not using
-                                       # a package architechture
+    * You want to use perl subroutines to create the text items and/or
+      banner:
 
          use Term::Menus;
 
@@ -317,35 +314,13 @@ DESCRIPTION
             Item_1 => {
 
                Text   => "]Convey[",
-               Convey => "&current_package_name::create_items(\"]Previous[\")",
-
-                         # IMPORTANT! '&' *must* be used to denote subroutine
-                         #            as the first character
-
-                         #      &current_package_name:: qualifier or &main::
-                         #      quaifiler MUST be used - otherwise
-                         #      Term::Menus cannot locate it
-
-                         #      embedded quote characters must be escaped
-
-                         #      enclosing double quotes MUST be used - this is
-                         #      a STRING being passed to Term::Menus that will
-                         #      then be internally eval-ed during runtime
-                         #      after the macro ]Previous[ is substituted
-
-                         #      other macros and values can be passed as
-                         #      arguments as follows:
-
-                         #      (\"]Previous[\",\"AnyString\")
+               Convey => "create_items(]Previous[)",
 
             },
 
             Select => 'One',
-            Banner => "&current_package_name::create_banner(\"]Previous[\")",
+            Banner => "create_banner(]Previous[)",
 
-                      ## or "&main::create_banner(\"]Previous[\")",
-                      ## if using in top level script (file does NOT
-                      ## have .pm extension)
          );
 
          my %Menu_1=(
@@ -363,8 +338,8 @@ DESCRIPTION
             Banner => "\n   Choose a /bin Utility :"
          );
 
-         my @selections=&Menu(\%Menu_1);
-         print "SELECTIONS=@selections\n";
+         my @selection=&Menu(\%Menu_1);
+         print "\n   SELECTION=@selection\n";
 
       The user sees ==>
 
@@ -407,7 +382,106 @@ DESCRIPTION
 
       The user sees ==>
 
-         SELECTIONS = bash is a Good Utility
+         SELECTION = bash is a Good Utility
+
+    * You want to use perl closures to create the text items and/or banner:
+
+         use Term::Menus;
+
+         my $create_items = sub {
+
+            my $previous=shift;
+            my @textlines=();
+            push @textlines, "$previous is a Good Utility";
+            push @textlines, "$previous is a Bad Utility";
+            return \@textlines;
+                   ## return value must an array reference
+
+         };
+
+         my $create_banner = sub {
+
+            my $previous=shift;
+            return "\n   Choose an Answer for $previous :"
+                   ## return value MUST be a string for banner
+
+         };
+
+         my %Menu_2=(
+
+            Label  => 'Menu_2',
+            Item_1 => {
+
+               Text   => "]Convey[",
+               Convey => $create_items->(']Previous['),
+
+            },
+
+            Select => 'One',
+            Banner => $create_banner->("]Previous["),
+
+         );
+
+         my %Menu_1=(
+
+            Label  => 'Menu_1',
+            Item_1 => {
+
+               Text   => "/bin/Utility - ]Convey[",
+               Convey => [ `ls -1 /bin` ],
+               Result => \%Menu_2,
+
+            },
+
+            Select => 'One',
+            Banner => "\n   Choose a /bin Utility :"
+         );
+
+         my @selection=&Menu(\%Menu_1);
+         print "\n   SELECTION=@selection\n";
+
+      The user sees ==>
+
+         Choose a /bin Utility :
+
+            1.        /bin Utility - arch
+            2.        /bin Utility - ash
+            3.        /bin Utility - awk
+            4.        /bin Utility - basename
+            5.        /bin Utility - bash
+            6.        /bin Utility - cat
+            7.        /bin Utility - chgrp
+            8.        /bin Utility - chmod
+            9.        /bin Utility - chown
+            10.       /bin Utility - cp
+
+         a.  Select All.   c.  Clear All.
+         f.  Finish.
+
+         93 Total Choices
+
+         Press ENTER (or "d") to scroll downward
+
+         OR "u" to scroll upward  (Type "quit" to quit)
+
+         PLEASE ENTER A CHOICE:
+
+      --< 5 >-<ENTER>----------------------------------
+
+         Choose an Answer for bash :
+
+            1.        bash is a Good Utility
+            2.        bash is a Bad Utility
+
+         (Type "quit" to quit)
+
+         PLEASE ENTER A CHOICE:
+
+      --< 1 >-<ENTER>----------------------------------
+
+      The user sees ==>
+
+         SELECTION = bash is a Good Utility
 
     More examples are in the EXAMPLES section below.
 
@@ -429,6 +503,7 @@ DESCRIPTION
       come with a standard Perl distribution.
 
 METHODS
+
     pick - create a simple menu
             $pick = &pick ($list|\@list|['list',...],[$Banner]);
 
@@ -452,6 +527,7 @@ METHODS
         Configuration Hash Structure.
 
   Menu Configuration Hash Structures
+
         These are the building blocks of the overall Menu architecture. Each
         hash structure represents a *menu screen*. A single menu layer, has
         only one hash structure defining it. A menu with a single sub-menu
@@ -488,6 +564,7 @@ METHODS
            );
 
    Menu Component Elements
+
     Each Menu Configuration Hash Structure consists of elements that define
     and control it's behavior, appearance, constitution and purpose. An
     element's syntax is as you would expect it to be in perl - a key string
@@ -495,8 +572,6 @@ METHODS
     list supported key names and ther associated value types:
 
     *   Display => 'Integer'
-
-    *
 
         * The *Display* key is an *optional* key that determines the number
           of Menu Items that will be displayed on each screen. This is
@@ -508,8 +583,6 @@ METHODS
 
     *   Label => 'Char String consisting of ASCII Characters'
 
-    *
-
         * The *Label* key provides a unique identifier to each Menu
           Structure. *Every Menu Configuration Hash Structure must have a
           valid and unique Label element* Otherwise "&Menu()" will throw an
@@ -518,8 +591,6 @@ METHODS
              Label => 'Menu_1',
 
     *   Item_<int> => { Item Configuration Hash Structure }
-
-    *
 
         * The *Item_<int>* elements define customized menu items. There are
           essentially two methods for creating menu items: The *Item_<int>*
@@ -545,17 +616,13 @@ METHODS
 
     *   Select => 'One' --or-- 'Many'
 
-    *
-
-        * The *Select* element determines whether this particular menu layer
-          allows the selection of multiple items - or a single item. The
-          default is 'One'.
+        * The MENU LEVEL *Select* element determines whether this particular
+          menu layer allows the selection of multiple items - or a single
+          item. The default is 'One'.
 
              Select => 'Many',
 
     *   Banner => 'Char String consisting of ASCII Characters'
-
-    *
 
         * The *Banner* element provides a customized descriptive header to
           the menu. *$Banner* is an optional element - giving instructions,
@@ -568,6 +635,7 @@ METHODS
           See Item Configuration Macros below )
 
    Item Congfiguration Hash Structures
+
     Each Menu Item can have an independant configurtion. Each Menu
     Configuration Hash Structure consists of elements that define and
     control it's behavior, appearance, constitution and purpose. An
@@ -577,8 +645,6 @@ METHODS
 
     *   Text => 'Char String consisting of ASCII Characters'
 
-    *
-
         * The *Text* element provides a customized descriptive string for
           the Item. It is the text the user will see displayed, describing
           the selection.
@@ -586,8 +652,6 @@ METHODS
              Text => 'This is Item_1',
 
     *   Convey => [ List ] --or-- @List --or-- $Scalar --or-- 'ASCII String'
-
-    *
 
         * The *Convey* element has a twofold purpose; it provides for the
           contents of the "]Convey[" macro, and defines or contains the
@@ -606,8 +670,6 @@ METHODS
              Convey => [ `ls -1` ] ,
 
     *   Default => 'Char String' --or-- Perl regular expression - qr/.../
-
-    *
 
         * The *Default* element provides a means to pre-select certain
           elements, as if the items were selected by the user. This can be
@@ -645,9 +707,46 @@ METHODS
 
              PLEASE ENTER A CHOICE:
 
-    *   Exclude => 'Char String' --or-- Perl regular expression - qr/.../
+    *   Select => 'One' --or-- 'Many'
 
-    *
+        * The ITEM LEVEL *Select* element provides a means to inform
+          Term::Menus that the specific items of a single ITEM BLOCK (as
+          opposed to full menu) are subject to multiple selecting - or just
+          single selection. This is useful in particular for Directory Tree
+          navigation - where files can be multi-selected (or tagged), yet
+          when a directory is selectedi, it forces an immediate navigation
+          and new menu - showing the contents of the just selected
+          directory.
+
+          NOTE: See the RECURSIVELY CALLED MENUS section for more
+          information.
+
+             Select => 'More',
+
+          The user sees ==>
+
+             d  1.        bin
+             d  2.        blib
+             d  3.        dist
+             d  4.        inc
+             d  5.        lib
+             d  6.        Module
+             d  7.        t
+                8.        briangreat2.txt
+             *  9.        ChangeLog
+                10.       close.perl
+
+             a.  Select All.   f.  Finish.
+
+             49 Total Choices
+
+             Press ENTER (or "d") to scroll downward
+
+             OR "u" to scroll upward  (Type "quit" to quit)
+
+             PLEASE ENTER A CHOICE:
+
+    *   Exclude => 'Char String' --or-- Perl regular expression - qr/.../
 
         * The *Exclude* element provides a means to remove matching elements
           from the Menu seen by the user. This element is useful only when
@@ -660,8 +759,6 @@ METHODS
              Exclude => qr/base|chown/i,
 
     *   Include => 'Char String' --or-- Perl regular expression - qr/.../
-
-    *
 
         * The *Include* element provides a means to create items filtered
           from a larger list of potential items available via the "]Convey["
@@ -679,8 +776,6 @@ METHODS
              Include => qr/base|chown/i,
 
     *   Result => \%Menu_2 --or -- "&any_method()",
-
-    *
 
         * *Result* is an *optional* element that also has two important
           uses:
@@ -720,14 +815,13 @@ METHODS
           an array.
 
    Item Congfiguration Macros
+
     Each Menu Item can utilize a very powerful set of configuration
     *Macros*. These constructs principally act as purveyors of information -
     from one menu to another, from one element to another. There are
     currently three available Macros:
 
     *   ]Convey[
-
-    *
 
         * "]Convey[" is used in conjunction with the *Convey* element
           (described) earlier. It's purpose to "convey" or transport or
@@ -787,8 +881,6 @@ METHODS
           NOTE: "]C[" can be used as a shorthand for "]Convey[".
 
     *   ]Previous[
-
-    *
 
         * "]Previous[" can be used in child menus. The "]Previous[" Macro
           contains the *Selection* of the parent menu. Unlike the "]Convey["
@@ -877,8 +969,6 @@ METHODS
           NOTE: "]P[" can be used as a shorthand for "]Previous[".
 
     *   ]Previous[{ <*Menu_Label*> }
-
-    *
 
         * "]Previous[{Menu_Label}" can be used in child menus. The
           "]Previous[{Menu_Label}" Macro contains the *Selection* of any
@@ -991,8 +1081,6 @@ METHODS
 
     *   ]Selected[
 
-    *
-
         * "]Selected[" can only be used in a *terminal* menu. ( *A terminal
           menu is the last menu in the chain, or the last menu the user
           sees. It is the menu that defines the* "Result" *element with a
@@ -1025,17 +1113,172 @@ METHODS
 
           NOTE: "]S[" can be used as a shorthand for "]Selected[".
 
-          NOTE: if you want to return output from the Result subroutine,
-                you must include a 'return' statement. So the sub above:
+          NOTE: if you want to return output from the Result subroutine, you
+          must include a 'return' statement. So the sub above:
 
-                sub selected { print "\n   SELECTED ITEM = $_[0]\n" }
+                          sub selected { print "\n   SELECTED ITEM = $_[0]\n" }
 
-                Becomes:
+                       Becomes:
 
-                sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
+                          sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
 
+RECURSIVELY CALLED MENUS
+
+    There are occasions where it is desirable to re-use the same Menu
+    template/hash configuration with dynamically discovered data. One
+    obvious example of this is navigating directory trees. Each subsequent
+    directory selection could potentially contain deeper levels of
+    directories. Essentially, any data structured in any kind of relational
+    tree layout is subject to this kind of navigation approach. Be warned
+    however, unlike most other functionality that is handled almost entirely
+    by the Term::Menus module, the code for doing recursive templating is
+    mostly contained in the template/hash configuration itself. There is a
+    "helper routine" (&get_Menu_map) that Term::Menus provides to assist
+    with the creation of recursively-friendly configurations, but given the
+    highly data-centric characteristics of such functionality, most of the
+    working code must be left to the authoring and management of the user.
+
+   &get_Menu_map()
+
+    This is a helper routine that returns a list of ancestor menu results.
+    This is needed when wanting to navigate a directory tree for instance.
+    Imagine a directory path that looks like this: /one/two/three. A call to
+    &get_Menu_map() when processing directory three with return this list:
+
+    ('one','two').
+
+        * The following code is an example of how to use recursion for
+          navigating a directory tree. (Note: Updated 1/28/2012; this is
+          maturing functionality, and work on this feature continues.):
+
+             use Term::Menus;
+
+             my %dir_menu=(
+
+                Label => 'dir_menu',
+                Item_1 => {
+
+                   Text => "]C[",
+                   Mark => "d",
+                   Convey => sub {
+
+                      if ("]P[") {
+
+                         my $dir="]P[";
+                         if ($^O eq 'cygwin') {
+                            $dir='/cygdrive/c/';
+                         } else {
+                            $dir='/';
+                         }
+                         my @xfiles=();
+                         my @return=();
+                         my @map=get_Menu_map;
+                         my $path=join "/", @map;
+                         opendir(DIR,"$dir$path") || die $!;
+                         @xfiles = readdir(DIR);
+                         closedir(DIR);
+                         foreach my $entry (sort @xfiles) {
+                            next if $entry eq '.';
+                            next if $entry eq '..';
+                            if (-1<$#map) {
+                               next unless -d "$dir$path/$entry";
+                            } else {
+                               next unless -d "$dir/$entry";
+                            }
+                            push @return, "$entry";
+                         }
+                         return @return;
+
+                      }
+                      my @xfiles=();
+                      my @return=();
+                      if ($^O eq 'cygwin') {
+                         opendir(DIR,'/cygdrive/c/') || die $!;
+                      } else {
+                         opendir(DIR,'/') || die $!;
+                      }
+                      @xfiles = readdir(DIR);
+                      closedir(DIR);
+                      foreach my $entry (@xfiles) {
+                         next if $entry eq '.';
+                         next if $entry eq '..';
+                         next unless -d "$entry";
+                         push @return, "$entry";
+                      }
+                      return @return;
+
+                   },
+                   Result => { 'dir_menu'=>'recurse' },
+
+                },
+                Item_2 => {
+
+                   Text => "]C[",
+                   Select => 'Many',
+                   Convey => sub {
+
+                      if ("]P[") {
+
+                         my $dir="]P[";
+                         if ($^O eq 'cygwin') {
+                            $dir='/cygdrive/c/';
+                         } else {
+                            $dir='/';
+                         }
+
+                         my @xfiles=();
+                         my @return=();
+                         my @map=get_Menu_map;
+                         my $path=join "/", @map;
+                         opendir(DIR,"$dir/$path") || die $!;
+                         @xfiles = readdir(DIR);
+                         closedir(DIR);
+                         foreach my $entry (sort @xfiles) {
+                            next if $entry eq '.';
+                            next if $entry eq '..';
+                            if (-1<$#map) {
+                               next if -d "$dir/$path/$entry";
+                            } else {
+                               next if -d "$dir/$entry";
+                            }
+                            push @return, "$entry";
+                         }
+                         return @return;
+
+                      }
+                      my @xfiles=();
+                      my @return=();
+                      if ($^O eq 'cygwin') {
+                         opendir(DIR,'/cygdrive/c/') || die $!;
+                      } else {
+                         opendir(DIR,'/') || die $!;
+                      }
+                      @xfiles = readdir(DIR);
+                      closedir(DIR);
+                      foreach my $entry (@xfiles) {
+                         next if $entry eq '.';
+                         next if $entry eq '..';
+                         next if -d "$entry";
+                         push @return, "$entry";
+                      }
+                      return @return;
+
+                   },
+                },
+                Banner => "   Current Directory: ]P[\n",
+
+             );
+
+             my $selection=Menu(\%dir_menu);
+
+             if (ref $selection eq 'ARRAY') {
+                print "\nSELECTION=",(join " ",@{$selection}),"\n";
+             } else {
+                print "\nSELECTION=$selection\n";
+             }
 
 USAGE and NAVIGATION
+
     Usage of "&pick()" and/or "&Menu()" during the runtime of a script in
     which one or both are included, is simple and intuitive. Nearly
     everything the end user needs in terms of instruction is included
@@ -1046,6 +1289,7 @@ USAGE and NAVIGATION
     to know about.
 
    Forward  ' > ' and  Backward  ' < ' Navigation
+
     When working with more than one "&Menu()" screen, it's valuable to know
     how to navigate back and forth between the different "&Menu()"
     levels/layers. For example, above was illustrated the output for two
@@ -1179,6 +1423,7 @@ USAGE and NAVIGATION
        PLEASE ENTER A CHOICE:
 
    View Sorted Items ' % '
+
     When working with numerous items in a single menu, it may be desirable
     to see the set of choices organized in either descending or reverse
     acscii order. Term::Menus provides this feature with the *Percent* ' % '
@@ -1278,6 +1523,7 @@ USAGE and NAVIGATION
         the parent menu above.
 
    View Summary of Selected Items ' * '
+
     When working with numerous items in a single menu, it is desirable to
     see the set of choices made before leaving the menu and committing to a
     non-returnable forward (perhaps even critical) process. Term::Menus
@@ -1335,17 +1581,15 @@ USAGE and NAVIGATION
         the parent menu above.
 
 EXAMPLES
+
 AUTHOR
+
     Brian M. Kelly <Brian.Kelly@fullautosoftware.net>
 
 COPYRIGHT
-    Copyright (C) 2000, 2001, 2002, 2003, 2004,
-                  2005, 2006, 2007, 2008, 2010,
-                  2011
 
-    by Brian M. Kelly.
+    Copyright (C) 2000-2013 by Brian M. Kelly.
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License.
     (http://opensource.org/licenses/gpl-3.0.html).
-
