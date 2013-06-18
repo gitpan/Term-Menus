@@ -16,7 +16,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.28';
+our $VERSION = '2.29';
 
 
 use 5.006;
@@ -1318,6 +1318,7 @@ sub Menu
 #print "WHAT IS THIS NOW=$eval_convey_code<==\n";
             $eval_convey_code||=sub {};
             @convey=$eval_convey_code->();
+            @convey=@{$convey[0]} if ref $convey[0] eq 'ARRAY';
             #eval {
             #   my $die="\n       FATAL ERROR! - Error in Convey => "
             #          ."sub{ *CONTENT* },\n                      code block."
@@ -1713,7 +1714,7 @@ sub transform_sicm
 sub transform_pmsi
 {
 
-print "TRANSFORM_PMSI CALLER=",caller,"\n";
+#print "TRANSFORM_PMSI CALLER=",caller,"\n";
    ## pmsi - [p]revious [m]enu [s]elected [i]tems 
    my $text=$_[0]||'';
    my $Conveyed=$_[1]||'';
@@ -1814,7 +1815,6 @@ print "TRANSFORM_PMSI CALLER=",caller,"\n";
          $text=~s/$esc_one/$replace/se;
       }
       my $replace='';
-print "WHAT IS PICKS=$picks_from_parent and WHAT IS TEXT=$text\n";
       if (ref $picks_from_parent eq 'ARRAY') {
          $replace=&Data::Dump::Streamer::Dump($picks_from_parent)->Out();
          my $type=ref $picks_from_parent;
@@ -1840,7 +1840,6 @@ print "WHAT IS PICKS=$picks_from_parent and WHAT IS TEXT=$text\n";
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
       $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
       my $replace=${$Conveyed}{$1};
-print "WHAT IS BIGGO REPLACE=$replace\n";
       if (ref $replace) {
          $replace=&Data::Dump::Streamer::Dump(${$Conveyed}{$1})->Out();
          my $type=ref ${$Conveyed}{$1};
@@ -5133,7 +5132,6 @@ sub return_result {
             $elem=unpack('x5 a*',$elem);
             push @{$result_array}, eval $elem;
          } else {
-print "ELEM=$elem\n";
             push @{$result_array}, $elem;
          }
       }
@@ -5610,7 +5608,9 @@ The user sees ==>
 
 =item *
 
-You want to use perl closures to create the text items and/or banner:
+You want to use anonymous subroutines to create the text items and/or banner
+(see the more detailed treatment of anonymous subroutines and Term::Menus
+macros in a later section of this documentation):
 
    use Term::Menus;
 
@@ -5628,7 +5628,7 @@ You want to use perl closures to create the text items and/or banner:
    my $create_banner = sub {
 
       my $previous=shift;
-      return "\n   Choose an Answer for $previous :"
+      return "\n   Choose an Answer for ]Previous[ :"
              ## return value MUST be a string for banner
 
    };
@@ -5639,12 +5639,22 @@ You want to use perl closures to create the text items and/or banner:
       Item_1 => {
 
          Text   => "]Convey[",
-         Convey => $create_items->(']Previous['),
+         Convey => $create_items->(']Previous['), # Subroutine executed
+                                                  # at runtime by Perl
+                                                  # and result is passed
+                                                  # to Term::Menus.
+
+                                                  # Do not use this argument
+                                                  # construct with Result =>
+                                                  # elements because only Menu
+                                                  # blocks or subroutines can
+                                                  # be passed.
 
       },
 
       Select => 'One',
-      Banner => $create_banner->("]Previous["),
+      Banner => $create_banner, # Perl passes sub itself at runtime and
+                                # execution is carried out by Term::Menus.
 
    );
 
@@ -6504,6 +6514,81 @@ B<NOTE:>     if you want to return output from the Result subroutine,
              Becomes:
 
                 sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
+
+=back
+
+=back
+
+=head1 UNLEASH IMMENSE POWER WITH ANONYMOUS SUBROUTINES
+
+Term::Menus was designed from the ground up to be the most powerful data and process organizing utility (for the command environment) immaginable. Some may argue it's the most powerful utility of its kind - PERIOD. Granted it's not as pretty as a true GUI (Graphical User Interfaces), but what it lacks in "style points" it makes up in raw capability. The source of this power is the infinite flexibility to create dynamic menus from any number of data points, with minimal programming and configuration. Anonymous subroutines in Perl are incredibly powerful.
+
+•Anonymous subs can be stored in arrays, hashes and scalars.
+•Anonymous subs can be built at runtime
+•Anonymous subs can be passed as arguments to other functions.
+•Anonymous subs get to keep variables in the surrounding scope.
+
+But most importantly, Term::Menus macros can be used I<directly> in the body of anonymous subroutines! Ordinary subroutines can be used as illustrated above of course, but the macro values can only be passed as arguments to the subroutine. This is much more complicated and less itutive than using macros directly in the code itself. Below is an example of their usage. The author received a request a while back from a user, asking if it was possible to return the item number rather than it's text value. The answer of course is YES! The code below illustrates this:
+
+   use Term::Menus;
+
+   my @list=('One','Two','Three');
+
+   my %Menu_1=(
+
+      Item_1 => {
+
+         Text    => "NUMBER - ]Convey[",
+         Convey  => \@list,
+         Result  => sub {
+                           my $cnt=-1;my $selection=']Selected[';
+                           foreach my $item (@list) {
+                              $cnt++;
+                              chomp($item);
+                              last if -1<index $selection, $item;
+                           } return "$cnt";
+                        }
+
+      },
+
+      Select => 'One',
+      Banner => "\n   Choose a /bin Utility :"
+   );
+
+   my $selection=Menu(\%Menu_1);
+   print "   \nSELECTION = $selection\n";
+
+Anonymous subroutines can be assigned directly to "Item_1" (or 2, etc.) elements 'Convey' and 'Result' as well as to the "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
+
+   use Term::Menus;
+
+   my @list=('One','Two','Three');
+
+   my $result = sub {
+                       my $cnt=-1;my $selection=']Selected[';
+                       foreach my $item (@list) {
+                          $cnt++;
+                          chomp($item);
+                          last if -1<index $selection, $item;
+                       } return "$cnt";
+                    };
+
+   my %Menu_1=(
+
+      Item_1 => {
+
+         Text    => "NUMBER - ]Convey[",
+         Convey  => \@list,
+         Result  => $result,
+
+      },
+
+      Select => 'One',
+      Banner => "\n   Choose a /bin Utility :"
+   );
+
+   my $selection=Menu(\%Menu_1);
+   print "   \nSELECTION = $selection\n";
 
 =back
 
