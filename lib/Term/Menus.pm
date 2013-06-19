@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.30';
+our $VERSION = '2.31';
 
 
 use 5.006;
@@ -5808,8 +5808,6 @@ The user sees ==>
 
 =back
 
-More examples are in the B<EXAMPLES> section below.
-
 Usage questions should be directed to the Usenet newsgroup
 comp.lang.perl.modules.
 
@@ -6564,8 +6562,6 @@ B<]Selected[>
 
 =over 2
 
-=item
-
 C<]Selected[> can only be used in a I<terminal> menu. B<(> I<A terminal menu is
 the last menu in the chain, or the last menu the user sees. It is the menu that
 defines the> C<Result> I<element with a method> C<Result =E<gt> &any_method()>,
@@ -6601,7 +6597,7 @@ C<Result> element method of the current menu:
    );
 
    my $selection=&Menu(\%Menu_1);
-   print "SELECTION=$selection\n";
+   print "\n   SELECTION=$selection\n";
 
 B<NOTE:>     C<]S[>  can be used as a shorthand for  C<]Selected[>.
 
@@ -6618,16 +6614,11 @@ B<NOTE:>     if you want to return output from the Result subroutine,
 
 =back
 
-=head1 UNLEASH IMMENSE POWER WITH ANONYMOUS SUBROUTINES AND MACROS
+=head1 ANONYMOUS SUBROUTINES AND MACROS
 
-Term::Menus was designed from the ground up to be the most powerful data and process organizing utility (for the command environment) imaginable. The source of this power is the infinite flexibility to create dynamic menus from any number of data points, with minimal programming and configuration. Anonymous subroutines in Perl are incredibly powerful.
+Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutines! Ordinary subroutines can be used as illustrated above of course, but the macro values can only be passed as arguments to ordinary subroutines. This is much more complicated and less intuitive than using macros directly in the code itself. Below is an example of their usage. The author received a request a while back from a user, asking if it was possible to return the item number rather than it's text value. The answer of course is YES! The code below illustrates this:
 
-•Anonymous subs can be stored in arrays, hashes and scalars.
-• Anonymous subs can be built at runtime
-• Anonymous subs can be passed as arguments to other functions.
-• Anonymous subs get to keep variables in the surrounding scope.
-
-But most importantly, Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutines! Ordinary subroutines can be used as illustrated above of course, but the macro values can only be passed as arguments to ordinary subroutines. This is much more complicated and less intuitive than using macros directly in the code itself. Below is an example of their usage. The author received a request a while back from a user, asking if it was possible to return the item number rather than it's text value. The answer of course is YES! The code below illustrates this:
+=over 2
 
    use Term::Menus;
 
@@ -6659,7 +6650,11 @@ But most importantly, Term::Menus macros can be used I<directly> in the body of 
    my $selection=Menu(\%Menu_1);
    print "   \nSELECTION = $selection\n";
 
+=back
+
 Anonymous subroutines can be assigned directly to "Item_1" (or Item_2, etc.) elements 'Convey' and 'Result' as well as to the Menu "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
+
+=over 2
 
    use Term::Menus;
 
@@ -7157,8 +7152,6 @@ menu. In other words, if Item 1. is deselected in the summary menu, Item 1.
 will also be deselected in the parent menu above.
 
 =back
-
-=head1 EXAMPLES
 
 =head1 AUTHOR
 
