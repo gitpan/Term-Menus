@@ -2,8 +2,7 @@ package Term::Menus;
 
 #    Menus.pm
 #
-#    Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
-#                  2006, 2007, 2008, 2010, 2011, 2012
+#    Copyright (C) 2000-2013
 #
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
@@ -16,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.29';
+our $VERSION = '2.30';
 
 
 use 5.006;
@@ -1332,7 +1331,7 @@ sub Menu
             #if ($@) {
             #   die $@;
             #}
-         } elsif ($convey_test=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+         } elsif ($convey_test=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                grep { $1 eq $_ } list_module('main')) {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
@@ -1343,6 +1342,7 @@ sub Menu
                                      $amlm_regex,
                                      $picks_from_parent);
                if ($transformed_convey!~/::/) {
+                  $transformed_convey=~s/^[&]//;
                   eval "\@convey=main::$transformed_convey";
                } else {
                   eval "\@convey=$transformed_convey";
@@ -1495,12 +1495,13 @@ sub Menu
          $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
          $picks_from_parent);
    }
-   if ($banner && ($banner=~/^&?(\w+)\s*[(]?.*[)]?\s*$/
+   if ($banner && ($banner=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
          && grep { $1 eq $_ } list_module('main')) &&
          defined $picks_from_parent &&
          !ref $picks_from_parent) {
       my @banner=();
       if ($banner!~/::/) {
+         $banner=~s/^[&]//;
          eval "\@banner=main::$banner";
       } else {
          eval "\@banner=$banner";
@@ -1694,7 +1695,7 @@ sub transform_sicm
    } else {
       $replace=${$all_menu_items_array}[$pn->{$numbor}->[1]-1];
    }
-   if ($text=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+   if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
          grep { $1 eq $_ } list_module('main')) {
       $replace=~s/\'/\\\'/g;
       $replace=~s/\"/\\\"/g;
@@ -1805,7 +1806,7 @@ sub transform_pmsi
                $replace='eval '.$replace;
             }
          }
-         if ($text=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+         if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                grep { $1 eq $_ } list_module('main')) {
             $replace=~s/\'/\\\'/g;
             $replace=~s/\"/\\\"/g;
@@ -1826,12 +1827,12 @@ sub transform_pmsi
       } else {
          $replace=$picks_from_parent;
       }
-      if ($text=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+      if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
             grep { $1 eq $_ } list_module('main')) {
          $replace=~s/\'/\\\'/g;
          $replace=~s/\"/\\\"/g;
          $replace='"'.$replace.'"' unless
-            $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
+            $text=~/^&?(?:.*::)*(\w+)\s*[(]["'].*["'][)]\s*$/;
       }
       $text=~s/$esc_one/$replace/s;
    }
@@ -1988,7 +1989,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       if ($_[1]) {
          my $result=${$Selected}{$_[0]}{$_[1]};
          #if (substr($result,0,1) eq '&') {
-         if ($result=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+         if ($result=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                   grep { $1 eq $_ } list_module('main')) {
             return 0;
          } else {
@@ -1999,7 +2000,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             foreach my $key (keys %{${$Selected}{$_[0]}}) {
                my $result=${$Selected}{$_[0]}{$key};
                #return '+' if substr($result,0,1) eq '&';
-               if ($result=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+               if ($result=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                   grep { $1 eq $_ } list_module('main')) {
                   return '+';
                }
@@ -2017,7 +2018,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       foreach my $key (keys %{$Selected}) {
          foreach my $item (keys %{${$Selected}{$key}}) {
             my $seltext=${$Selected}{$key}{$item};
-            if ($seltext=~/^&?(\w+)\s*[(]?.*[)]?\s*$/ &&
+            if ($seltext=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                   grep { $1 eq $_ } list_module('main')) {
                push @subs, escape_quotes($seltext);
             } elsif (ref $seltext eq 'CODE') {
@@ -2102,7 +2103,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                           "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
                   die $die;
                }
-            } elsif ($test_result!~/^&?(\w+)\s*[(]?.*[)]?\s*$/ ||
+            } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
                      !grep { $1 eq $_ } list_module('main')) {
 
             #} elsif (unpack('a1',
@@ -2132,7 +2133,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";
          if ((ref $test_item eq 'HASH' &&
                    exists $test_item->{Item_1})
-                   || ($test_item=~/^&?(\w+)\s*[(]?.*[)]?\s*$/
+                   || ($test_item=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
                    && grep { $1 eq $_ } list_module('main'))
 #substr($test_item,0,1) eq '&'
                    || ref $test_item eq 'CODE') {
@@ -2476,7 +2477,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     if ((-1<index $firsterr,
                                           'Undefined subroutine') &&
                                           (-1<index $firsterr,$sub)) {
-                                       eval "\@resu=\&main::$sub";
+                                       if ($sub!~/::/) {
+                                          $sub=~s/^[&]//;
+                                          eval "\@resu=main::$sub";
+                                       } else {
+                                          eval "\@resu=$sub";
+                                       }
                                        my $seconderr=$@||'';my $die='';
                                        my $c=$Term::Menus::fa_code;
                                        if ($seconderr=~/Undefined subroutine/) {
@@ -2510,7 +2516,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                           $firsterr);
                                     }
                                  } else {
-                                    eval "\@resu=\&main::$sub";
+                                    if ($sub!~/::/) {
+                                       $sub=~s/^[&]//;
+                                       eval "\@resu=main::$sub";
+                                    } else {
+                                       eval "\@resu=$sub";
+                                    }
                                     die $@ if $@;
                                  }
                               };
@@ -3072,7 +3083,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            my $firsterr=$@||'';
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
-                              eval "\@resu=\&main::$sub";
+                              if ($sub!~/::/) {
+                                 $sub=~s/^[&]//;
+                                 eval "\@resu=main::$sub";
+                              } else {
+                                 eval "\@resu=$sub";
+                              }
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$MenuUnit_hash_ref}
@@ -3098,7 +3114,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
                         } else {
-                           eval "\@resu=\&main::$sub";
+                           if ($sub!~/::/) {
+                              $sub=~s/^[&]//;
+                              eval "\@resu=main::$sub";
+                           } else {
+                              eval "\@resu=$sub";
+                           }
                            die $@ if $@;
                         }
                      };
@@ -3303,7 +3324,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            my $firsterr=$@||'';
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
-                              eval "\@resu=\&main::$sub";
+                              if ($sub!~/::/) {
+                                 $sub=~s/^[&]//;
+                                 eval "\@resu=main::$sub";
+                              } else {
+                                 eval "\@resu=$sub";
+                              }
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$MenuUnit_hash_ref}
@@ -3329,7 +3355,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
                         } else {
-                           eval "\@resu=\&main::$sub";
+                           if ($sub!~/::/) {
+                              $sub=~s/^[&]//; 
+                              eval "\@resu=main::$sub";
+                           } else {
+                              eval "\@resu=$sub";
+                           }
                            die $@ if $@;
                         }
                      };
@@ -3556,7 +3587,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            my $firsterr=$@||'';
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
-                              eval "\@resu=\&main::$sub";
+                              if ($sub!~/::/) {
+                                 $sub=~s/^[&]//;
+                                 eval "\@resu=main::$sub";
+                              } else {
+                                 eval "\@resu=$sub";
+                              }
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$MenuUnit_hash_ref}
@@ -3582,7 +3618,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
                         } else {
-                           eval "\@resu=\&main::$sub";
+                           if ($sub!~/::/) {
+                              $sub=~s/^[&]//;
+                              eval "\@resu=main::$sub";
+                           } else {
+                              eval "\@resu=$sub";
+                           }
                            die $@ if $@;
                         }
                      };
@@ -3775,7 +3816,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            my $firsterr=$@||'';
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
-                              eval "\@resu=\&main::$sub";
+                              if ($sub!~/::/) {
+                                 $sub=~s/^[&]//;
+                                 eval "\@resu=main::$sub";
+                              } else {
+                                 eval "\@resu=$sub";
+                              }
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$MenuUnit_hash_ref}
@@ -3801,7 +3847,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
                         } else {
-                           eval "\@resu=\&main::$sub";
+                           if ($sub!~/::/) {
+                              $sub=~s/^[&]//;
+                              eval "\@resu=main::$sub";
+                           } else {
+                              eval "\@resu=$sub";
+                           }
                            die $@ if $@;
                         }
                      };
@@ -4417,7 +4468,12 @@ return 'DONE_SUB';
                               my $firsterr=$@||'';
                               if ((-1<index $firsterr,'Undefined subroutine') &&
                                     (-1<index $firsterr,$sub)) {
-                                 eval "\@resu=\&main::$sub";
+                                 if ($sub!~/::/) {
+                                    $sub=~s/^[&]//;
+                                    eval "\@resu=main::$sub";
+                                 } else {
+                                    eval "\@resu=$sub";
+                                 }
                                  my $seconderr=$@||'';my $die='';
                                  my $c=$Term::Menus::fa_code;
                                  if ($seconderr=~/Undefined subroutine/) {
@@ -4454,7 +4510,12 @@ return 'DONE_SUB';
                                  }
                               }
                            } else {
-                              eval "\@resu=\&main::$sub";
+                              if ($sub!~/::/) {
+                                 $sub=~s/^[&]//;
+                                 eval "\@resu=main::$sub";
+                              } else {
+                                 eval "\@resu=$sub";
+                              }
                               die $@ if $@;
                            }
                         };
@@ -4608,7 +4669,7 @@ return 'DONE_SUB';
                      }
                   #} elsif (defined $pn{$numbor}[0] &&
                   #      exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
-                  } elsif ($test_result!~/^&?(\w+)\s*[(]?.*[)]?\s*$/ ||
+                  } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
                         !grep { $1 eq $_ } list_module('main')) {
                         #substr(${$FullMenu}{$MenuUnit_hash_ref}
                         #[2]{$pn{$numbor}[0]},0,1) ne '&') {
@@ -4737,7 +4798,12 @@ return 'DONE_SUB';
                            my $firsterr=$@||'';
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
-                              eval "\@resu=\&main::$sub";
+                              if ($sub!~/::/) {
+                                 $sub=~s/^[&]//;
+                                 eval "\@resu=main::$sub";
+                              } else {
+                                 eval "\@resu=$sub";
+                              }
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$MenuUnit_hash_ref}
@@ -4763,7 +4829,12 @@ return 'DONE_SUB';
                               &Net::FullAuto::FA_Core::handle_error($firsterr);
                            }
                         } else {
-                           eval "\@resu=\&main::$sub";
+                           if ($sub!~/::/) {
+                              $sub=~s/^[&]//;
+                              eval "\@resu=main::$sub";
+                           } else {
+                              eval "\@resu=$sub";
+                           }
                            die $@ if $@;
                         }
                      };
@@ -4871,7 +4942,7 @@ return 'DONE_SUB';
                            $MenuUnit_hash_ref,$Conveyed);
                      }
                   }
-               } elsif ($test_result!~/^&?(\w+)\s*[(]?.*[)]?\s*$/ ||
+               } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
                      !grep { $1 eq $_ } list_module('main')) {
                   my $die="The \"Result14 =>\" Setting\n              -> "
                          .$test_result
@@ -4957,7 +5028,12 @@ return 'DONE_SUB';
                         my $firsterr=$@||'';
                         if ((-1<index $firsterr,'Undefined subroutine') &&
                               (-1<index $firsterr,$sub)) {
-                           eval "\@resu=\&main::$sub";
+                           if ($sub!~/::/) {
+                              $sub=~s/^[&]//;
+                              eval "\@resu=main::$sub";
+                           } else {
+                              eval "\@resu=$sub";
+                           }
                            my $seconderr=$@||'';my $die='';
                            if ($seconderr=~/Undefined subroutine/) {
                               if (${$FullMenu}{$MenuUnit_hash_ref}
@@ -4995,8 +5071,14 @@ return 'DONE_SUB';
                         $sub=&transform_pmsi($sub,
                             $Conveyed,$SaveMMap,$pmsi_regex,
                             $amlm_regex,$picks_from_parent);
-                        $sub="\@resu=\&main::$sub";
-                        eval $sub;
+                        if ($sub!~/::/) {
+                           $sub=~s/^[&]//;
+                           eval "\@resu=main::$sub";
+                        } else {
+                           eval "\@resu=$sub";
+                        }
+                        #$sub="\@resu=\&main::$sub";
+                        #eval $sub;
                         if ($@) {
                            my $er=$@."\n       line ";
                            die $er.__LINE__;
@@ -5648,7 +5730,12 @@ macros in a later section of this documentation):
                                                   # construct with Result =>
                                                   # elements because only Menu
                                                   # blocks or subroutines can
-                                                  # be passed.
+                                                  # be passed. (Unless the
+                                                  # return item is itself
+                                                  # a Menu configuration
+                                                  # block [HASH] or an
+                                                  # anonymous subroutine
+                                                  # [CODE])
 
       },
 
@@ -6180,7 +6267,7 @@ C<&Menu()> returns a list (i.e. - array), or I<reference> to an array.
 
 =back
 
-=head3 Item Congfiguration Macros
+=head3 Item Configuration Macros
 
 Each Menu Item can utilize a very powerful set of configuration I<Macros>.
 These constructs principally act as purveyors of information - from one
@@ -6193,6 +6280,7 @@ available Macros:
 
 B<]Convey[>
 
+
 =over 2
 
 =item
@@ -6203,7 +6291,7 @@ with the C<Convey> element - and replace the C<]Convey[> Macro in the C<Text>
 element value with that list item. The I<Convey> mechanism utilizing the
 C<Convey> Macro is essentially an I<Item multiplier>. The entire contents of
 the list associated with the I<Convey> element will be turned into it's own
-C<Item> when the menu is displayed.
+C<Item> when the menu is displayed. Both ordinary and anonymous subroutines can be use to dynamically generate I<Convey> lists. (With I<]Convey[>, macros can be used only as subroutine arguments or in the body of anonymous subroutines - see other examples.)
 
    use Term::Menus;
 
@@ -6258,6 +6346,7 @@ B<NOTE:>     C<]C[>  can be used as a shorthand for  C<]Convey[>.
 =item
 
 B<]Previous[>
+
 
 =over 2
 
@@ -6353,6 +6442,7 @@ B<NOTE:>     C<]P[>  can be used as a shorthand for  C<]Previous[>.
 =item
 
 B<]Previous[{> <I<Menu_Label>> B<}>
+
 
 =over 2
 
@@ -6471,6 +6561,7 @@ C<]C[> can be used as a shorthand for C<]Convey[>.
 
 B<]Selected[>
 
+
 =over 2
 
 =item
@@ -6493,7 +6584,15 @@ C<Result> element method of the current menu:
 
          Text   => "/bin/Utility - ]Convey[",
          Convey => [ `ls -1 /bin` ],
-         Result => "&selected(]Selected[)",
+         Result => "&selected(]Selected[)", # ]Selected[ macro passed to
+                                            # ordinary perl subroutine.
+                                            # The '&' characater is optional
+                                            # but the quotes are NOT. Ordinary
+                                            # subroutine calls MUST be
+                                            # surrounded by either double or
+                                            # single quotes. (DO NOT use
+                                            # quotes around anonymous
+                                            # subroutine calls, however!) 
 
       },
 
@@ -6501,8 +6600,8 @@ C<Result> element method of the current menu:
       Banner => "\n   Choose a /bin Utility :"
    );
 
-   my @selections=&Menu(\%Menu_1);
-   print "SELECTIONS=@selections\n";
+   my $selection=&Menu(\%Menu_1);
+   print "SELECTION=$selection\n";
 
 B<NOTE:>     C<]S[>  can be used as a shorthand for  C<]Selected[>.
 
@@ -6519,16 +6618,16 @@ B<NOTE:>     if you want to return output from the Result subroutine,
 
 =back
 
-=head1 UNLEASH IMMENSE POWER WITH ANONYMOUS SUBROUTINES
+=head1 UNLEASH IMMENSE POWER WITH ANONYMOUS SUBROUTINES AND MACROS
 
-Term::Menus was designed from the ground up to be the most powerful data and process organizing utility (for the command environment) immaginable. Some may argue it's the most powerful utility of its kind - PERIOD. Granted it's not as pretty as a true GUI (Graphical User Interfaces), but what it lacks in "style points" it makes up in raw capability. The source of this power is the infinite flexibility to create dynamic menus from any number of data points, with minimal programming and configuration. Anonymous subroutines in Perl are incredibly powerful.
+Term::Menus was designed from the ground up to be the most powerful data and process organizing utility (for the command environment) imaginable. The source of this power is the infinite flexibility to create dynamic menus from any number of data points, with minimal programming and configuration. Anonymous subroutines in Perl are incredibly powerful.
 
 •Anonymous subs can be stored in arrays, hashes and scalars.
-•Anonymous subs can be built at runtime
-•Anonymous subs can be passed as arguments to other functions.
-•Anonymous subs get to keep variables in the surrounding scope.
+• Anonymous subs can be built at runtime
+• Anonymous subs can be passed as arguments to other functions.
+• Anonymous subs get to keep variables in the surrounding scope.
 
-But most importantly, Term::Menus macros can be used I<directly> in the body of anonymous subroutines! Ordinary subroutines can be used as illustrated above of course, but the macro values can only be passed as arguments to the subroutine. This is much more complicated and less itutive than using macros directly in the code itself. Below is an example of their usage. The author received a request a while back from a user, asking if it was possible to return the item number rather than it's text value. The answer of course is YES! The code below illustrates this:
+But most importantly, Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutines! Ordinary subroutines can be used as illustrated above of course, but the macro values can only be passed as arguments to ordinary subroutines. This is much more complicated and less intuitive than using macros directly in the code itself. Below is an example of their usage. The author received a request a while back from a user, asking if it was possible to return the item number rather than it's text value. The answer of course is YES! The code below illustrates this:
 
    use Term::Menus;
 
@@ -6548,6 +6647,8 @@ But most importantly, Term::Menus macros can be used I<directly> in the body of 
                               last if -1<index $selection, $item;
                            } return "$cnt";
                         }
+                        # Note use of ]Selected[ macro in
+                        # anonymous subroutine body
 
       },
 
@@ -6558,7 +6659,7 @@ But most importantly, Term::Menus macros can be used I<directly> in the body of 
    my $selection=Menu(\%Menu_1);
    print "   \nSELECTION = $selection\n";
 
-Anonymous subroutines can be assigned directly to "Item_1" (or 2, etc.) elements 'Convey' and 'Result' as well as to the "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
+Anonymous subroutines can be assigned directly to "Item_1" (or Item_2, etc.) elements 'Convey' and 'Result' as well as to the Menu "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
 
    use Term::Menus;
 
@@ -6572,6 +6673,7 @@ Anonymous subroutines can be assigned directly to "Item_1" (or 2, etc.) elements
                           last if -1<index $selection, $item;
                        } return "$cnt";
                     };
+                    # Anonymous subroutine assigned to "$result" variable
 
    my %Menu_1=(
 
@@ -6579,7 +6681,8 @@ Anonymous subroutines can be assigned directly to "Item_1" (or 2, etc.) elements
 
          Text    => "NUMBER - ]Convey[",
          Convey  => \@list,
-         Result  => $result,
+         Result  => $result, # Anonymous subroutine assisned via
+                             # "$result" variable
 
       },
 
@@ -6611,7 +6714,7 @@ This is a helper routine that returns a list of ancestor menu results. This is n
 
 =item
 
-The following code is an example of how to use recursion for navigating a directory tree. (Note: Updated 1/28/2012; this is maturing functionality, and work on this feature continues.):
+The following code is an example of how to use recursion for navigating a directory tree.
 
    use Term::Menus;
 
