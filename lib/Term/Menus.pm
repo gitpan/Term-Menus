@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.31';
+our $VERSION = '2.32';
 
 
 use 5.006;
@@ -268,7 +268,12 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_EVENT_REP_WOULD_ROLLBACK &DB_BACKUP_CLEAN
             %DB_BACKUP_READ_COUNT %DB_BACKUP_SINGLE_DIR
             %DB_LOCK_IGNORE_REC %DB_BACKUP_READ_SLEEP
-            %DB_BACKUP_NO_LOGS %DB_REP_WOULDROLLBACK);
+            %DB_BACKUP_NO_LOGS %DB_REP_WOULDROLLBACK
+            %DB_STREAM_WRITE %DB_INTERNAL_BLOB_DB
+            %list_module %DB_STREAM_READ %DB_LOG_BLOB
+            %DB_STREAM_SYNC_WRITE %DB_CHKSUM_FAIL
+            %DB_EVENT_REP_AUTOTAKEOVER_FAILED %DB_VERB_MVCC
+            %DB_REPMGR_ISVIEW);
 
 @EXPORT = qw(pick Menu get_Menu_map);
 
@@ -1178,6 +1183,7 @@ sub run_sub
    }
 
    my $code=$_[0];
+   $code=~s/^[&]//;
    my $menu_args= (defined $_[1]) ? $_[1] : '';
    my $subfile=substr($Term::Menus::fa_code,0,-3).'::'
          if $Term::Menus::fa_code;
@@ -1332,7 +1338,7 @@ sub Menu
             #   die $@;
             #}
          } elsif ($convey_test=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-               grep { $1 eq $_ } list_module('main')) {
+               grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
             if (defined $picks_from_parent &&
                           !ref $picks_from_parent) {
                my $transformed_convey=
@@ -1496,7 +1502,7 @@ sub Menu
          $picks_from_parent);
    }
    if ($banner && ($banner=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
-         && grep { $1 eq $_ } list_module('main')) &&
+         && grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) &&
          defined $picks_from_parent &&
          !ref $picks_from_parent) {
       my @banner=();
@@ -1634,9 +1640,14 @@ sub Menu
 }
 
 sub list_module {
-   my $module = shift;
+   my @modules = @_;
+   my @result=();
    no strict 'refs';
-   return grep { defined &{"$module\::$_"} } keys %{"$module\::"}
+   foreach my $module (@modules) {
+      $module=~s/\.pm$//;
+      push @result,grep { defined &{"$module\::$_"} } keys %{"$module\::"};
+   }
+   return @result;
 }
 
 sub transform_sicm
@@ -1696,7 +1707,7 @@ sub transform_sicm
       $replace=${$all_menu_items_array}[$pn->{$numbor}->[1]-1];
    }
    if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-         grep { $1 eq $_ } list_module('main')) {
+         grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
       $replace=~s/\'/\\\'/g;
       $replace=~s/\"/\\\"/g;
       $replace='"'.$replace.'"' unless
@@ -1807,7 +1818,7 @@ sub transform_pmsi
             }
          }
          if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-               grep { $1 eq $_ } list_module('main')) {
+               grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
             $replace=~s/\'/\\\'/g;
             $replace=~s/\"/\\\"/g;
             $replace='"'.$replace.'"' unless
@@ -1828,7 +1839,7 @@ sub transform_pmsi
          $replace=$picks_from_parent;
       }
       if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-            grep { $1 eq $_ } list_module('main')) {
+            grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
          $replace=~s/\'/\\\'/g;
          $replace=~s/\"/\\\"/g;
          $replace='"'.$replace.'"' unless
@@ -1990,7 +2001,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          my $result=${$Selected}{$_[0]}{$_[1]};
          #if (substr($result,0,1) eq '&') {
          if ($result=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-                  grep { $1 eq $_ } list_module('main')) {
+                  grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
             return 0;
          } else {
             return &find_Selected($result,'',$Selected);
@@ -2001,7 +2012,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                my $result=${$Selected}{$_[0]}{$key};
                #return '+' if substr($result,0,1) eq '&';
                if ($result=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-                  grep { $1 eq $_ } list_module('main')) {
+                  grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
                   return '+';
                }
                my $output=&find_Selected($result,'',$Selected);
@@ -2019,7 +2030,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          foreach my $item (keys %{${$Selected}{$key}}) {
             my $seltext=${$Selected}{$key}{$item};
             if ($seltext=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-                  grep { $1 eq $_ } list_module('main')) {
+                  grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
                push @subs, escape_quotes($seltext);
             } elsif (ref $seltext eq 'CODE') {
                push @subs, $seltext;
@@ -2104,7 +2115,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   die $die;
                }
             } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
-                     !grep { $1 eq $_ } list_module('main')) {
+                     !grep { $1 eq $_ } list_module(
+                     'main',$Term::Menus::fa_code)) {
 
             #} elsif (unpack('a1',
             #      ${$_[0]}{${$FullMenu}{$_[0]}
@@ -2134,8 +2146,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          if ((ref $test_item eq 'HASH' &&
                    exists $test_item->{Item_1})
                    || ($test_item=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
-                   && grep { $1 eq $_ } list_module('main'))
-#substr($test_item,0,1) eq '&'
+                   && grep { $1 eq $_ } list_module(
+                   'main',$Term::Menus::fa_code))
                    || ref $test_item eq 'CODE') {
             my $con_regex=qr/\]c(o+nvey)*\[/i;
             my $sicm_regex=
@@ -2450,6 +2462,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                               eval {
                                  if ($subfile) {
+                                    $sub=~s/^[&]//;
                                     if ($Term::Menus::fullauto && (!exists
                                           ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                           !${$MenuUnit_hash_ref}{'NoPlan'})
@@ -2478,7 +2491,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                           'Undefined subroutine') &&
                                           (-1<index $firsterr,$sub)) {
                                        if ($sub!~/::/) {
-                                          $sub=~s/^[&]//;
                                           eval "\@resu=main::$sub";
                                        } else {
                                           eval "\@resu=$sub";
@@ -3058,6 +3070,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           $sub=~s/^[&]//;
                            if ($Term::Menus::fullauto && (!exists
                                  ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -3084,7 +3097,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
                               if ($sub!~/::/) {
-                                 $sub=~s/^[&]//;
                                  eval "\@resu=main::$sub";
                               } else {
                                  eval "\@resu=$sub";
@@ -3300,6 +3312,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           $sub=~s/^[&]//;
                            if ($Term::Menus::fullauto && (!exists
                                  ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -3325,7 +3338,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
                               if ($sub!~/::/) {
-                                 $sub=~s/^[&]//;
                                  eval "\@resu=main::$sub";
                               } else {
                                  eval "\@resu=$sub";
@@ -3563,6 +3575,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           $sub=~s/^[&]//;
                            if ($Term::Menus::fullauto && (!exists
                                  ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -3588,7 +3601,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
                               if ($sub!~/::/) {
-                                 $sub=~s/^[&]//;
                                  eval "\@resu=main::$sub";
                               } else {
                                  eval "\@resu=$sub";
@@ -3792,6 +3804,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      eval {
                         if ($subfile) {
+                           $sub=~s/^[&]//;
                            if ($Term::Menus::fullauto && (!exists
                                  ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -3817,7 +3830,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
                               if ($sub!~/::/) {
-                                 $sub=~s/^[&]//;
                                  eval "\@resu=main::$sub";
                               } else {
                                  eval "\@resu=$sub";
@@ -4444,6 +4456,7 @@ return 'DONE_SUB';
                         }
                         eval {
                            if ($subfile) {
+                              $sub=~s/^[&]//;
                               if ($Term::Menus::fullauto && (!exists
                                     ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                     !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -4469,7 +4482,6 @@ return 'DONE_SUB';
                               if ((-1<index $firsterr,'Undefined subroutine') &&
                                     (-1<index $firsterr,$sub)) {
                                  if ($sub!~/::/) {
-                                    $sub=~s/^[&]//;
                                     eval "\@resu=main::$sub";
                                  } else {
                                     eval "\@resu=$sub";
@@ -4670,7 +4682,8 @@ return 'DONE_SUB';
                   #} elsif (defined $pn{$numbor}[0] &&
                   #      exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
                   } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
-                        !grep { $1 eq $_ } list_module('main')) {
+                        !grep { $1 eq $_ } list_module('main',
+                        $Term::Menus::fa_code)) {
                         #substr(${$FullMenu}{$MenuUnit_hash_ref}
                         #[2]{$pn{$numbor}[0]},0,1) ne '&') {
 
@@ -4774,6 +4787,7 @@ return 'DONE_SUB';
                      }
                      eval {
                         if ($subfile) {
+                           $sub=~s/^[&]//;
                            if ($Term::Menus::fullauto && (!exists
                                  ${$MenuUnit_hash_ref}{'NoPlan'} ||
                                  !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -4799,7 +4813,6 @@ return 'DONE_SUB';
                            if ((-1<index $firsterr,'Undefined subroutine') &&
                                  (-1<index $firsterr,$sub)) {
                               if ($sub!~/::/) {
-                                 $sub=~s/^[&]//;
                                  eval "\@resu=main::$sub";
                               } else {
                                  eval "\@resu=$sub";
@@ -4943,7 +4956,8 @@ return 'DONE_SUB';
                      }
                   }
                } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
-                     !grep { $1 eq $_ } list_module('main')) {
+                     !grep { $1 eq $_ } list_module(
+                     'main',$Term::Menus::fa_code)) {
                   my $die="The \"Result14 =>\" Setting\n              -> "
                          .$test_result
                          ."\n              Found in the Menu Unit -> "
@@ -5004,6 +5018,7 @@ return 'DONE_SUB';
                   }
                   eval {
                      if ($subfile) {
+                        $sub=~s/^[&]//; 
                         if ($Term::Menus::fullauto && (!exists
                               ${$MenuUnit_hash_ref}{'NoPlan'} ||
                               !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -5021,7 +5036,7 @@ return 'DONE_SUB';
                                 { Label  => ${$MenuUnit_hash_ref}{'Label'},
                                   Number => $numbor,
                                   PlanID =>
-                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                    $Net::FullAuto::FA_Core::makeplan->{Number},
                                   Item   => "&$subfile$sub" }
                         }
                         eval "\@resu=\&$subfile$sub";
@@ -5029,7 +5044,6 @@ return 'DONE_SUB';
                         if ((-1<index $firsterr,'Undefined subroutine') &&
                               (-1<index $firsterr,$sub)) {
                            if ($sub!~/::/) {
-                              $sub=~s/^[&]//;
                               eval "\@resu=main::$sub";
                            } else {
                               eval "\@resu=$sub";
