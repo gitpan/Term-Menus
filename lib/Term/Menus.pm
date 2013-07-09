@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.32';
+our $VERSION = '2.33';
 
 
 use 5.006;
@@ -790,7 +790,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          if $fa_code->[0] && -1==index $fa_code->[0],'Net/FullAuto';
       $fa_code->[0]||='';
       my $argv=join " ",@ARGV;
-      if ($argv!~/--edit |-e[a-z]/) {
+      if ($argv!~/--edi*t* *|-e[a-z]|--admin|-V|-v|--VE*R*S*I*O*N*/) {
          if ($fa_code->[0]) {
             if ($Term::Menus::canload->($fa_code->[0])) {
                require $fa_code->[0];
@@ -1084,7 +1084,6 @@ our $parent_menu='';
 
 sub fa_login
 {
-
    my $code='';my $menu_args='';my $to='';my $die='';
    my $start_menu_ref='';my $cache='';
    my $returned='';
@@ -1589,14 +1588,14 @@ sub Menu
               $filtered_menu_return[0],$filtered_menu_return[1],
               $filtered_menu_return[2];
       }
-#print "WAHT IS ALL=$pick and FULL=$FullMenu and SEL=$Selected and CON=$Conveyed and SAVE=$SavePick and LAST=$SaveMMap and NEXT=$SaveNext and PERSISTS=$Persists  and PARENT=$parent_menu<==\n";
+#print "WAHT IS ALL=",keys %{${$pick}[0]}," and FULL=$FullMenu and SEL=$Selected and CON=$Conveyed and SAVE=$SavePick and LAST=$SaveMMap and NEXT=$SaveNext and PERSISTS=$Persists  and PARENT=$parent_menu<==\n";
       if ($Term::Menus::fullauto && $master_substituted) {
          $pick=~s/$master_substituted/__Master_${$}__/sg;
       }
       if ($pick eq ']quit[') {
          return ']quit['
       } elsif ($pick eq '-' || $pick eq '+') {
-#print "PICKMINUSPLUS2=$pick and  THIS=",keys %{${$Selected}{$MenuUnit_hash_ref}},"\n";
+print "PICKMINUSPLUS2=$pick<== and  THIS=",keys %{${$Selected}{$MenuUnit_hash_ref}},"\n";
          unless (keys %{${$SavePick}{$MenuUnit_hash_ref}}) {
             return $pick,$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
@@ -1630,6 +1629,9 @@ sub Menu
                } else {
                   return $pick; 
                }
+            } elsif (-1==$#{$pick} &&
+                  (ref $topmenu eq 'HASH') && (exists $topmenu->{Item_1})) {
+               return [ $topmenu ];
             } else {
                return $pick->[0];
             }
@@ -1767,6 +1769,7 @@ sub transform_pmsi
    }
    while ($text=~m/($pmsi_regex(?:\{[^}]+\})*)/sg) {
       my $esc_one=$1;
+      $esc_one=~s/["]\s*[.]\s*["]//s;
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
       $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
       while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
@@ -2338,7 +2341,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       }
 #print "NUMBORX=$numbor<==\n";
       while ($numbor=~/\d+/ &&
-            ($numbor<=$start || $start+$choose_num < $numbor)) {
+            ($numbor<=$start || $start+$choose_num < $numbor || $numbor eq 'admin')) {
          my $menu_text='';my $picknum_for_display='';
          $menu_text.=$banner if defined $banner;
          $menu_text.="\n\n";
@@ -2352,6 +2355,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          }
          my $mark_blank=$mark;
          my $mark_flg=0;my $prev_menu=0;
+         $numlist=1 if $numbor eq 'admin';
          while (0 < $numlist) {
             if (exists $picks{$picknum}) {
                $mark_flg=1;
@@ -3921,8 +3925,13 @@ return 'DONE_SUB';
                && exists $MenuUnit_hash_ref->{'Label'}
                && !exists $Net::FullAuto::FA_Core::admin_menus{
                $MenuUnit_hash_ref->{Label}}) {
-            Menu($Net::FullAuto::FA_Core::admin_menu->())
-               if $Net::FullAuto::FA_Core::admin_menu;
+            while (1) {
+print "HOWGWW\n";
+               my @menu_output=Menu($Net::FullAuto::FA_Core::admin_menu->())
+                  if $Net::FullAuto::FA_Core::admin_menu;
+               last if $menu_output[0] ne '-' && $menu_output[0] ne '+';
+            }
+print "WE ARE OUT\n";
          } elsif (!keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^[Aa]$/) {
             #if (${$MenuUnit_hash_ref}{Select} eq 'One') {
@@ -4028,7 +4037,7 @@ return 'DONE_SUB';
             last;
          } chomp $numbor;
          if (!((keys %picks) && $numbor=~/^[Ff]$/) &&
-               $numbor!~/^\d+$/ && !$return_from_child_menu) {
+               $numbor!~/^\d+|admin$/ && !$return_from_child_menu) {
 #print "WELL HELLO FFFF\n";
             $numbor=$start+$choose_num+1;
             last;
@@ -4381,9 +4390,9 @@ return 'DONE_SUB';
                            $Persists;
                      }
                   } elsif ($menu_output eq '-') {
-                     $return_from_child_menu='-';
+                     return $menu_output;#$return_from_child_menu='-';
                   } elsif ($menu_output eq '+') {
-                     $return_from_child_menu='+';
+                     return $menu_output;#$return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
 #print "DONE_SUB11\n";
                      return 'DONE_SUB';
@@ -4901,13 +4910,14 @@ return 'DONE_SUB';
                   *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
                my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
-               my $test_result=${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
+               my $test_result=
+                  ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
                if (ref $test_result eq 'CODE') {
-#print "GOT CODE\n";
                   my $cd='';
                   my $sub=$test_result;
                   if ($Term::Menus::data_dump_streamer) {
                      $cd=&Data::Dump::Streamer::Dump($sub)->Out();
+#print "CD=$cd<==\n";
                      $cd=&transform_sicm($cd,$sicm_regex,$numbor,
                             \@all_menu_items_array,\%picks,\%pn,
                             $return_from_child_menu,$log_handle);
@@ -4916,7 +4926,9 @@ return 'DONE_SUB';
                             $amlm_regex,$picks_from_parent);
                   }
                   $cd=~s/\$CODE\d*\s*=\s*//s;
+#print "CDNOW=$cd\n";
                   $sub=eval $cd;
+#print "SUB NOW=$sub\n";
                   if ($@) {
                      my $die='';
                      if (unpack('a11',$@) eq 'FATAL ERROR') {
@@ -4943,6 +4955,7 @@ return 'DONE_SUB';
                      } else { die $die }
                   }
                   my @resu=$sub->();
+#print "RESU=@resu\n";
                   if (-1<$#resu) {
                      if (0<$#resu && wantarray && !$no_wantarray) {
                         if (1==$recurse_level) {
@@ -4950,6 +4963,10 @@ return 'DONE_SUB';
                         } else {
                            return \@resu;
                         }
+                     } elsif (ref $resu[0] eq 'HASH' &&
+                           exists $resu[0]->{Item_1}) {
+                        ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}=
+                           $resu[0];
                      } else {
                         return return_result($resu[0],
                            $MenuUnit_hash_ref,$Conveyed);
@@ -4966,8 +4983,6 @@ return 'DONE_SUB';
                          ." and not a Valid SubRoutine.\n\n";
                   die $die;
                }
-               if (${$FullMenu}{$MenuUnit_hash_ref}[2]
-                                {$pn{$numbor}[0]}) { }
                $picks{$numbor}='';
                ($FullMenu,$Conveyed,$SaveNext,$Persists,
                   $Selected,$convey,$parent_menu)
@@ -4975,6 +4990,79 @@ return 'DONE_SUB';
                   \@all_menu_items_array,\%picks,$picks_from_parent,
                   $FullMenu,$Conveyed,$Selected,$SaveNext,
                   $Persists,$parent_menu);
+               my $test_item=${$FullMenu}{$MenuUnit_hash_ref}[2]
+                     {$pn{$numbor}[0]}; 
+               $test_item||='';
+               if (ref $test_item eq 'HASH' && exists $test_item->{Item_1}) {
+                  %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
+                  ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=[];
+                  if (0<$#{[keys %picks]}) {
+                     foreach my $key (sort numerically keys %picks) {
+                        push @{${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}},
+                               $all_menu_items_array[$key-1];
+                     }
+                  } else {
+                     ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=
+                        $all_menu_items_array[$numbor-1];
+                  }
+                  my $mcount=0;
+                  unless (exists ${$SaveMMap}{$MenuUnit_hash_ref}) {
+                     if ($filtered_menu) {
+                        my $pmap=[];
+                        foreach my $kee (keys %{$SaveMMap}) {
+                           my $map=&Data::Dump::Streamer::Dump(
+                              ${$SaveMMap}{$kee})->Out();
+                           $map=~s/\$ARRAY\d*\s*=\s*//s;
+                           my $m=eval $map;
+                           $pmap=$m if $#{$pmap}<$#{$m};
+                        }
+                        ${$SaveMMap}{$MenuUnit_hash_ref}=$pmap;
+                        $mcount=&get_Menu_map_count(
+                           ${$SaveMMap}{$MenuUnit_hash_ref});
+                     } elsif ($parent_menu) {
+                        my $parent_map=&Data::Dump::Streamer::Dump(
+                              ${$SaveMMap}{$parent_menu})->Out();
+                        $parent_map=~s/\$ARRAY\d*\s*=\s*//s;
+                        ${$SaveMMap}{$MenuUnit_hash_ref}=eval $parent_map;
+                        $mcount=&get_Menu_map_count(
+                           ${$SaveMMap}{$MenuUnit_hash_ref});
+                     } else {
+                        ${$SaveMMap}{$MenuUnit_hash_ref}=[];
+                     }
+                  }
+                  if (ref $convey eq 'ARRAY') {
+                     push @{${$SaveMMap}{$MenuUnit_hash_ref}},
+                        [ ++$mcount, $convey->[0] ];
+                  } else {
+                     push @{${$SaveMMap}{$MenuUnit_hash_ref}},
+                        [ ++$mcount, $convey ];
+                  }
+                  $MenuMap=${$SaveMMap}{$MenuUnit_hash_ref};
+                  eval {
+                     ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
+                        $SaveMMap,$SaveNext,$Persists)
+                        =&Menu(${$FullMenu}
+                        {$MenuUnit_hash_ref}[2]
+                        {$all_menu_items_array[$numbor-1]},$convey,
+                        $recurse_level,$FullMenu,
+                        $Selected,$Conveyed,$SavePick,
+                        $SaveMMap,$SaveNext,$Persists,
+                        $MenuUnit_hash_ref,$no_wantarray);
+                  };
+                  die $@ if $@;
+                  chomp($menu_output) if !(ref $menu_output);
+                  if ($menu_output eq '-') {
+                     return $menu_output;
+                  } elsif ($menu_output eq '+') {
+                     return $menu_output;
+                  } elsif ($menu_output eq 'DONE_SUB') {
+                     return 'DONE_SUB';
+                  } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
+                     return 'DONE';
+                  } elsif ($menu_output) {
+                     return $menu_output;
+                  } 
+               }
                my %pick=();
                $pick{$numbor}='*';
                %{${$SavePick}{$MenuUnit_hash_ref}}=%pick;
@@ -5002,7 +5090,8 @@ return 'DONE_SUB';
                                Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
-                               Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
+                               Item   =>
+                                  &Data::Dump::Streamer::Dump($sub)->Out() }
                      }
                      @resu=$sub->();
                      if (-1<$#resu) {
