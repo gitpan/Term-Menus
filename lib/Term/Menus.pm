@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.33';
+our $VERSION = '2.34';
 
 
 use 5.006;
@@ -790,7 +790,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          if $fa_code->[0] && -1==index $fa_code->[0],'Net/FullAuto';
       $fa_code->[0]||='';
       my $argv=join " ",@ARGV;
-      if ($argv!~/--edi*t* *|-e[a-z]|--admin|-V|-v|--VE*R*S*I*O*N*/) {
+      if ($argv!~/--edi*t* *|-e[a-z]|--admin|-V|-v|--VE*R*S*I*O*N*|--welcome/) {
          if ($fa_code->[0]) {
             if ($Term::Menus::canload->($fa_code->[0])) {
                require $fa_code->[0];
@@ -1595,7 +1595,7 @@ sub Menu
       if ($pick eq ']quit[') {
          return ']quit['
       } elsif ($pick eq '-' || $pick eq '+') {
-print "PICKMINUSPLUS2=$pick<== and  THIS=",keys %{${$Selected}{$MenuUnit_hash_ref}},"\n";
+#print "PICKMINUSPLUS2=$pick<== and  THIS=",keys %{${$Selected}{$MenuUnit_hash_ref}},"\n";
          unless (keys %{${$SavePick}{$MenuUnit_hash_ref}}) {
             return $pick,$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
@@ -1707,6 +1707,10 @@ sub transform_sicm
       }
    } else {
       $replace=${$all_menu_items_array}[$pn->{$numbor}->[1]-1];
+      $replace=~s/\'/\\\'/g;
+      $replace=~s/\"/\\\"/g;
+      $replace='"'.$replace.'"' unless
+         $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
    }
    if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
          grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
@@ -2724,7 +2728,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                } else { print $blanklines }
             } else { print $blanklines }
             print $menu_text;my $ch=0;
-            #if (${$MenuUnit_hash_ref}{Select} eq 'Many') {
             if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
                print "\n";
                unless (keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}) {
@@ -3926,12 +3929,10 @@ return 'DONE_SUB';
                && !exists $Net::FullAuto::FA_Core::admin_menus{
                $MenuUnit_hash_ref->{Label}}) {
             while (1) {
-print "HOWGWW\n";
                my @menu_output=Menu($Net::FullAuto::FA_Core::admin_menu->())
                   if $Net::FullAuto::FA_Core::admin_menu;
                last if $menu_output[0] ne '-' && $menu_output[0] ne '+';
             }
-print "WE ARE OUT\n";
          } elsif (!keys %{${$FullMenu}{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^[Aa]$/) {
             #if (${$MenuUnit_hash_ref}{Select} eq 'One') {
@@ -4926,7 +4927,7 @@ print "WE ARE OUT\n";
                             $amlm_regex,$picks_from_parent);
                   }
                   $cd=~s/\$CODE\d*\s*=\s*//s;
-#print "CDNOW=$cd\n";
+#print "CDNOW=$cd\n";<STDIN>;
                   $sub=eval $cd;
 #print "SUB NOW=$sub\n";
                   if ($@) {
