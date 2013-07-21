@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.34';
+our $VERSION = '2.35';
 
 
 use 5.006;
@@ -4391,9 +4391,11 @@ return 'DONE_SUB';
                            $Persists;
                      }
                   } elsif ($menu_output eq '-') {
-                     return $menu_output;#$return_from_child_menu='-';
+                     #return $menu_output;
+                     $return_from_child_menu='-';
                   } elsif ($menu_output eq '+') {
-                     return $menu_output;#$return_from_child_menu='+';
+                     #return $menu_output;
+                     $return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
 #print "DONE_SUB11\n";
                      return 'DONE_SUB';
@@ -5529,7 +5531,6 @@ You need to select multiple items and return the selected list:
 
    use Term::Menus;
 
-   my @list=`ls -1 /bin`;
    my %Menu_1=(
 
       Item_1 => {
@@ -6028,7 +6029,6 @@ B<Display> => 'Integer'
 
 =over 2
 
-=item
 
 The I<Display> key is an I<optional> key that determines the number
 of Menu
@@ -6046,7 +6046,6 @@ B<Label> => 'Char String consisting of ASCII Characters'
 
 =over 2
 
-=item
 
 The I<Label> key provides a unique identifier to each Menu Structure.
 I<Every Menu Configuration Hash Structure B<must> have a valid and
@@ -6063,7 +6062,6 @@ Structure }
 
 =over 2
 
-=item
 
 The I<Item_E<lt>intE<gt>> elements define customized menu items.
 There are
@@ -6105,7 +6103,6 @@ B<Select> => 'One' --or-- 'Many'
 
 =over 2
 
-=item
 
 The MENU LEVEL I<Select> element determines whether this particular menu
 layer allows the selection of multiple items - or a single item. The 
@@ -6121,7 +6118,6 @@ B<Banner> => 'Char String consisting of ASCII Characters'
 
 =over 2
 
-=item
 
 The I<Banner> element provides a customized descriptive header to the menu.
 I<$Banner> is an optional element - giving instructions, descriptions, etc.
@@ -6153,7 +6149,6 @@ B<Text> => 'Char String consisting of ASCII Characters'
 
 =over 2
 
-=item
 
 The I<Text> element provides a customized descriptive string for the Item.
 It is the text the user will see displayed, describing the selection.
@@ -6168,7 +6163,6 @@ B<Convey> => [ List ] --or-- @List --or-- $Scalar --or-- 'ASCII String'
 
 =over 2
 
-=item
 
 The I<Convey> element has a twofold purpose; it provides for the contents
 of the C<]Convey[> macro, and defines or contains the string or result that
@@ -6193,7 +6187,6 @@ B<Default> => 'Char String' --or-- Perl regular expression - qr/.../
 
 =over 2
 
-=item
 
 The I<Default> element provides a means to pre-select certain elements,
 as if the items were selected by the user. This can be done with two
@@ -6239,7 +6232,6 @@ B<Select> => 'One' --or-- 'Many'
 
 =over 2
 
-=item
 
 The ITEM LEVEL I<Select> element provides a means to inform Term::Menus
 that the specific items of a single ITEM BLOCK (as opposed to full menu)
@@ -6284,7 +6276,6 @@ B<Exclude> => 'Char String' --or-- Perl regular expression - qr/.../
 
 =over 2
 
-=item
 
 The I<Exclude> element provides a means to remove matching elements
 from the Menu seen by the user. This element is useful only when the
@@ -6303,7 +6294,6 @@ B<Include> => 'Char String' --or-- Perl regular expression - qr/.../
 
 =over 2
 
-=item
 
 The I<Include> element provides a means to create items filtered from a larger
 list of potential items available via the C<]Convey[> macro. This element is
@@ -6326,7 +6316,6 @@ B<Result> => \%Menu_2  --or --  "&any_method()",
 
 =over 2
 
-=item
 
 I<Result> is an I<optional> element that also has two important uses:
 
@@ -6385,7 +6374,6 @@ B<]Convey[>
 
 =over 2
 
-=item
 
 C<]Convey[> is used in conjunction with the I<Convey> element (described)
 earlier. It's purpose to "convey" or transport or carry a list item associated
@@ -6452,7 +6440,6 @@ B<]Previous[>
 
 =over 2
 
-=item
 
 C<]Previous[> can be used in child menus. The C<]Previous[> Macro contains
 the I<Selection> of the parent menu. Unlike the C<]Convey[> Macro, the
@@ -6548,7 +6535,6 @@ B<]Previous[{> <I<Menu_Label>> B<}>
 
 =over 2
 
-=item
 
 C<]Previous[{Menu_Label}> can be used in child menus. The C<]Previous[{Menu_Label}> 
 Macro contains the I<Selection> of any preceding menu specified with the C<Menu_Label> 
