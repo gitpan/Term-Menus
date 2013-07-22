@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.35';
+our $VERSION = '2.36';
 
 
 use 5.006;
@@ -5935,8 +5935,7 @@ list - use C<&pick()>. The syntax is simpler, and you'll write less code.
 =item *
 
 You'll need to be running at least Perl version 5.002 to use this
-module.  This module does not require any libraries that don't already
-come with a standard Perl distribution.
+module.
 
 =back
 
@@ -5948,7 +5947,7 @@ come with a standard Perl distribution.
 
     $pick = &pick ($list|\@list|['list',...],[$Banner]);
 
-Where I<$list> is a variable containing a array or list reference.
+Where I<$list> is a variable containing an array or list reference.
 This argument can also be a escaped array (sending a reference) or
 an anonymous array (which also sends a reference).
 
@@ -5960,7 +5959,7 @@ The default is "Please Pick an Item:"
 
     $pick  = &Menu ($list|\@list|['list',...],[$Banner]);
 
-Where I<$pick> is a variable containing a array or list reference
+Where I<$pick> is a variable containing an array or list reference
 of the pick or picks.
 
     @picks = &Menu ($Menu_1|\%Menu_1|{ Label => 'Menu_1' });
@@ -6092,8 +6091,8 @@ They all share the same C<Result> element.
 
 The syntax and usage of I<Item_E<lt>intE<gt>> elements is important
 and
-extensive enough warrant it's own section. See B<I<Item Configuration Hash
-Structures>> below.
+extensive enough to warrant it's own section. See B<I<Item Configuration 
+Hash Structures>> below.
 
 =back
 
@@ -6114,7 +6113,9 @@ default is 'One'.
 
 =item
 
-B<Banner> => 'Char String consisting of ASCII Characters'
+B<Banner> => 'Char String consisting of ASCII Characters' or  
+anonymous subroutine or subroutine reference for generating 
+dynamic banners.
 
 =over 2
 
@@ -6125,6 +6126,20 @@ The default is "Please Pick an Item:"
 
    Banner => "The following items are for selection,\n".
              "\tEnjoy the Experience!",
+
+--or--
+
+   Banner => sub { <generate dynamic banner content here> },
+
+--or--
+
+   my $create_banner = sub { <generate dynamic banner content here> },
+
+   Banner => $create_banner,
+
+Creating a reference to a Banner subroutine enables the sharing of
+Banner generation code between multiple Menus.
+
 
 B<NOTE:>   Macros (like  C<]Previous[> )  I<can> be used in Banners!   :-)   ( See Item Configuration Macros below )
 
@@ -6319,7 +6334,7 @@ B<Result> => \%Menu_2  --or --  "&any_method()",
 
 I<Result> is an I<optional> element that also has two important uses:
 
-=item *
+=item 
 
 For selecting the child menu next in the chain of operation and conveyance,
 
@@ -6327,7 +6342,7 @@ For selecting the child menu next in the chain of operation and conveyance,
 
 --or--
 
-=item *
+=item
 
 For building customized method arguements using C<&Menu()>'s built-in
 macros.
@@ -6708,7 +6723,7 @@ B<NOTE:>     if you want to return output from the Result subroutine,
 
 Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutines! Ordinary subroutines can be used as illustrated above of course, but the macro values can only be passed as arguments to ordinary subroutines. This is much more complicated and less intuitive than using macros directly in the code itself. Below is an example of their usage. The author received a request a while back from a user, asking if it was possible to return the item number rather than it's text value. The answer of course is YES! The code below illustrates this:
 
-=over 2
+=over 4 
 
    use Term::Menus;
 
@@ -6744,7 +6759,7 @@ Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutin
 
 Anonymous subroutines can be assigned directly to "Item_1" (or Item_2, etc.) elements 'Convey' and 'Result' as well as to the Menu "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
 
-=over 2
+=over 4
 
    use Term::Menus;
 
@@ -6791,13 +6806,7 @@ There are occasions where it is desirable to re-use the same Menu template/hash 
 
 This is a helper routine that returns a list of ancestor menu results. This is needed when wanting to navigate a directory tree for instance. Imagine a directory path that looks like this: /one/two/three. A call to &get_Menu_map() when processing directory three with return this list: ('one','two').
 
-=over4
-
-=item
-
-=over 2
-
-=item
+=over 4
 
 The following code is an example of how to use recursion for navigating a directory tree.
 
@@ -6929,8 +6938,6 @@ The following code is an example of how to use recursion for navigating a direct
 
 =back
 
-=back
-
 =head1 USAGE and NAVIGATION
 
 Usage of C<&pick()> and/or C<&Menu()> during the runtime of a script in which
@@ -6989,7 +6996,6 @@ The user sees ==>
 
    PLEASE ENTER A CHOICE:
 
-=back
 
 In the above example, suppose that the user "fat-fingered" his/her
 choice, and really didn't want to "bash" bash, but wanted to bash
@@ -7001,6 +7007,7 @@ for the BOSS. THANKFULLY, navigation makes this situation avoidable.
 All the user would have to do is type ' B<E<lt>> ' to go backward to the
 previous menu, and ' B<E<gt>> ' to go forward to the next menu (assuming there
 is one in each case):
+
 
 The user sees ==>
 
@@ -7078,6 +7085,8 @@ made in the child menu.
    OR "u" to scroll upward  (Type "quit" to quit)
 
    PLEASE ENTER A CHOICE:
+
+=back
 
 =head3 View Sorted Items ' B<%> '
 

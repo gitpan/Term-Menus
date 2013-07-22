@@ -4,7 +4,7 @@ author:
   - 'Brian M. Kelly <Brian.Kelly@fullautosoftware.net>'
 configure_requires:
 generated_by:
-license: gpl
+license: gpl-3.0
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
@@ -12,7 +12,7 @@ name: Term-Menus
 provides:
   Term::Menus:
     file: lib/Term/Menus.pm
-    version: 2.35
+    version: 2.36
   TMMemHandle:
     file: lib/Term/Menus.pm
 requires:
@@ -21,4 +21,4 @@ requires:
   Term::RawInput: 0
 resources:
   license: http://opensource.org/licenses/gpl-3.0.html
-version: 2.35
+version: 2.36
