@@ -1,3 +1,13 @@
+2013-07-27  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.37 released.
+
+        * Enabled returning '<' in anonymous subroutines so
+          that user has option to code a return to parent
+          Menus from a Result subroutine by simply returning
+          '<'.
+
+
 2013-07-22  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.36 released.

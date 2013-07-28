@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.36';
+our $VERSION = '2.37';
 
 
 use 5.006;
@@ -2459,6 +2459,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  }
                                  @resu=$sub->();
                                  if (-1<$#resu) {
+                                    next if $resu[0] eq '<';
                                     if (0<$#resu && wantarray && !$no_wantarray) {
                                        return @resu;
                                     } else {
@@ -2571,6 +2572,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     } else { die $die }
                                   }
                               } elsif (-1<$#resu) {
+                                 next if $resu[0] eq '<';
                                  if (0<$#resu && wantarray && !$no_wantarray) {
                                     return @resu;
                                  } else {
@@ -3065,6 +3067,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -3166,6 +3169,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -3307,6 +3311,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -3407,6 +3412,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -3570,6 +3576,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -3666,6 +3673,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -3799,6 +3807,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -3899,6 +3908,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else { die $die }
                         }
                      } elsif (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -4456,6 +4466,7 @@ return 'DONE_SUB';
                            }
                            @resu=$sub->();
                            if (-1<$#resu) {
+                              next if $resu[0] eq '<';
                               if (0<$#resu && wantarray && !$no_wantarray) {
                                  return @resu;
                               } else {
@@ -4573,6 +4584,7 @@ return 'DONE_SUB';
                               } else { die $die }
                            }
                         } elsif (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -4683,6 +4695,7 @@ return 'DONE_SUB';
                      }
                      my @resu=$sub->();
                      if (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -4787,6 +4800,7 @@ return 'DONE_SUB';
                         }
                         @resu=$sub->();
                         if (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -4889,6 +4903,7 @@ return 'DONE_SUB';
                         }
                      } else {
                         if (-1<$#resu) {
+                           next if $resu[0] eq '<';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
@@ -4958,8 +4973,9 @@ return 'DONE_SUB';
                      } else { die $die }
                   }
                   my @resu=$sub->();
-#print "RESU=@resu\n";
+#print "RETURN RESU6=@resu\n";
                   if (-1<$#resu) {
+                     next if $resu[0] eq '<';
                      if (0<$#resu && wantarray && !$no_wantarray) {
                         if (1==$recurse_level) {
                            return @resu;
@@ -5098,6 +5114,7 @@ return 'DONE_SUB';
                      }
                      @resu=$sub->();
                      if (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -5217,6 +5234,7 @@ return 'DONE_SUB';
                   } else {
 #print "ARE WE HERE????\n";sleep 10;
                      if (-1<$#resu) {
+                        next if $resu[0] eq '<';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -6758,6 +6776,8 @@ Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutin
 =back
 
 Anonymous subroutines can be assigned directly to "Item_1" (or Item_2, etc.) elements 'Convey' and 'Result' as well as to the Menu "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
+
+B<NOTE:>   To force a return to a parent menu (assuming there is one) from a subroutine assigned to a Result element, just return '<' from the subroutine. This is extremely useful when there is a desire to process a selection, and then return to the parent menu when processing is complete. :-)
 
 =over 4
 
