@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.37';
+our $VERSION = '2.38';
 
 
 use 5.006;
@@ -1630,7 +1630,7 @@ sub Menu
                   return $pick; 
                }
             } elsif (-1==$#{$pick} &&
-                  (ref $topmenu eq 'HASH') && (exists $topmenu->{Item_1})) {
+                  (ref $topmenu eq 'HASH') && (grep { /Item_/ } keys %{$topmenu})) {
                return [ $topmenu ];
             } else {
                return $pick->[0];
@@ -1650,6 +1650,58 @@ sub list_module {
       push @result,grep { defined &{"$module\::$_"} } keys %{"$module\::"};
    }
    return @result;
+}
+
+sub test_hashref {
+
+   my $hashref_to_test=$_[0];
+   if (ref $hashref_to_test eq 'HASH') {
+      if (grep { /Item_/ } keys %{$hashref_to_test}) {
+         if (!exists $Term::Menus::LookUpMenuName->{$hashref_to_test}
+               && exists $hashref_to_test->{'Label'}) {
+            $Term::Menus::LookUpMenuName->{$hashref_to_test}=
+                $hashref_to_test->{'Label'};
+         } return 1;
+      } else {
+         my $die="\n      FATAL ERROR! - Unable to verify Menu\n"
+             ."\n      This Error is usually the result of a Menu"
+             ."\n           block that does not contain properly"
+             ."\n           coded Item blocks or was not coded"
+             ."\n           ABOVE the parent Menu hash block"
+             ."\n           (Example: 1), or not coded with"
+             ."\n           GLOBAL scope (Example: 2).\n"
+             ."\n      Example 1:"
+             ."\n                   my %Example_Menu=( \# ABOVE parent"
+             ."\n                                      \# Best Practice"
+             ."\n                      Item_1 => {"
+             ."\n                         Text   => 'Item Text',"
+             ."\n                      },"
+             ."\n                   );"
+             ."\n                   my %Parent_Menu=(\n"
+             ."\n                      Item_1 => {"
+             ."\n                         Text   => 'Item Text',"
+             ."\n                         Result => \%Example_Menu,"
+             ."\n                      },"
+             ."\n                   );\n"
+             ."\n"
+             ."\n      Example 2:"
+             ."\n                   my %Parent_Menu=(\n"
+             ."\n                      Item_1 => {"
+             ."\n                         Text   => 'Item Text',"
+             ."\n                         Result => \%Example_Menu,"                             
+             ."\n                      },"
+             ."\n                   );"
+             ."\n                   our %Example_Menu=( \# GLOBAL scope"
+             ."\n                                       \# Note: 'our' pragma"
+             ."\n                      Item_1 => {"
+             ."\n                         Text   => 'Item Text',"
+             ."\n                      },"
+             ."\n                   );\n"
+             ."\n";
+         die $die;
+      }
+   } else { return 0 }
+
 }
 
 sub transform_sicm
@@ -1782,7 +1834,7 @@ sub transform_pmsi
                    ."\n            describes a Menu that is *NOT* in the"
                    ."\n            invocation history of this process.\n"
                    ."\n       This Error is usually the result of a missing,"
-                   ."\n            Menu, a Menu block that is not exported or"
+                   ."\n            Menu, a Menu block that was not global or"
                    ."\n            was not coded ABOVE the parent Menu hash"
                    ."\n            block, or whose Label was missing or"
                    ."\n            mis-spelled or mis-labeled.\n"
@@ -2086,59 +2138,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $convey=$convey->[0];
             }
          }
-#print "WHAT IS CONVEYXXXXXXXXXXXXX=@{$convey} and PICK=$pick<==\n";<STDIN>;
-         if ($pick && exists ${$_[0]}{${$FullMenu}{$_[0]}
-               [4]{${$_[1]}[$pick-1]}}{Convey} &&
-               ref ${$_[0]}{${$FullMenu}{$_[0]}
-               [4]{${$_[1]}[$pick-1]}}{Convey} eq 'HASH') {
-#print "ARE WE HEREEEEEEEEEEEEEEEEE\n";<STDIN>;
-            ${$Conveyed}{${$Term::Menus::LookUpMenuName}{$_[0]}}=$convey;
-            $parent_menu=${$Term::Menus::LookUpMenuName}{$_[0]};
-            my $test_result=${$_[0]}{${$FullMenu}{$_[0]}
-                  [4]{${$_[1]}[$pick-1]}}{'Result'};
-            if (ref ${$_[0]}{${$FullMenu}{$_[0]}
-                  [4]{${$_[1]}[$pick-1]}}{'Result'} eq 'HASH') {
-               if (exists ${$_[0]}{${$FullMenu}{$_[0]}
-                     [4]{${$_[1]}[$pick-1]}}{'Result'}{'Label'}) {
-                  $Term::Menus::LookUpMenuName{${$_[0]}{${$FullMenu}{$_[0]}
-                     [4]{${$_[1]}[$pick-1]}}{'Result'}}=
-                     ${$_[0]}{${$FullMenu}{$_[0]}
-                     [4]{${$_[1]}[$pick-1]}}{'Result'}{'Label'};
-                  $parent_menu=$Term::Menus::LookUpMenuName{$_[0]};
-               } else {
-                  my $mcmf=$Term::Menus::fa_menu;
-                  my $die="The \"Result1 =>\" Setting".
-                          "\n\t\tFound in the Menu Unit -> ".
-                          "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
-                          "HASH reference to a Menu Unit\,\n\t\t".
-                          "that does NOT EXIST or is NOT EXPORTED".
-                          "\n\n\tHint: Make sure the Names of all".
-                          "\n\t      Menu Hash Blocks in the\n\t".
-                          "      $mcmf file are\n\t".
-                          "      listed in the \@EXPORT list\n\t".
-                          "      found at the beginning of\n\t".
-                          "      the $mcmf file\n\n\t".
-                          "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-                  die $die;
-               }
-            } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
-                     !grep { $1 eq $_ } list_module(
-                     'main',$Term::Menus::fa_code)) {
-
-            #} elsif (unpack('a1',
-            #      ${$_[0]}{${$FullMenu}{$_[0]}
-            #      [4]{${$_[1]}[$pick-1]}}{'Result'})
-            #      ne '&') {
-
-            }
-         }
-         ${$Conveyed}{${$_[0]}{'Label'}}=$convey;
+         #${$Conveyed}{${$_[0]}{'Label'}}=$convey;
       } elsif ($_[3]) {
          $convey=$_[3];
-         ${$Conveyed}{${$_[0]}{'Label'}}=$convey;
+         #${$Conveyed}{${$_[0]}{'Label'}}=$convey;
       } elsif ($pick) {
          $convey=${$_[1]}[$pick-1];
-         ${$Conveyed}{${$_[0]}{'Label'}}=$convey;
+         #${$Conveyed}{${$_[0]}{'Label'}}=$convey;
       }
       $convey='' if !$convey ||
             (ref $convey eq 'ARRAY' && $#{$convey}==-1);
@@ -2151,7 +2157,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             (values %{$test_item})[0] ne 'recurse')) {
 #print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";
          if ((ref $test_item eq 'HASH' &&
-                   exists $test_item->{Item_1})
+                   grep { /Item_/ } keys %{$test_item})
                    || ($test_item=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
                    && grep { $1 eq $_ } list_module(
                    'main',$Term::Menus::fa_code))
@@ -2164,28 +2170,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
             my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
-            if (ref $test_item eq 'HASH' &&
-                    !exists ${$Term::Menus::LookUpMenuName}{$test_item}) {
-               if (exists ${$test_item}{'Label'}) {
-                  $Term::Menus::LookUpMenuName{$test_item}=
-                     ${$test_item}{'Label'};
-               } else {
-                  my $mcmf=$Term::Menus::fa_menu;
-                  my $die="The \"Result2 =>\" Setting".
-                          "\n\t\tFound in the Menu Unit -> ".
-                          "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
-                          "HASH reference to a Menu Unit\,\n\t\t".
-                          "that does NOT EXIST or is NOT EXPORTED".
-                          "\n\n\tHint: Make sure the Names of all".
-                          "\n\t      Menu Hash Blocks in the\n\t".
-                          "      $mcmf file are\n\t".
-                          "      listed in the \@EXPORT list\n\t".
-                          "      found at the beginning of\n\t".
-                          "      the $mcmf file\n\n\t".
-                          "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-                  die $die;
-               }
-            }
             if ($test_item=~/$con_regex|$pmsi_regex|$amlm_regex|$sicm_regex/) {
                $test_item=&transform_sicm($test_item,$sicm_regex,$numbor,
                              \@all_menu_items_array,$_[2],
@@ -2270,27 +2254,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       ${$Selected}{$_[0]}{$pick}=$test_item if $pick;
       if ($pick && ref ${$_[0]}{${$FullMenu}{$_[0]}
             [4]{${$_[1]}[$pick-1]}}{'Result'} eq 'HASH') {
-         if (exists ${$_[0]}{${$FullMenu}{$_[0]}
-               [4]{${$_[1]}[$pick-1]}}{'Result'}{'Label'}) {
-            ${$SaveNext}{$_[0]}=
-               ${${$FullMenu}{$_[0]}[2]}
-               {${$_[1]}[$pick-1]};
-         } else {
-            my $mcmf=$Term::Menus::fa_menu;
-            my $die="The \"Result4 =>\" Setting".
-                   "\n\t\tFound in the Menu Unit -> ".
-                   "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
-                   "HASH reference to a Menu Unit\,\n\t\t".
-                   "that does NOT EXIST or is NOT EXPORTED".
-                   "\n\n\tHint: Make sure the Names of all".
-                   "\n\t      Menu Hash Blocks in the\n\t".
-                   "      $mcmf file are\n\t".
-                   "      listed in the \@EXPORT list\n\t".
-                   "      found at the beginning of\n\t".
-                   "      the $mcmf file\n\n\t".
-                   "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-            die $die;
-         }
+         ${$SaveNext}{$_[0]}=${${$FullMenu}{$_[0]}[2]}
+            {${$_[1]}[$pick-1]};
       }
       return $FullMenu,$Conveyed,$SaveNext,
              $Persists,$Selected,$convey,$parent_menu;
@@ -2374,14 +2339,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   substr($mark,-1)=$picks{$picknum};
                }
 #print "DO WE GET HERE4 and SEL=${$MenuUnit_hash_ref}{Select}!\n";
-               #if ((${$MenuUnit_hash_ref}{Select} eq 'Many'
                my $gotmany=($select_many ||
                      (keys %{${$MenuUnit_hash_ref}{Select}})) ? 1 : 0;
                if (($gotmany
                      && $numbor=~/^[Ff]$/) || ($picks{$picknum} ne
                      '+' && $picks{$picknum} ne '-' &&
                      !$gotmany)) {
-                     #${$MenuUnit_hash_ref}{Select} ne 'Many')) {
 #print "DO WE GET HERE5! and ${$MenuUnit_hash_ref}{Select}\n";
                   $mark_flg=1;
                   $mark=$mark_blank;
@@ -2390,8 +2353,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         {$all_menu_items_array[$picknum-1]}) && ref
                         ${$FullMenu}{$MenuUnit_hash_ref}[2]
                         {$all_menu_items_array[$picknum-1]} eq 'HASH' &&
-                        (exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
-                        {$all_menu_items_array[$picknum-1]}{Item_1})) {
+                        (grep { /Item_/ } keys %{$FullMenu->{$MenuUnit_hash_ref}[3]})) {
                      if (exists ${$FullMenu}{$MenuUnit_hash_ref}[3]
                                       {$all_menu_items_array[$picknum-1]}) {
                         $convey=${${$FullMenu}{$MenuUnit_hash_ref}[3]
@@ -2764,36 +2726,36 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
             if ($display_this_many_items<$num_pick) {
                print "\n   $num_pick Total Choices\n",
-                     "\n   Press ENTER \(or \"d\"\) to scroll downward\n",
-                     "\n   OR \"u\" to scroll upward  ";
+                     "\n   Press ENTER \(or 'd'\) to scroll downward\n",
+                     "\n   OR 'u' to scroll upward  ";
                if ($Term::Menus::fullauto) {
                   if (exists $MenuUnit_hash_ref->{'Label'} &&
                         exists $Net::FullAuto::FA_Core::admin_menus{
                         $MenuUnit_hash_ref->{'Label'}}) {
-                     print "\(Type \"quit\" to Quit Admin Menu\)\n";
+                     print "\(Type 'quit' to Quit Admin Menu\)\n";
                   } else {
-                     print "\(Type \"quit\" to Quit FullAuto\)\n";
+                     print "\(Type 'quit' to Quit FullAuto\)\n";
                   }
                } else {
-                  print "\n   \(Type \"quit\" to Quit\)\n";
+                  print "\n   \(Type 'quit' to Quit\)\n";
                }
             } elsif ($Term::Menus::fullauto) {
                if ($MenuUnit_hash_ref->{'Label'} &&
                      exists $Net::FullAuto::FA_Core::admin_menus{
                      $MenuUnit_hash_ref->{'Label'}}) {
-                  print "\n   \(Type \"quit\" to Quit Admin Menu\)\n";
+                  print "\n   \(Type 'quit' to Quit Admin Menu\)\n";
                } else {
-                  print "\n   \(Type \"quit\" to Quit FullAuto\)\n";
+                  print "\n   \(Type 'quit' to Quit FullAuto\)\n";
                }
-            } else { print"\n   \(Type \"quit\" to Quit\)\n" }
+            } else { print"\n   \(Type 'quit' to Quit\)\n" }
             if ($Term::Menus::fullauto) {
                if ($MenuUnit_hash_ref->{'Label'} &&
                      exists $Net::FullAuto::FA_Core::admin_menus{
                      $MenuUnit_hash_ref->{'Label'}}) {
-                  print "\n   (Type \"help\" for Help)\n";
+                  print "\n   (Type 'help' for Help)\n";
                } else {
-                  print "\n   (Type \"help\" for Help)".
-                        "  (Type \"admin\" for Admin Menu)\n";
+                  print "\n   (Type 'help' for Help)".
+                        "  (Type 'admin' for Admin Menu)\n";
                }
             }
             if ($Term::Menus::term_input) {
@@ -2877,7 +2839,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            "       selections, BUT -> You have not actually\n",
                            "       selected anything!\n\n       Do you wish ",
                            "to quit or re-attempt selecting?\n\n       ",
-                           "Type \"quit\" to quit or ENTER to continue ... ";
+                           "Type 'quit' to quit or ENTER to continue ... ";
                      if ($Term::Menus::term_input) {
                         print "\n";
                         ($choice,$ikey)=rawInput("   PLEASE ENTER A CHOICE: ");
@@ -3687,10 +3649,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
-#print "NEGATIVE\n";
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
-#print "YEP - HERE IS WHERE IT IS HAPPENING\ n";
                $return_from_child_menu='+';
             } elsif ($menu_output) {
 #print "WHAT IS MENU_OUTPUT=${$menu_output}[0]<==\n" if ref $menu_output eq 'ARRAY';
@@ -3853,7 +3813,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               my $seconderr=$@||'';my $die='';
                               if ($seconderr=~/Undefined subroutine/) {
                                  if (${$FullMenu}{$MenuUnit_hash_ref}
-                                      [2]{$all_menu_items_array[$numbor-1]}) {
+                                       [2]{$all_menu_items_array[$numbor-1]}) {
                                     $die="The \"Result15 =>\" Setting"
                                         ."\n\t\t-> " . ${$FullMenu}
                                         {$MenuUnit_hash_ref}[2]
@@ -4198,7 +4158,10 @@ return 'DONE_SUB';
                          $all_menu_items_array[$pn{$numbor}[1]-1]}{'Label'}||
                          exists $labels{(keys %{${$FullMenu}
                          {$MenuUnit_hash_ref}[2]
-                         {$all_menu_items_array[$digital_numbor-1]}})[0]}) {
+                         {$all_menu_items_array[$digital_numbor-1]}})[0]or[]}||
+                         test_hashref(${$FullMenu}{$MenuUnit_hash_ref}[2]
+                         {$all_menu_items_array[$numbor-1]||
+                         $all_menu_items_array[$pn{$numbor}[1]-1]})) {
                   my $menyou='';
                   my $cur_menu=($filtered_menu)?$parent_menu:$MenuUnit_hash_ref;
 #print "DIGITAL_NUMBER=$digital_numbor<==\n";
@@ -4597,25 +4560,9 @@ return 'DONE_SUB';
 #print "DONE_SUB12\n";
  return 'DONE_SUB';
                   }
-               } else {
-                  my $mcmf=$Term::Menus::fa_menu;
-                  my $die="The \"Result11 =>\" Setting".
-                          "\n\t\tFound in the Menu Unit -> ".
-                          "${$MenuUnit_hash_ref}{'Label'}\n\t\tis a ".
-                          "HASH reference to a Menu Unit\,\n\t\t".
-                          "that does NOT EXIST or is NOT EXPORTED".
-                          "\n\n\tHint: Make sure the Names of all".
-                          "\n\t      Menu Hash Blocks in the\n\t".
-                          "      $mcmf file are\n\t".
-                          "      listed in the \@EXPORT list\n\t".
-                          "      found at the beginning of\n\t".
-                          "      the $mcmf file\n\n\t".
-                          "our \@EXPORT = qw( %Menu_1 %Menu_2 ... )\;\n";
-                  die $die;
                }
             } elsif ($FullMenu && $caller eq $callertest &&
                   ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}}))) {
-                  #${$MenuUnit_hash_ref}{Select} eq 'Many') {
                if ($numbor!~/^[Ff]$/ && exists $picks{$numbor}) {
                   if ($picks{$numbor} eq '*') {
                      delete $picks{$numbor};
@@ -4631,12 +4578,9 @@ return 'DONE_SUB';
                }
                if (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]}) {
                   $numbor=(keys %picks)[0] if $numbor=~/^[Ff]$/;
-                  #if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}
-#print "PICKNUM=$picknum and @all_menu_items_array\n";
                   my $test_result=
-                        ${$FullMenu}{$MenuUnit_hash_ref}[2]{$all_menu_items_array[$picknum-1]};
-                  if (ref ${$FullMenu}{$MenuUnit_hash_ref}[2]{$all_menu_items_array[$picknum-1]}
-                          eq 'CODE') {
+                        ${$FullMenu}{$MenuUnit_hash_ref}[2]{$all_menu_items_array[$numbor-1]};
+                  if (ref $test_result eq 'CODE') {
 #print "GOT CODE\n";
                      my $cd='';
                      my $sub=${$FullMenu}{$MenuUnit_hash_ref}[2]
@@ -4706,12 +4650,12 @@ return 'DONE_SUB';
                      }
                   #} elsif (defined $pn{$numbor}[0] &&
                   #      exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
-                  } elsif ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
-                        !grep { $1 eq $_ } list_module('main',
-                        $Term::Menus::fa_code)) {
+                  } elsif ($test_result &&
+                        ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
+                        (!grep { $1 eq $_ } list_module('main',
+                        $Term::Menus::fa_code) && $picks{$numbor} ne '*'))) {
                         #substr(${$FullMenu}{$MenuUnit_hash_ref}
                         #[2]{$pn{$numbor}[0]},0,1) ne '&') {
-
                      my $die="The \"Result12 =>\" Setting\n              -> "
                             #.${$FullMenu}{$MenuUnit_hash_ref}[2]
                             #{$pn{$numbor}[0]}
@@ -4983,7 +4927,8 @@ return 'DONE_SUB';
                            return \@resu;
                         }
                      } elsif (ref $resu[0] eq 'HASH' &&
-                           exists $resu[0]->{Item_1}) {
+                           grep { /Item_/ } keys %{$resu[0]}) {
+                           #exists $resu[0]->{Item_1}) {
                         ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}=
                            $resu[0];
                      } else {
@@ -5012,7 +4957,8 @@ return 'DONE_SUB';
                my $test_item=${$FullMenu}{$MenuUnit_hash_ref}[2]
                      {$pn{$numbor}[0]}; 
                $test_item||='';
-               if (ref $test_item eq 'HASH' && exists $test_item->{Item_1}) {
+               if (ref $test_item eq 'HASH' && # exists $test_item->{Item_1}) {
+                     grep { /Item_/ } keys %{$test_item}) {
                   %{${$SavePick}{$MenuUnit_hash_ref}}=%picks;
                   ${$Conveyed}{${$MenuUnit_hash_ref}{'Label'}}=[];
                   if (0<$#{[keys %picks]}) {
@@ -5470,7 +5416,7 @@ The user sees ==>
       2.        Second Item
       3.        Third Item
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5508,9 +5454,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5531,9 +5477,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5585,9 +5531,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5615,9 +5561,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5686,9 +5632,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5699,7 +5645,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5788,9 +5734,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5801,7 +5747,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5906,9 +5852,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -5919,7 +5865,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6251,9 +6197,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6295,9 +6241,9 @@ The user sees ==>
 
    49 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6456,9 +6402,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6534,9 +6480,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6547,7 +6493,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6648,7 +6594,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6659,7 +6605,7 @@ The user sees ==>
       1.        Bob said bash is a Good Utility!
       2.        Mary said bash is a Good Utility!
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -6838,7 +6784,7 @@ The following code is an example of how to use recursion for navigating a direct
       Item_1 => {
 
          Text => "]C[",
-         Mark => "d",
+         Mark => 'd',
          Convey => sub {
 
             if ("]P[") {
@@ -6997,9 +6943,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7012,7 +6958,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7036,7 +6982,7 @@ The user sees ==>
       1.        bash is a Good Utility
       2.        bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7062,9 +7008,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7100,9 +7046,9 @@ made in the child menu.
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7139,9 +7085,9 @@ The user sees ==>
 
    929 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7167,9 +7113,9 @@ The user sees ==>
 
    929 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7197,9 +7143,9 @@ The user sees ==>
 
    929 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7243,9 +7189,9 @@ The user sees ==>
 
    93 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward  (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -7260,7 +7206,7 @@ The user sees ==>
    *  9.        /bin Utility - chown
    *  11.       /bin Utility - cpio
 
-   (Type "quit" to quit)
+   (Type 'quit' to quit)
 
    PLEASE ENTER A CHOICE:
 
