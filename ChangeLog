@@ -1,3 +1,24 @@
+2013-08-03  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.39 released.
+
+        * Label elements renamed to "Name" elements
+          and are no longer explicitly "required"
+          for most anticipated usages of Term::Menus;
+          though, are needed for some constructs and
+          are therefore considered "best practice".
+          Now using the CPAN modules PadWalker and
+          Devel::Symdump to dynamically discover
+          *MOST* Menu names.
+
+        * Fixed a number of navigation components when
+          using dynamic and anonymous Menus constructs.
+
+        * Changed documentation to reflect changes, and
+          describe "Explicit Named Macros" and coding
+          approaches for their usage. 
+
+
 2013-07-28  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.38 released.
