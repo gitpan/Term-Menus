@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.39';
+our $VERSION = '2.40';
 
 
 use 5.006;
@@ -1805,7 +1805,7 @@ sub test_hashref {
 sub transform_sicm
 {
 
-#print "TRANSFROM_SICM_CALLER=",caller,"\n";
+#print "TRANSFORM_SICM_CALLER=",caller,"\n";
    ## sicm - [s]elected [i]tems [c]urrent [m]enu
    my $text=$_[0]||'';
    my $sicm_regex=$_[1]||'';
@@ -2227,8 +2227,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $Persists=$_[8];
       my $parent_menu=$_[9];
       my $pick=(keys %{$_[2]})[0] || '';
-#print "PICK=$pick<== and KEYS=",keys %{$_[2]},"\n";
-#print "MENU=",$_[0]->{Name}," WHAT IS THIS=",keys %{${$FullMenu}{$_[0]}[3]},"\n";<STDIN>;
       if ($pick && exists ${$FullMenu}{$_[0]}[3]{${$_[1]}[$pick-1]}) {
          if ($pick && exists ${$_[0]}{${$FullMenu}{$_[0]}
                             [4]{${$_[1]}[$pick-1]}}{Convey}) {
@@ -2251,13 +2249,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          }
 #print "CONVEY1=$convey and MENU=",$_[0]->{Name},"\n";<STDIN>;
          $Conveyed->{pw($_[0])}=$convey;
-      } elsif ($_[3]) {
-         $convey=$_[3];
+      #} elsif ($_[3]) {
+      #   $convey=$_[3];
 #print "CONVEY_picks_from_parent=$convey\n";<STDIN>;
-         $Conveyed->{pw($_[0])}=$convey; 
+      #   $Conveyed->{pw($_[0])}=$convey; 
       } elsif ($pick) {
          $convey=${$_[1]}[$pick-1];
 #print "CONVEY3=$convey\n";<STDIN>;
+         $Conveyed->{pw($_[0])}=$convey;
+      } elsif ($_[3]) {
+         $convey=$_[3];
+#print "CONVEY_picks_from_parent=$convey\n";<STDIN>;
          $Conveyed->{pw($_[0])}=$convey;
       }
       $convey='' if !$convey ||
@@ -3418,8 +3420,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                         {$MenuUnit_hash_ref}[2]
                                         {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        .${$Term::Menus::LookUpMenuName}
-                                        {$MenuUnit_hash_ref}."\n\t\t"
+                                        .$MenuUnit_hash_ref->{Name}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
@@ -4316,7 +4317,6 @@ return 'DONE_SUB';
                      \@all_menu_items_array,\%picks,
                      $picks_from_parent,$FullMenu,$Conveyed,$Selected,
                      $SaveNext,$Persists,$parent_menu);
-#print "CONVEYXXXXX=@{$convey}<==\n";<STDIN>;
                   %{$SavePick->{$cur_menu}}=%picks;
                   $Conveyed->{pw($cur_menu)}=[];
                   if (0<$#{[keys %picks]}) {
@@ -4328,7 +4328,6 @@ return 'DONE_SUB';
                      $Conveyed->{pw($cur_menu)}=
                         $all_menu_items_array[$numbor-1];
                   }
-#print "WHAT IS CONVEY=$convey and PICKS=",keys %picks,"\n";
                   my $mcount=0;
                   unless (exists $SaveMMap->{$cur_menu}) {
                      if ($filtered_menu) {
@@ -4524,8 +4523,7 @@ return 'DONE_SUB';
                                            {$MenuUnit_hash_ref}[2]
                                            {$all_menu_items_array[$numbor-1]}
                                            ."\n\t\tFound in the Menu Unit -> "
-                                           .${$Term::Menus::LookUpMenuName}
-                                           {$MenuUnit_hash_ref}."\n\t\t"
+                                           .$MenuUnit_hash_ref->{Name}."\n\t\t"
                                            ."Specifies a Subroutine"
                                            ." that Does NOT Exist"
                                            ."\n\t\tin the User Code File "
@@ -4839,8 +4837,7 @@ return 'DONE_SUB';
                                         {$MenuUnit_hash_ref}[2]
                                         {$all_menu_items_array[$numbor-1]}
                                         ."\n\t\tFound in the Menu Unit -> "
-                                        .${$Term::Menus::LookUpMenuName}
-                                        {$MenuUnit_hash_ref}."\n\t\t"
+                                        .$MenuUnit_hash_ref->{Name}."\n\t\t"
                                         ."Specifies a Subroutine"
                                         ." that Does NOT Exist"
                                         ."\n\t\tin the User Code File "
@@ -4908,17 +4905,6 @@ return 'DONE_SUB';
             } elsif (keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]} 
                   && exists ${$FullMenu}{$MenuUnit_hash_ref}[2]
                   {$pn{$numbor}[0]}) {
-
-               $picks{$numbor}='';
-#print "WHAT ARE THE PICKS=",keys %picks," and passing to GET_RESULT\n";<STDIN>;
-               ($FullMenu,$Conveyed,$SaveNext,$Persists,
-                  $Selected,$convey,$parent_menu)
-                  =$get_result->($MenuUnit_hash_ref,
-                  \@all_menu_items_array,\%picks,$picks_from_parent,
-                  $FullMenu,$Conveyed,$Selected,$SaveNext,
-                  $Persists,$parent_menu);
-
-#print "WHAT ARE KEYS=",keys %{${$FullMenu}{$MenuUnit_hash_ref}[2]},"\n";<STDIN>;
                my $sicm_regex=
                   qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
                      *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
@@ -4928,54 +4914,29 @@ return 'DONE_SUB';
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
                my $test_result=
                   $FullMenu->{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]};
-#print "WHAT IS TEST_RESULT=$test_result\n";
                if (ref $test_result eq 'CODE') {
-                  my $cd='';
-                  my $sub=$test_result;
-                  if ($Term::Menus::data_dump_streamer) {
-                     $cd=&Data::Dump::Streamer::Dump($sub)->Out();
-#print "CD1=$cd<==\n";<STDIN>;
+                  my $look_at_test_result=
+                        &Data::Dump::Streamer::Dump($test_result)->Out();
+                  if ($look_at_test_result!~/Item_/s) {
+                     $picks{$numbor}='';
+                     ($FullMenu,$Conveyed,$SaveNext,$Persists,
+                        $Selected,$convey,$parent_menu)
+                        =$get_result->($MenuUnit_hash_ref,
+                        \@all_menu_items_array,\%picks,$picks_from_parent,
+                        $FullMenu,$Conveyed,$Selected,$SaveNext,
+                        $Persists,$parent_menu);
+                     my $cd=$look_at_test_result;
                      $cd=&transform_sicm($cd,$sicm_regex,$numbor,
                             \@all_menu_items_array,\%picks,\%pn,
-                            $return_from_child_menu,$log_handle,
-                            $MenuUnit_hash_ref->{Name});
-#print "CD2=$cd<== and MENUNAME=$MenuUnit_hash_ref->{Name}\n";<STDIN>;
-#print "CONVEYED_passing_to_transform=",keys %{$Conveyed},"\n";
+                            $return_from_child_menu,$log_handle);
                      $cd=&transform_pmsi($cd,
                             $Conveyed,$SaveMMap,$pmsi_regex,
                             $amlm_regex,$picks_from_parent);
+                     $cd=~s/\$CODE\d*\s*=\s*//s;
+                     $test_result=eval $cd;
                   }
-                  $cd=~s/\$CODE\d*\s*=\s*//s;
-#print "CDNOW3=$cd\n";<STDIN>;
-                  $sub=eval $cd;
-#print "SUB NOW=$sub\n";<STDIN>;
-                  if ($@) {
-                     my $die='';
-                     if (unpack('a11',$@) eq 'FATAL ERROR') {
-                        if (defined $log_handle &&
-                              -1<index $log_handle,'*') {
-                           print $log_handle $@;
-                           close($log_handle);
-                        }
-                        die $@;
-                     } else {
-                        $die="\n       FATAL ERROR! - The Local "
-                               ."System $Term::Menus::local_hostname Conveyed\n"
-                               ."              the Following "
-                               ."Unrecoverable Error Condition :\n\n"
-                               ."       $@\n       line ".__LINE__;
-                        if (defined $log_handle &&
-                              -1<index $log_handle,'*') {
-                           print $log_handle $die;
-                           close($log_handle);
-                        }
-                     }
-                     if ($Term::Menus::fullauto) {
-                        &Net::FullAuto::FA_Core::handle_error($die);
-                     } else { die $die }
-                  }
-                  my @resu=$sub->();
-#print "RETURN RESU6=@resu\n";<STDIN>;
+                  my @resu=$test_result->();
+#print "RETURN RESU6=@resu<==\n";<STDIN>;
                   if (-1<$#resu) {
                      if ($resu[0] eq '<') { %picks=();next }
                      if (0<$#resu && wantarray && !$no_wantarray) {
@@ -4985,20 +4946,8 @@ return 'DONE_SUB';
                            return \@resu;
                         }
                      } elsif (ref $resu[0] eq 'HASH' &&
-                           grep { /Item_/ } keys %{$resu[0]}) {
-                        my @packages=();
-                        foreach my $package ($cd=~m/package\s*([\w:]+)/g) {
-                           push @packages,$package;
-                        }
-                        pw($resu[0],\@packages);
-                        my $rx=qw/.*?(?:my|our)*\s*\(?%([^\s]*)\)?\s*=\s*[(].*/;
-                        unless (exists $resu[0]->{Name}) {
-                           $cd=~s/^$rx$/$1/s;
-                           if ($cd && $cd=~/^\w+$/) {
-                              $resu[0]->{Name}=$cd;
-                           }
-                        }
-                        $FullMenu->{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}=
+                           (grep { /Item_/ } keys %{$resu[0]})) {
+                        ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}=
                            $resu[0];
                      } else {
                         return return_result($resu[0],
@@ -5016,10 +4965,17 @@ return 'DONE_SUB';
                          ." and not a Valid SubRoutine.\n\n";
                   die $die;
                }
-               my $test_item=$FullMenu->{$MenuUnit_hash_ref}[2]
+               $picks{$numbor}='';
+               ($FullMenu,$Conveyed,$SaveNext,$Persists,
+                  $Selected,$convey,$parent_menu)
+                  =$get_result->($MenuUnit_hash_ref,
+                  \@all_menu_items_array,\%picks,$picks_from_parent,
+                  $FullMenu,$Conveyed,$Selected,$SaveNext,
+                  $Persists,$parent_menu);
+               my $test_item=${$FullMenu}{$MenuUnit_hash_ref}[2]
                      {$pn{$numbor}[0]}; 
                $test_item||='';
-               if (ref $test_item eq 'HASH' && # exists $test_item->{Item_1}) {
+               if (ref $test_item eq 'HASH' &&
                      grep { /Item_/ } keys %{$test_item}) {
                   %{$SavePick->{$MenuUnit_hash_ref}}=%picks;
                   $Conveyed->{pw($MenuUnit_hash_ref)}=[];
@@ -5177,8 +5133,7 @@ return 'DONE_SUB';
                                      {$MenuUnit_hash_ref}[2]
                                      {$all_menu_items_array[$numbor-1]}
                                      ."\n\t\tFound in the Menu Unit -> "
-                                     .${$Term::Menus::LookUpMenuName}
-                                     {$MenuUnit_hash_ref}."\n\t\t"
+                                     .$MenuUnit_hash_ref->{Name}."\n\t\t"
                                      ."Specifies a Subroutine"
                                      ." that Does NOT Exist"
                                      ."\n\t\tin the User Code File "
@@ -6796,44 +6751,6 @@ B<NOTE:>     if you want to return output from the Result subroutine,
              Becomes:
 
                 sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
-
-B<NOTE:>     There is also an Explicit Named Macro construct with this Macro
-             as well - but it has a very limited and "explicit" application.
-             It can be very useful and powerful to dynamically construct child
-             Menus in Result blocks - Embedded Menus are another way to describe
-             these. These can be problematic however for this reason: When a menu
-             is parsed for Macros and Term::Menus finds them, B<ALL> Macros will
-             expanded or replaced - including the ones found in Embedded Menus!
-             To prevent this, explicitly name embedded ]Selected[ macros as
-             follows in the example:
-
-                my %Top_Menu = (
-
-                   Name   => 'Top_Menu',
-                   Item_1 => {
-
-                      Text   => 'Some Top_Menu Text',
-                      Result => {
-
-                         Name   => 'Embedded_Menu',
-                         Item_1 => {
-
-                            Text => 'Some Embedded_Menu Text'
-                            Result => sub { print ]Selected[{Embedded_Menu} }
-
-                         },
-
-                      },
-                   },
-
-                );
-
-             The Embedded Menu is an anonymous hash, and requires a Name
-             element. If one were to use a naked ]Selected[ Macro rather
-             than an Explicit Named Macro here, the printed result would
-             be "Some Top_Menu Text" rather than "Some Embedded_Menu Text"
-             which is probably what the user or Menu developer is really
-             after.
 
 =back
 
