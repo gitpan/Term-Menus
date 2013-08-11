@@ -1,3 +1,11 @@
+2013-08-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.41 released.
+
+        * Can now indicate what Menu to return to from
+          Result with new {<Menu_Name>}< macro.
+
+
 2013-08-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.40 released.

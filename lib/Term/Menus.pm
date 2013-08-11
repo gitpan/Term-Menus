@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.40';
+our $VERSION = '2.41';
 
 
 use 5.006;
@@ -1599,6 +1599,7 @@ sub Menu
                        $SaveMMap,$SaveNext,$Persists,
                        $no_wantarray,$sorted,
                        $select_many);
+#print "PICK=$pick->[0] and CURMENU=$MenuUnit_hash_ref->{Name}\n";
       if (-1<$#filtered_menu_return) {
          return $pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveMMap,$SaveNext,$Persists,$parent_menu,
@@ -1636,6 +1637,10 @@ sub Menu
          if (wantarray && 1==$recurse) {
             my @choyce=@{$pick};undef @{$pick};undef $pick;
             return @choyce
+         } elsif (ref $pick eq 'ARRAY' &&
+               $pick->[0]=~/^[{](.*)[}][<]$/) {
+            return $pick,$FullMenu,$Selected,$Conveyed,
+                       $SavePick,$SaveMMap,$SaveNext,$Persists;
          } elsif (!$picks_from_parent &&
                !(keys %{${$MenuUnit_hash_ref}{Select}})) {
             if (ref $topmenu eq 'HASH' && (keys %{${$topmenu}{Select}} &&
@@ -1647,7 +1652,8 @@ sub Menu
                   return $pick; 
                }
             } elsif (-1==$#{$pick} &&
-                  (ref $topmenu eq 'HASH') && (grep { /Item_/ } keys %{$topmenu})) {
+                  (ref $topmenu eq 'HASH') &&
+                  (grep { /Item_/ } keys %{$topmenu})) {
                return [ $topmenu ];
             } else {
                return $pick->[0];
@@ -2271,7 +2277,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             exists $FullMenu->{$_[0]}[2]{$_[1]->[$pick-1]} &&
             (ref $test_item eq 'HASH' &&
             (values %{$test_item})[0] ne 'recurse')) {
-#print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";
+#print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";<STDIN>;
          if ((ref $test_item eq 'HASH' &&
                    grep { /Item_/ } keys %{$test_item})
                    || ($test_item=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
@@ -2536,7 +2542,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  @resu=$sub->();
                                  if (-1<$#resu) {
                                     if ($resu[0] eq '<') { %picks=();next }
-                                    if (0<$#resu && wantarray && !$no_wantarray) {
+                                    if (0<$#resu && wantarray &&
+                                          !$no_wantarray) {
                                        return @resu;
                                     } else {
 #print "RETURN RESU9\n";
@@ -4371,9 +4378,18 @@ return 'DONE_SUB';
                         $cur_menu,$no_wantarray;
                   }
                   $MenuMap=$SaveMMap->{$cur_menu};
+                  my $returned_FullMenu='';
+                  my $returned_Selected='';
+                  my $returned_Conveyed='';
+                  my $returned_SavePick='';
+                  my $returned_SaveMMap='';
+                  my $returned_SaveNext='';
+                  my $returned_Persists='';
                   eval {
-                     ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                        $SaveMMap,$SaveNext,$Persists)
+                     ($menu_output,$returned_FullMenu,
+                        $returned_Selected,$returned_Conveyed,
+                        $returned_SavePick,$returned_SaveMMap,
+                        $returned_SaveNext,$returned_Persists)
                         =&Menu($FullMenu->
                         {$cur_menu}[2]
                         {$all_menu_items_array[$numbor-1]},$convey,
@@ -4382,6 +4398,33 @@ return 'DONE_SUB';
                         $SaveMMap,$SaveNext,$Persists,
                         $cur_menu,$no_wantarray);
                   };
+                  if (ref $menu_output eq 'ARRAY' &&
+                        $menu_output->[0]=~/^[{](.*)[}][<]$/) {
+                     delete $Selected->{$MenuUnit_hash_ref};
+                     delete $Conveyed->{$MenuUnit_hash_ref};
+                     delete $SavePick->{$MenuUnit_hash_ref};
+                     delete $SaveMMap->{$MenuUnit_hash_ref};
+                     delete $SaveNext->{$MenuUnit_hash_ref};
+                     delete $Persists->{$MenuUnit_hash_ref};
+                     if ($1 eq $MenuUnit_hash_ref->{Name}) {
+                        %picks=();
+                        next;
+                     } else {
+                        delete $FullMenu->{$MenuUnit_hash_ref};
+                        return $menu_output,
+                           $FullMenu,$Selected,$Conveyed,
+                           $SavePick,$SaveMMap,$SaveNext,
+                           $Persists;
+                     }
+                  } else {
+                     $FullMenu=$returned_FullMenu;
+                     $Selected=$returned_Selected;
+                     $Conveyed=$returned_Conveyed;
+                     $SavePick=$returned_SavePick;
+                     $SaveMMap=$returned_SaveMMap;
+                     $SaveNext=$returned_SaveNext;
+                     $Persists=$returned_Persists;
+                  }
                   die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU12=$menu_output<==\n";
@@ -4405,10 +4448,8 @@ return 'DONE_SUB';
                            $Persists;
                      }
                   } elsif ($menu_output eq '-') {
-                     #return $menu_output;
                      $return_from_child_menu='-';
                   } elsif ($menu_output eq '+') {
-                     #return $menu_output;
                      $return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
 #print "DONE_SUB11\n";
@@ -5034,7 +5075,6 @@ return 'DONE_SUB';
                   };
                   die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
-#print "WTF is the MENU OUTPUT=$menu_output\n";<STDIN>;
                   if ($menu_output eq '-') {
                      $return_from_child_menu='-';
                      next;
@@ -5082,6 +5122,13 @@ return 'DONE_SUB';
                      @resu=$sub->();
                      if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
+                        if ($resu[0]=~/^[{](.*)[}][<]$/) {
+                           if ($1 eq $MenuUnit_hash_ref->{Name}) {
+                              %picks=();next;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -5202,6 +5249,13 @@ return 'DONE_SUB';
 #print "ARE WE HERE????\n";sleep 10;
                      if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
+                        if ($resu[0]=~/^[{](.*)[}][<]$/) {
+                           if ($1 eq $MenuUnit_hash_ref->{Name}) {
+                              %picks=();next;
+                           } else {
+                              return $resu[0];
+                           }
+                        }
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
@@ -6796,7 +6850,7 @@ Term::Menus macros can be used I<directly> in the body of B<anonymous> subroutin
 
 Anonymous subroutines can be assigned directly to "Item_1" (or Item_2, etc.) elements 'Convey' and 'Result' as well as to the Menu "Banner" element. Use of the these constructs over more traditional subroutines is encouraged because it means writing less code, while enabling the code that is written to be less complex, more intuitive and readable, and certainly easier to maintain. The same anonymous routine can be use in multipe Menus or Items of a single Menu by assigning that routine to a variable, and then assigning the variable instead.
 
-B<NOTE:>   To force a return to a parent menu (assuming there is one) from a subroutine assigned to a Result element, just return '<' from the subroutine. This is extremely useful when there is a desire to process a selection, and then return to the parent menu when processing is complete. :-)
+B<NOTE:>   To force a return to a parent menu (assuming there is one) from a subroutine assigned to a Result element, just return '<' from the subroutine. This is extremely useful when there is a desire to process a selection, and then return to the parent menu when processing is complete. To return to any ancestor Menu in the stack, return this macro from the subroutine: C<{Menu_Name}<> :-)
 
 =over 4
 
