@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.41';
+our $VERSION = '2.42';
 
 
 use 5.006;
@@ -45,15 +45,15 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_LOG_VERIFY_ERR %DB_EVENT_REG_ALIVE %DB_XA_CREATE
             %DB_VERB_REP_ELECT %DB_REP_JOIN_FAILURE %DB_DELIMITER
             %DB_ENV_TXN %DB_ENV_RPCCLIENT %DB_MPOOL_CLEAN %DB_BTREEOLDVER
-            %DB_TEMPORARY %DB_REPMGR_ACKS_ONE %DB_OLD_VERSION
+            %DB_TEMPORARY %DB_REPMGR_ACKS_ONE %DB_OLD_VERSION %padwalker
             %DB_TEST_POSTLOGMETA %DB_SET_RECNO %DB_SA_UNKNOWNKEY
-            %DB_MAX_RECORDS %DB_LOCK_CONFLICT %DB_REP_NEWMASTER
+            %DB_MAX_RECORDS %DB_LOCK_CONFLICT %DB_REP_NEWMASTER %banner
             %DB_LOCK_FREE_LOCKER %DB_POSITIONI %DB_VERB_FILEOPS
             %DB_LOCK_DEFAULT %DB_REP_ANYWHERE %DB_REPMGR_CONF_2SITE_STRICT
-            %DB_AUTO_COMMIT %DB_TXN_NOWAIT %DB_STAT_LOCK_PARAMS
-            %DB_REP_CONF_NOWAIT %DB_OK_RECNO %DB_SEQ_WRAPPED
+            %DB_AUTO_COMMIT %DB_TXN_NOWAIT %DB_STAT_LOCK_PARAMS %pw
+            %DB_REP_CONF_NOWAIT %DB_OK_RECNO %DB_SEQ_WRAPPED %test_hashref
             %DB_MUTEX_LOCKED %DB_BEFORE %DB_EVENT_REP_MASTER_FAILURE
-            %DB_QUEUE %DB_TXN_LOCK_OPTIMISTIC %DB_REP_UNAVAIL
+            %DB_QUEUE %DB_TXN_LOCK_OPTIMISTIC %DB_REP_UNAVAIL %eval_error
             %DB_FOREIGN_CASCADE %DB_NOOVERWRITE %DB_REP_CONF_AUTOINIT
             %LOGREC_OP %DB_RUNRECOVERY %DB_UNREF %DB_REPMGR_ISPEER
             %DB_VERIFY_BAD %DB_STAT_NOERROR %DB_ENV_LOG_AUTOREMOVE
@@ -1116,17 +1116,9 @@ sub fa_login
          }
          if ($Net::FullAuto::FA_Core::plan) {
             my $plann=shift @{$Net::FullAuto::FA_Core::plan};
-            if (pw($start_menu_ref) eq $plann->{Menu}) {
-               my $return=eval $plann->{Item};
-               &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
-               return $return;
-            } else {
-               my $die=
-                  "\n       FATAL ERROR! -  Plan Number $plann->{PlanID} does"
-                  ."\n                       match the current logic flow."
-                  ."\n\n      ";
-               die($die);
-            }
+            my $return=eval $plann->{Item};
+            &Net::FullAuto::FA_Core::handle_error($@,'-1') if $@;
+            return $return;
          }
          $returned=&Menu($start_menu_ref);
       } elsif ($start_menu_ref) {
@@ -1231,6 +1223,94 @@ sub get_Menu_map
    return @menu_picks;
 }
 
+sub eval_error
+{
+
+   my $log_handle=$_[1]||'';
+   if (10<length $_[0] && unpack('a11',$_[0]) eq 'FATAL ERROR') {
+      if (defined $log_handle &&
+            -1<index $log_handle,'*') {
+         print $log_handle $@;
+         close($log_handle);
+      }
+      die $_[0];
+   } else {
+      my $die="\n       FATAL ERROR! - The Local "
+             ."System $Term::Menus::local_hostname "
+             ."Conveyed\n"
+             ."              the Following "
+             ."Unrecoverable Error Condition :\n\n"
+             ."       $_[0]\n       line ".__LINE__;
+      if (defined $log_handle &&
+            -1<index $log_handle,'*') {
+         print $log_handle $die;
+         close($log_handle);
+      }
+      if ($Term::Menus::fullauto) {
+         &Net::FullAuto::FA_Core::handle_error($die);
+      } else { die $die }
+   }
+}
+
+sub banner
+{
+
+   my $banner=$_[0]||'';
+   return '' unless $banner;
+   my $Conveyed=$_[1]||'';
+   my $SaveMMap=$_[2]||'';
+   my $picks_from_parent=$_[3]||'';
+   my $log_handle=$_[4]||'';
+   my $pmsi_regex=qr/\](!)?p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+      *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+   my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
+      *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
+   $banner||='';
+   if (ref $banner eq 'CODE') {
+      my $banner_code=$banner;
+      if ($Term::Menus::data_dump_streamer) {
+         $banner_code=
+            &Data::Dump::Streamer::Dump($banner_code)->Out();
+         $banner_code=&transform_pmsi($banner_code,
+            $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
+            $picks_from_parent);
+      }
+#print "WHAT IS CDNOW2=$banner_code<==\n";<STDIN>;
+      $banner_code=~s/\$CODE\d*\s*=\s*//s;
+#print "WHAT IS CDREALLYNOW=$banner_code<==\n";<STDIN>;
+      my $eval_banner_code=eval $banner_code;
+      $eval_banner_code||=sub {};
+      eval {
+         my $die="\n"
+                ."       FATAL ERROR! - Error in Banner => sub{ *CONTENT* },\n"
+                ."                      code block. To find error, copy the\n"
+                ."                      *CONTENT* to a separate script, and\n"
+                ."                      test for the error there. Use the\n"
+                ."                      'use strict;' pragma.\n\n";
+         $banner=$eval_banner_code->() or die $die;
+      };
+      &eval_error($@,$log_handle) if $@;
+   } elsif (keys %{$Conveyed} || $picks_from_parent) {
+      $banner=&transform_pmsi($banner,
+         $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
+         $picks_from_parent);
+   }
+   if ($banner && ($banner=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
+         && grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) &&
+         defined $picks_from_parent &&
+         !ref $picks_from_parent) {
+      my @banner=();
+      if ($banner!~/::/) {
+         $banner=~s/^[&]//;
+         eval "\@banner=main::$banner";
+      } else {
+         eval "\@banner=$banner";
+      }
+      $banner=join '',@banner;
+   } return $banner;
+
+}
+
 sub Menu
 {
 #print "MENUCALLER=",(caller)[0]," and ",__PACKAGE__,"\n";<STDIN>;
@@ -1239,7 +1319,7 @@ sub Menu
 
    #print "MENU=",&Data::Dump::Streamer::Dump($MenuUnit_hash_ref)->Out(),"\n";;
 
-   $MenuUnit_hash_ref->{Name}=pw($MenuUnit_hash_ref);
+   $MenuUnit_hash_ref->{Name}=&pw($MenuUnit_hash_ref);
    my $select_many=0;
    if (exists ${$MenuUnit_hash_ref}{Select}) {
       if (${$MenuUnit_hash_ref}{Select}=~/many/i) {
@@ -1275,13 +1355,13 @@ sub Menu
    if (defined $_[12] && $_[12]) {
       return '','','','','','','','','','','',$_[12];
    }
-   my $pmsi_regex=qr/\]p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+   my $pmsi_regex=qr/\](!)?p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
       *c*(?:h+osen[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
    my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
       *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
    my %Items=();my %negate=();my %result=();my %convey=();
    my %chosen=();my %default=();my %select=();my %mark=();
-   my $pick='';my $picks=[];my $banner='';my %num__=();
+   my $pick='';my $picks=[];my %num__=();
    my $display_this_many_items=10;my $die_err='';
    my $master_substituted='';my $convey='';$mark{BLANK}=1;
    my $num=0;my @convey=();my $filtered=0;my $sorted='';
@@ -1335,6 +1415,7 @@ sub Menu
             $convey_code=~s/\$CODE\d*\s*=\s*//s;
 #print "WHAT IS CDREALLYNOW=$convey_code<==\n";<STDIN>;
             my $eval_convey_code=eval $convey_code;
+            #&eval_error($@,$log_handle) if $@;
 #print "WHAT IS THIS NOW=$eval_convey_code<==\n";
             $eval_convey_code||=sub {};
             @convey=$eval_convey_code->();
@@ -1475,61 +1556,13 @@ sub Menu
          $chosen{$text}="Item_$num";
          $num__{$text}=${$Items{$num}}{__NUM__}
             if exists ${$Items{$num}}{__NUM__};
-      } $banner='';
+      }
    }
 
 
       #########################################
       # End Items Breakdown
 
-   $banner=${$_[0]}{Banner}
-      if exists ${$_[0]}{Banner};
-   if (ref $banner eq 'CODE') {
-      my $banner_code=$banner;
-      if ($Term::Menus::data_dump_streamer) {
-         $banner_code=
-            &Data::Dump::Streamer::Dump($banner_code)->Out();
-#print "PICKSFROMPARENTXX=$picks_from_parent AND CONVEY_CODE=$convey_code\n";
-         $banner_code=&transform_pmsi($banner_code,
-            $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
-            $picks_from_parent);
-      }
-#print "WHAT IS CDNOW2=$banner_code<==\n";<STDIN>;
-      $banner_code=~s/\$CODE\d*\s*=\s*//s;
-#print "WHAT IS CDREALLYNOW=$banner_code<==\n";<STDIN>;
-      my $eval_banner_code=eval $banner_code;
-#print "WHAT IS THIS NOW=$eval_banner_code<==\n";
-      $eval_banner_code||=sub {};
-      eval {
-         my $die="\n"
-                ."       FATAL ERROR! - Error in Banner => sub{ *CONTENT* },\n"
-                ."                      code block. To find error, copy the\n"
-                ."                      *CONTENT* to a separate script, and\n"
-                ."                      test for the error there. Use the\n"
-                ."                      'use strict;' pragma.\n\n";
-         $banner=$eval_banner_code->() or die $die;
-      };
-      if ($@) {
-         die $@;
-      }
-   } else {
-      $banner=&transform_pmsi($banner,
-         $Conveyed,$SaveMMap,$pmsi_regex,$amlm_regex,
-         $picks_from_parent);
-   }
-   if ($banner && ($banner=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
-         && grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) &&
-         defined $picks_from_parent &&
-         !ref $picks_from_parent) {
-      my @banner=();
-      if ($banner!~/::/) {
-         $banner=~s/^[&]//;
-         eval "\@banner=main::$banner";
-      } else {
-         eval "\@banner=$banner";
-      }
-      $banner=join '',@banner;
-   }
    $display_this_many_items=${$_[0]}{Display}
       if exists ${$_[0]}{Display};
 
@@ -1556,7 +1589,7 @@ sub Menu
    if ($select_many || keys %{$MenuUnit_hash_ref->{Select}}) {
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveMMap,$SaveNext,$Persists,$parent_menu)=&pick(
-                        $picks,$banner,
+                        $picks,$MenuUnit_hash_ref->{Banner}||'',
                         $display_this_many_items,'','',
                         $MenuUnit_hash_ref,++$recurse,
                         $picks_from_parent,$parent_menu,
@@ -1592,7 +1625,8 @@ sub Menu
       ($pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveMMap,$SaveNext,$Persists,$parent_menu,
               @filtered_menu_return)
-              =&pick($picks,$banner,$display_this_many_items,
+              =&pick($picks,$MenuUnit_hash_ref->{Banner}||'',
+                       $display_this_many_items,
                        '','',$MenuUnit_hash_ref,++$recurse,
                        $picks_from_parent,$parent_menu,
                        $FullMenu,$Selected,$Conveyed,$SavePick,
@@ -1824,6 +1858,9 @@ sub transform_sicm
    my $current_menu_name=$_[8]||'';
    my $selected=[];my $replace='';
    my $expand_array_flag=0;
+   $sicm_regex=
+      qr/\]s(?:e+lected[-_]*)*i*(?:t+ems[-_]*)
+         *c*(?:u+rrent[-_]*)*m*(?:e+nu[-_]*)*\[/xi;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
       unless ($text=~/^\s*\]\[\[\s*/s && $text=~/\s*\]\]\[\s*$/s) {
          my $die="\n       FATAL ERROR! - The --RETURN-ARRAY-- Macro"
@@ -1912,8 +1949,11 @@ sub transform_pmsi
    my $amlm_regex=$_[4]||'';
    my $picks_from_parent=$_[5]||'';
    my $log_handle=$_[6]||'';
-#print "TRANSFORM_CONVEYED=",keys %{$Conveyed}," and PICKS=$picks_from_parent<==\n";;<STDIN>;
    my $expand_array_flag=0;
+   $pmsi_regex=qr/\](!)?p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+      *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+   $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
+      *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
    $text=~s/\s?$//s;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
       unless ($text=~/^\s*\]\[\[\s*/s && $text=~/\s*\]\]\[\s*$/s) {
@@ -1943,13 +1983,17 @@ sub transform_pmsi
       $expand_array_flag=1;
    }
    while ($text=~m/($pmsi_regex(?:\{[^}]+\})*)/sg) {
-      my $esc_one=$1;
-#print "ESC_ONE=$esc_one and CONVEYED=",&Data::Dump::Streamer::Dump($Conveyed)->Out(),"\n";
+      my $esc_one=$1;my $bang=$2||'';
+#print "ESC_ONE=$esc_one<== and BANG=$bang<== and CONVEYED=",&Data::Dump::Streamer::Dump($Conveyed)->Out(),"\n";
       $esc_one=~s/["]\s*[.]\s*["]//s;
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
       $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
+#print "esc_one=$esc_one<==\n";
+#print "TEXT=$text<==\n";
       while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
-         unless (exists ${$Conveyed}{$1}) {
+#print "ARE WE HERE\n";sleep 3;
+#print "WHAT IS DOLLARONENOW=$1\n";
+         unless (exists $Conveyed->{$1} || $bang) {
             my $die="\n       FATAL ERROR! - The Menu Name:  \"$1\""
                    ."\n            describes a Menu that is *NOT* in the"
                    ."\n            invocation history of this process.\n"
@@ -1980,12 +2024,11 @@ sub transform_pmsi
                &Net::FullAuto::FA_Core::handle_error($die);
             } else { die $die }
          }
-#print "DOLLARONE=$1<==\n";
-         my $replace=${$Conveyed}{$1};
-#print "REPLACE=$replace\n";
+         last unless $Conveyed->{$1};
+         my $replace=$Conveyed->{$1};
          if (ref $replace) {
             $replace=&Data::Dump::Streamer::Dump(${$Conveyed}{$1})->Out();
-            my $type=ref ${$Conveyed}{$1};
+            my $type=ref $Conveyed->{$1};
             $replace=~s/\$$type\d*\s*=\s*//s;
             $replace=~s/\'/\\\'/sg;
             if ($expand_array_flag) {
@@ -2024,6 +2067,7 @@ sub transform_pmsi
    }
    while ($text=~m/($amlm_regex(?:\{[^}]+\})*)/sg) {
       my $esc_one=$1;
+      last unless $esc_one;
       $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
       $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
       my $replace=${$Conveyed}{$1};
@@ -2037,8 +2081,7 @@ sub transform_pmsi
          }
       }
       $text=~s/$esc_one/$replace/se;
-   }
-   return $text;
+   } return $text;
 
 }
 
@@ -2099,7 +2142,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    my %exclude=();my %include=();my %default=();
    my %labels=();
    foreach my $menuhash (keys %{$FullMenu}) {
-      my $name=pw($FullMenu->{$menuhash}[0]);
+      my $name=&pw($FullMenu->{$menuhash}[0]);
       if ($name) {
          $FullMenu->{$menuhash}[0]->{Name}=$name;
       } else { next }
@@ -2254,19 +2297,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
          }
 #print "CONVEY1=$convey and MENU=",$_[0]->{Name},"\n";<STDIN>;
-         $Conveyed->{pw($_[0])}=$convey;
+         $Conveyed->{&pw($_[0])}=$convey;
       #} elsif ($_[3]) {
       #   $convey=$_[3];
 #print "CONVEY_picks_from_parent=$convey\n";<STDIN>;
-      #   $Conveyed->{pw($_[0])}=$convey; 
+      #   $Conveyed->{&pw($_[0])}=$convey; 
       } elsif ($pick) {
          $convey=${$_[1]}[$pick-1];
 #print "CONVEY3=$convey\n";<STDIN>;
-         $Conveyed->{pw($_[0])}=$convey;
+         $Conveyed->{&pw($_[0])}=$convey;
       } elsif ($_[3]) {
          $convey=$_[3];
 #print "CONVEY_picks_from_parent=$convey\n";<STDIN>;
-         $Conveyed->{pw($_[0])}=$convey;
+         $Conveyed->{&pw($_[0])}=$convey;
       }
       $convey='' if !$convey ||
             (ref $convey eq 'ARRAY' && $#{$convey}==-1);
@@ -2288,8 +2331,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             my $sicm_regex=
                qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
                   *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
-            my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
-                  *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
+            my $pmsi_regex=qr/\](!)?p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+                  *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
             my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
             if ($test_item=~/$con_regex|$pmsi_regex|$amlm_regex|$sicm_regex/) {
@@ -2414,25 +2457,19 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          if (substr($plannn,2,5) eq 'ARRAY') {
             my $eval_plan=substr($plannn,1,-1);
             $plan_=eval $eval_plan;
+            &eval_error($@,$log_handle) if $@;
          } else {
             $plan_=$plannn;
          }
-         if (pw($MenuUnit_hash_ref) eq $plann->{Menu}) {
-            return $plan_;
-         } else {
-            my $die="\n       FATAL ERROR! -  Plan Number ${$plann}{PlanID}"
-                   ." does"
-                   ."\n                       match the current logic flow."
-                   ."\n\n      ";
-            die($die);
-         }
+         return $plan_;
       }
 #print "NUMBORX=$numbor<==\n";
       while ($numbor=~/\d+/ &&
             ($numbor<=$start || $start+$choose_num < $numbor ||
             $numbor eq 'admin')) {
          my $menu_text='';my $picknum_for_display='';
-         $menu_text.=$banner if defined $banner;
+         $menu_text.=&banner($MenuUnit_hash_ref->{Banner}||$banner,
+            $Conveyed,$SaveMMap,$picks_from_parent,$log_handle);
          $menu_text.="\n\n";
 #print "WHAT IS START=$start\n";
          my $picknum=$start+1;
@@ -2531,7 +2568,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     }
                                     push @{$Net::FullAuto::FA_Core::makeplan->{
                                             'Plan'}},
-                                         { Menu   => pw($MenuUnit_hash_ref),
+                                         { Menu   => &pw($MenuUnit_hash_ref),
                                            Number => $numbor,
                                            PlanID =>
                                               $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -2570,7 +2607,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                        }
                                        push @{$Net::FullAuto::FA_Core::makeplan->{
                                                'Plan'}},
-                                            { Menu   => pw($MenuUnit_hash_ref),
+                                            { Menu   => &pw($MenuUnit_hash_ref),
                                               Number => $numbor,
                                               PlanID =>
                                                  $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -2629,32 +2666,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                     die $@ if $@;
                                  }
                               };
-                              if ($@) {
-                                 if (unpack('a11',$@) eq 'FATAL ERROR') {
-                                    if (defined $log_handle &&
-                                          -1<index $log_handle,'*') {
-                                       print $log_handle $@;
-                                       close($log_handle);
-                                    }
-                                    die $@;
-                                 } else {
-                                    my $die="\n       FATAL ERROR! - The Local "
-                                       ."System $Term::Menus::local_hostname "
-                                       ."Conveyed\n"
-                                       ."              the Following "
-                                       ."Unrecoverable Error Condition :\n\n"
-                                       ."       $@\n       line ".__LINE__;
-                                    if (defined $log_handle &&
-                                          -1<index $log_handle,'*') {
-                                       print $log_handle $die;
-                                       close($log_handle);
-                                    }
-                                    if ($Term::Menus::fullauto) {
-                                       &Net::FullAuto::FA_Core::handle_error(
-                                          $die);
-                                    } else { die $die }
-                                  }
-                              } elsif (-1<$#resu) {
+                              &eval_error($@,$log_handle) if $@;
+                              if (-1<$#resu) {
                                  if ($resu[0] eq '<') { %picks=();next }
                                  if (0<$#resu && wantarray && !$no_wantarray) {
                                     return @resu;
@@ -2773,7 +2786,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                             },
                   NoPlan => 1,
                   Banner => "   FullAuto has determined that the ".
-                            pw($MenuUnit_hash_ref) .
+                            &pw($MenuUnit_hash_ref) .
                             " Menu has been\n".
                             "   configured with a \"Default\" setting."
 
@@ -2789,7 +2802,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $Net::FullAuto::FA_Core::makeplan->{'Title'}=$pn{$numbor}[0];
                }
                push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
-                    { Menu   => pw($MenuUnit_hash_ref),
+                    { Menu   => &pw($MenuUnit_hash_ref),
                       Number => 'Default',
                       PlanID =>
                          $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -2847,7 +2860,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      "\n   OR 'u' to scroll upward  ";
                if ($Term::Menus::fullauto) {
                   if (exists $Net::FullAuto::FA_Core::admin_menus{
-                        pw($MenuUnit_hash_ref)}) {
+                        &pw($MenuUnit_hash_ref)}) {
                      print "\(Type 'quit' to Quit Admin Menu\)\n";
                   } else {
                      print "\(Type 'quit' to Quit FullAuto\)\n";
@@ -2857,7 +2870,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
             } elsif ($Term::Menus::fullauto) {
                if (exists $Net::FullAuto::FA_Core::admin_menus{
-                        pw($MenuUnit_hash_ref)}) {
+                        &pw($MenuUnit_hash_ref)}) {
                   print "\n   \(Type 'quit' to Quit Admin Menu\)\n";
                } else {
                   print "\n   \(Type 'quit' to Quit FullAuto\)\n";
@@ -2865,7 +2878,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } else { print"\n   \(Type 'quit' to Quit\)\n" }
             if ($Term::Menus::fullauto) {
                if (exists $Net::FullAuto::FA_Core::admin_menus{
-                     pw($MenuUnit_hash_ref)}) {
+                     &pw($MenuUnit_hash_ref)}) {
                   print "\n   (Type 'help' for Help)\n";
                } else {
                   print "\n   (Type 'help' for Help)".
@@ -3018,7 +3031,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
                unless ($got_default) {
                   push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
-                       { Menu   => pw($MenuUnit_hash_ref),
+                       { Menu   => &pw($MenuUnit_hash_ref),
                          Number => 'Multiple',
                          PlanID =>
                             $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3129,7 +3142,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
-                                { Menu   => pw($MenuUnit_hash_ref),
+                                { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{
@@ -3167,7 +3180,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
-                                   { Menu   => pw($MenuUnit_hash_ref),
+                                   { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{
@@ -3216,30 +3229,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            die $@ if $@;
                         }
                      };
-                     if ($@) {
-                        if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $@;
-                              close($log_handle);
-                           }
-                           die $@;
-                        } else {
-                           my $die="\n       FATAL ERROR! - The Local "
-                              ."System $Term::Menus::local_hostname Conveyed\n"
-                              ."              the Following "
-                              ."Unrecoverable Error Condition :\n\n"
-                              ."       $@\n       line ".__LINE__;
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
-                           if ($Term::Menus::fullauto) {
-                              &Net::FullAuto::FA_Core::handle_error($die);
-                           } else { die $die }
-                        }
-                     } elsif (-1<$#resu) {
+                     &eval_error($@,$log_handle) if $@;
+                     if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
@@ -3367,7 +3358,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
-                                { Menu   => pw($MenuUnit_hash_ref),
+                                { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3403,7 +3394,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
-                                   { Menu   => pw($MenuUnit_hash_ref),
+                                   { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3451,30 +3442,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            die $@ if $@;
                         }
                      };
-                     if ($@) {
-                        if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $@;
-                              close($log_handle);
-                           }
-                           die $@;
-                        } else {
-                           my $die="\n       FATAL ERROR! - The Local "
-                              ."System $Term::Menus::local_hostname Conveyed\n"
-                              ."              the Following "
-                              ."Unrecoverable Error Condition :\n\n"
-                              ."       $@\n       line ".__LINE__;
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
-                           if ($Term::Menus::fullauto) {
-                              &Net::FullAuto::FA_Core::handle_error($die);
-                           } else { die $die }
-                        }
-                     } elsif (-1<$#resu) {
+                     &eval_error($@,$log_handle) if $@;
+                     if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
@@ -3627,7 +3596,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
-                                { Menu   => pw($MenuUnit_hash_ref),
+                                { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3663,7 +3632,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
-                                   { Menu   => pw($MenuUnit_hash_ref),
+                                   { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3711,26 +3680,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            die $@ if $@;
                         }
                      };
-                     if ($@) {
-                        if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           die $@;
-                        } else {
-                           my $die="\n       FATAL ERROR! - The Local "
-                                  ."System $Term::Menus::local_hostname "
-                                  ."Conveyed\n"
-                                  ."              the Following "
-                                  ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@\n       line ".__LINE__;
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
-                           if ($Term::Menus::fullauto) {
-                              &Net::FullAuto::FA_Core::handle_error($die);
-                           } else { die $die }
-                        }
-                     } elsif (-1<$#resu) {
+                     &eval_error($@,$log_handle) if $@;
+                     if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
@@ -3830,7 +3781,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      }
                      unless ($got_default) {
                         push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
-                             { Menu   => pw($MenuUnit_hash_ref),
+                             { Menu   => &pw($MenuUnit_hash_ref),
                                Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3857,7 +3808,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
-                                { Menu   => pw($MenuUnit_hash_ref),
+                                { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3893,7 +3844,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
-                                   { Menu   => pw($MenuUnit_hash_ref),
+                                   { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -3941,30 +3892,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            die $@ if $@;
                         }
                      };
-                     if ($@) {
-                        if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $@;
-                              close($log_handle);
-                           }
-                           die $@;
-                        } else {
-                           my $die="\n       FATAL ERROR! - The Local "
-                              ."System $Term::Menus::local_hostname Conveyed\n"
-                              ."              the Following "
-                              ."Unrecoverable Error Condition :\n\n"
-                              ."       $@\n       line ".__LINE__;
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
-                           if ($Term::Menus::fullauto) {
-                              &Net::FullAuto::FA_Core::handle_error($die);
-                           } else { die $die }
-                        }
-                     } elsif (-1<$#resu) {
+                     &eval_error($@,$log_handle) if $@;
+                     if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
@@ -3991,7 +3920,7 @@ return 'DONE_SUB';
             system('man Net::FullAuto');
          } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i
                && !exists $Net::FullAuto::FA_Core::admin_menus{
-               pw($MenuUnit_hash_ref)}) {
+               &pw($MenuUnit_hash_ref)}) {
             while (1) {
                my @menu_output=Menu($Net::FullAuto::FA_Core::admin_menu->())
                   if $Net::FullAuto::FA_Core::admin_menu;
@@ -4217,7 +4146,7 @@ return 'DONE_SUB';
                          exists $labels{(keys %{$FullMenu->
                          {$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[$digital_numbor-1]}})[0]or[]}||
-                         test_hashref($FullMenu->{$MenuUnit_hash_ref}[2]
+                         &test_hashref($FullMenu->{$MenuUnit_hash_ref}[2]
                          {$all_menu_items_array[$numbor-1]||
                          $all_menu_items_array[$pn{$numbor}[1]-1]})) {
                   my $menyou='';
@@ -4325,14 +4254,14 @@ return 'DONE_SUB';
                      $picks_from_parent,$FullMenu,$Conveyed,$Selected,
                      $SaveNext,$Persists,$parent_menu);
                   %{$SavePick->{$cur_menu}}=%picks;
-                  $Conveyed->{pw($cur_menu)}=[];
+                  $Conveyed->{&pw($cur_menu)}=[];
                   if (0<$#{[keys %picks]}) {
                      foreach my $key (sort numerically keys %picks) {
-                        push @{$Conveyed->{pw($cur_menu)}},
+                        push @{$Conveyed->{&pw($cur_menu)}},
                                $all_menu_items_array[$key-1];
                      }
                   } else {
-                     $Conveyed->{pw($cur_menu)}=
+                     $Conveyed->{&pw($cur_menu)}=
                         $all_menu_items_array[$numbor-1];
                   }
                   my $mcount=0;
@@ -4398,6 +4327,7 @@ return 'DONE_SUB';
                         $SaveMMap,$SaveNext,$Persists,
                         $cur_menu,$no_wantarray);
                   };
+                  die $@ if $@;
                   if (ref $menu_output eq 'ARRAY' &&
                         $menu_output->[0]=~/^[{](.*)[}][<]$/) {
                      delete $Selected->{$MenuUnit_hash_ref};
@@ -4425,7 +4355,6 @@ return 'DONE_SUB';
                      $SaveNext=$returned_SaveNext;
                      $Persists=$returned_Persists;
                   }
-                  die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU12=$menu_output<==\n";
                   if ($filtered_menu) {
@@ -4473,7 +4402,7 @@ return 'DONE_SUB';
                         }
                         unless ($got_default) {
                            push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
-                             { Menu   => pw($MenuUnit_hash_ref),
+                             { Menu   => &pw($MenuUnit_hash_ref),
                                Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -4501,7 +4430,7 @@ return 'DONE_SUB';
                               }
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                      'Plan'}},
-                                   { Menu   => pw($MenuUnit_hash_ref),
+                                   { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -4539,7 +4468,7 @@ return 'DONE_SUB';
                                  }
                                  push @{$Net::FullAuto::FA_Core::makeplan->{
                                          'Plan'}},
-                                      { Menu   => pw($MenuUnit_hash_ref),
+                                      { Menu   => &pw($MenuUnit_hash_ref),
                                         Number => $numbor,
                                         PlanID =>
                                            $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -4598,36 +4527,8 @@ return 'DONE_SUB';
                               die $@ if $@;
                            }
                         };
-                        if ($@) {
-                           if (unpack('a11',$@) eq 'FATAL ERROR') {
-                              if (defined $log_handle &&
-                                    -1<index $log_handle,'*') {
-                                 print $log_handle $@;
-                                 close($log_handle);
-                              }
-                              die $@;
-                           } else {
-                              my $die="\n       FATAL ERROR! - The Local "
-                                 ."System $Term::Menus::local_hostname "
-                                 ."Conveyed\n"
-                                 ."              the Following "
-                                 ."Unrecoverable Error Condition :\n\n"
-                                 ."       $@\n       line ".__LINE__;
-                              if (defined $log_handle &&
-                                    -1<index $log_handle,'*') {
-                                 print $log_handle $die;
-                                 close($log_handle);
-                              }
-                              if ($parent_menu && wantarray && !$no_wantarray) {
-                                 return '',
-                                    $FullMenu,$Selected,$Conveyed,
-                                    $SavePick,$SaveMMap,$SaveNext,
-                                    $Persists,$parent_menu,$die;
-                              } elsif ($Term::Menus::fullauto) {
-                                 &Net::FullAuto::FA_Core::handle_error($die);
-                              } else { die $die }
-                           }
-                        } elsif (-1<$#resu) {
+                        &eval_error($@,$log_handle) if $@;
+                        if (-1<$#resu) {
                            if ($resu[0] eq '<') { %picks=();next }
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
@@ -4669,8 +4570,8 @@ return 'DONE_SUB';
                      my $sicm_regex=
                         qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
                            *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
-                     my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
-                        *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
+                     my $pmsi_regex=qr/\](!)?p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+                        *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
                      my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                         *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
                      my $select_ed=[];
@@ -4693,32 +4594,7 @@ return 'DONE_SUB';
                      }
                      $cd=~s/\$CODE\d*\s*=\s*//s;
                      $sub=eval $cd;
-                     if ($@) {
-                        my $die='';
-                        if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $@;
-                              close($log_handle);
-                           }
-                           die $@;
-                        } else {
-                           $die="\n       FATAL ERROR! - The Local "
-                                  ."System $Term::Menus::local_hostname"
-                                  ." Conveyed\n"
-                                  ."              the Following "
-                                  ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@\n       line ".__LINE__;
-                           if (defined $log_handle &&
-                                 -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
-                        }
-                        if ($Term::Menus::fullauto) {
-                           &Net::FullAuto::FA_Core::handle_error($die);
-                        } else { die $die }
-                     }
+                     &eval_error($@,$log_handle) if $@;
                      my @resu=$sub->();
                      if (-1<$#resu) {
                         if ($resu[0] eq '<') { %picks=();next }
@@ -4730,23 +4606,14 @@ return 'DONE_SUB';
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
-                  #} elsif (defined $pn{$numbor}[0] &&
-                  #      exists ${$FullMenu}{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]} &&
                   } elsif ($test_result &&
                         ($test_result!~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ ||
                         (!grep { $1 eq $_ } list_module('main',
                         $Term::Menus::fa_code) && $picks{$numbor} ne '*'))) {
-                        #substr(${$FullMenu}{$MenuUnit_hash_ref}
-                        #[2]{$pn{$numbor}[0]},0,1) ne '&') {
                      my $die="The \"Result12 =>\" Setting\n              -> "
-                            #.${$FullMenu}{$MenuUnit_hash_ref}[2]
-                            #{$pn{$numbor}[0]}
                             ."$test_result\n              Found in the Menu Unit -> "
                             .$MenuUnit_hash_ref
                             ."\n              is NOT a Menu Unit\,"
-                            #." and Because it Does Not Have"
-                            #."\n              an \"&\" as"
-                            #." the Lead Character, $0"
                             ."\ and it is NOT a Valid Subroutine.\n\n"
                             ."\n              Cannot Determine "
                             ."if it is a Valid SubRoutine.\n\n";
@@ -4789,7 +4656,7 @@ return 'DONE_SUB';
                      }
                      unless ($got_default) {
                         push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
-                             { Menu   => pw($MenuUnit_hash_ref),
+                             { Menu   => &pw($MenuUnit_hash_ref),
                                Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -4816,7 +4683,7 @@ return 'DONE_SUB';
                            }
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
-                                { Menu   => pw($MenuUnit_hash_ref),
+                                { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
                                      $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -4854,7 +4721,7 @@ return 'DONE_SUB';
                               }
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
-                                   { Menu   => pw($MenuUnit_hash_ref),
+                                   { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
                                         $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -4902,43 +4769,18 @@ return 'DONE_SUB';
                            die $@ if $@;
                         }
                      };
-                     if ($@) {
-                        if (unpack('a11',$@) eq 'FATAL ERROR') {
-                           die $@;
+                     &eval_error($@,$log_handle) if $@;
+                     if (-1<$#resu) {
+                        if ($resu[0] eq '<') { %picks=();next }
+                        if (0<$#resu && wantarray && !$no_wantarray) {
+                           return @resu;
                         } else {
-                           my $die="\n       FATAL ERROR! - The Local "
-                                  ."System $Term::Menus::local_hostname "
-                                  ."Conveyed\n"
-                                  ."              the Following "
-                                  ."Unrecoverable Error Condition :\n\n"
-                                  ."       $@\n       line ".__LINE__;
-                           if (defined $log_handle &&
-                                -1<index $log_handle,'*') {
-                              print $log_handle $die;
-                              close($log_handle);
-                           }
-                           if ($parent_menu && wantarray && !$no_wantarray) {
-                              return '',
-                                 $FullMenu,$Selected,$Conveyed,
-                                 $SavePick,$SaveMMap,$SaveNext,
-                                 $Persists,$parent_menu,$die;
-                           } elsif ($Term::Menus::fullauto) {
-                              &Net::FullAuto::FA_Core::handle_error($die);
-                           } else { die $die }
-                        }
-                     } else {
-                        if (-1<$#resu) {
-                           if ($resu[0] eq '<') { %picks=();next }
-                           if (0<$#resu && wantarray && !$no_wantarray) {
-                              return @resu;
-                           } else {
 #print "RETURN RESU5\n";
-                              return return_result($resu[0],
-                                 $MenuUnit_hash_ref,$Conveyed);
-                           }
+                           return return_result($resu[0],
+                              $MenuUnit_hash_ref,$Conveyed);
                         }
-                        $done=1;last
                      }
+                     $done=1;last
                   }
                } else { $done=1;last }
 #print "DONE_SUB13\n";
@@ -4949,8 +4791,8 @@ return 'DONE_SUB';
                my $sicm_regex=
                   qr/\]s(e+lected[-_]*)*i*(t+ems[-_]*)
                      *c*(u+rrent[-_]*)*m*(e+nu[-_]*)*\[/xi;
-               my $pmsi_regex=qr/\]p(r+evious[-_]*)*m*(e+nu[-_]*)
-                  *s*(e+lected[-_]*)*i*(t+ems[-_]*)*\[/xi;
+               my $pmsi_regex=qr/\](!)?p(?:r+evious[-_]*)*m*(?:e+nu[-_]*)
+                  *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
                my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
                my $test_result=
@@ -4975,6 +4817,7 @@ return 'DONE_SUB';
                             $amlm_regex,$picks_from_parent);
                      $cd=~s/\$CODE\d*\s*=\s*//s;
                      $test_result=eval $cd;
+                     &eval_error($@,$log_handle) if $@;
                   }
                   my @resu=$test_result->();
 #print "RETURN RESU6=@resu<==\n";<STDIN>;
@@ -5019,14 +4862,14 @@ return 'DONE_SUB';
                if (ref $test_item eq 'HASH' &&
                      grep { /Item_/ } keys %{$test_item}) {
                   %{$SavePick->{$MenuUnit_hash_ref}}=%picks;
-                  $Conveyed->{pw($MenuUnit_hash_ref)}=[];
+                  $Conveyed->{&pw($MenuUnit_hash_ref)}=[];
                   if (0<$#{[keys %picks]}) {
                      foreach my $key (sort numerically keys %picks) {
-                        push @{$Conveyed->{pw($MenuUnit_hash_ref)}},
+                        push @{$Conveyed->{&pw($MenuUnit_hash_ref)}},
                                $all_menu_items_array[$key-1];
                      }
                   } else {
-                     $Conveyed->{pw($MenuUnit_hash_ref)}=
+                     $Conveyed->{&pw($MenuUnit_hash_ref)}=
                         $all_menu_items_array[$numbor-1];
                   }
                   my $mcount=0;
@@ -5112,7 +4955,7 @@ return 'DONE_SUB';
                         }
                         push @{$Net::FullAuto::FA_Core::makeplan->{
                                'Plan'}},
-                             { Menu   => pw($MenuUnit_hash_ref),
+                             { Menu   => &pw($MenuUnit_hash_ref),
                                Number => $numbor,
                                PlanID =>
                                   $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -5156,7 +4999,7 @@ return 'DONE_SUB';
                            }
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
-                                { Menu   => pw($MenuUnit_hash_ref),
+                                { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
                                     $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -5214,58 +5057,31 @@ return 'DONE_SUB';
                         } else {
                            eval "\@resu=$sub";
                         }
-                        #$sub="\@resu=\&main::$sub";
-                        #eval $sub;
                         if ($@) {
                            my $er=$@."\n       line ";
                            die $er.__LINE__;
                         }
                      }
                   };
-                  if ($@) {
-                     if (unpack('a11',$@) eq 'FATAL ERROR') {
-                        die $@;
-                     } else {
-                        my $die="\n       FATAL ERROR! - The Local "
-                               ."System $Term::Menus::local_hostname Conveyed\n"
-                               ."              the Following "
-                               ."Unrecoverable Error Condition :\n\n"
-                               ."       $@\n       line ".__LINE__;
-                        if (defined $log_handle &&
-                              -1<index $log_handle,'*') {
-                           print $log_handle $die;
-                           close($log_handle);
-                        }
-                        if ($parent_menu && wantarray && !$no_wantarray) {
-                           return '',
-                              $FullMenu,$Selected,$Conveyed,
-                              $SavePick,$SaveMMap,$SaveNext,
-                              $Persists,$parent_menu,$die;
-                        } elsif ($Term::Menus::fullauto) {
-                           &Net::FullAuto::FA_Core::handle_error($die,'-28');
-                        } else { die $die }
-                     }
-                  } else {
 #print "ARE WE HERE????\n";sleep 10;
-                     if (-1<$#resu) {
-                        if ($resu[0] eq '<') { %picks=();next }
-                        if ($resu[0]=~/^[{](.*)[}][<]$/) {
-                           if ($1 eq $MenuUnit_hash_ref->{Name}) {
-                              %picks=();next;
-                           } else {
-                              return $resu[0];
-                           }
-                        }
-                        if (0<$#resu && wantarray && !$no_wantarray) {
-                           return @resu;
+                  if (-1<$#resu) {
+                     if ($resu[0] eq '<') { %picks=();next }
+                     if ($resu[0]=~/^[{](.*)[}][<]$/) {
+                        if ($1 eq $MenuUnit_hash_ref->{Name}) {
+                           %picks=();next;
                         } else {
-#print "RETURN RESU8=$resu[0]\n";
-                           return return_result($resu[0],
-                              $MenuUnit_hash_ref,$Conveyed);
+                           return $resu[0];
                         }
                      }
-                     $done=1;last
+                     if (0<$#resu && wantarray && !$no_wantarray) {
+                        return @resu;
+                     } else {
+#print "RETURN RESU8=$resu[0]\n";
+                        return return_result($resu[0],
+                           $MenuUnit_hash_ref,$Conveyed);
+                     }
                   }
+                  $done=1;last
                }
 #print "DONE_SUB14\n";sleep 5;
  return 'DONE_SUB';
@@ -5322,7 +5138,7 @@ return 'DONE_SUB';
       }
       unless ($got_default) {
          push @{$Net::FullAuto::FA_Core::makeplan->{'Plan'}},
-              { Menu   => pw($MenuUnit_hash_ref),
+              { Menu   => &pw($MenuUnit_hash_ref),
                 Number => $numbor,
                 PlanID =>
                    $Net::FullAuto::FA_Core::makeplan->{Number},
@@ -5345,7 +5161,7 @@ sub return_result {
    my $result_string=$_[0];
    my $MenuUnit_hash_ref=$_[1];
    my $Conveyed=$_[2];
-   $Conveyed->{pw($MenuUnit_hash_ref)}=$result_string;
+   $Conveyed->{&pw($MenuUnit_hash_ref)}=$result_string;
    my $result_array=[];
    if ((-1<index $result_string,'][[') &&
          (-1<index $result_string,']][')) {

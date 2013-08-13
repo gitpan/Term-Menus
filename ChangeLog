@@ -1,3 +1,12 @@
+2013-08-13  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.42 released.
+
+        * Plan expiration for FullAuto is now in place.
+
+        * Lots of code cleanup, including error messages.
+
+
 2013-08-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.41 released.
