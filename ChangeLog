@@ -1,3 +1,12 @@
+2013-08-25  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.43 released.
+
+        * More work done on CODE parsing routines affecting Macros.
+
+        * ]S[ now can take multiple menu names ]S[{Menu1_Name|Menu2_Name}.
+
+
 2013-08-13  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.42 released.
