@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.44';
+our $VERSION = '2.45';
 
 
 use 5.006;
@@ -1688,7 +1688,7 @@ sub Menu
                        $SaveMMap,$SaveNext,$Persists,
                        $no_wantarray,$sorted,
                        $select_many);
-#print "PICK=$pick->[0] and CURMENU=$MenuUnit_hash_ref->{Name}\n";
+#print "PICK=",keys %{$pick->[0]}," and CURMENU=$MenuUnit_hash_ref->{Name}\n";
       if (-1<$#filtered_menu_return) {
          return $pick,$FullMenu,$Selected,$Conveyed,$SavePick,
               $SaveMMap,$SaveNext,$Persists,$parent_menu,
@@ -1943,19 +1943,19 @@ sub transform_sicm
       }
       $expand_array_flag=1;
    }
-   WL: while ($text=~m/($sicm_regex(?:\{[^}]+\})*)/sg) {
-      my $esc_one=$1;
-      $esc_one=~s/["]\s*[.]\s*["]//s;
-      $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
-      $esc_one=~s/[|]/\\\|/g;
-      $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
-      while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
-         if (-1<index $1, $current_menu_name) {
-            $text=~s/$esc_one/\]S\[/sg;
-            last WL;
-         } else { last }
-      }
-   }
+   #WL: while ($text=~m/($sicm_regex(?:\{[^}]+\})*)/sg) {
+   #   my $esc_one=$1;
+   #   $esc_one=~s/["]\s*[.]\s*["]//s;
+   #   $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+   #   $esc_one=~s/[|]/\\\|/g;
+   #   $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
+   #   while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
+   #      if (-1<index $1, $current_menu_name) {
+   #         $text=~s/$esc_one/\]S\[/sg;
+   #         last WL;
+   #      } else { last }
+   #   }
+   #}
    my @pks=keys %{$picks};
    if (0<$#pks && !$return_from_child_menu) {
       foreach my $key (sort numerically keys %{$picks}) {
@@ -1967,25 +1967,38 @@ sub transform_sicm
       if ($expand_array_flag) {
          $replace='eval '.$replace;
       }
+      $replace=~s/\'/\\\'/sg;
    } else {
-      $replace=$all_menu_items_array->[$pn->{$numbor}->[1]-1];
+      if (ref $pn eq 'HASH') {
+         $replace=$all_menu_items_array->[$pn->{$numbor}->[1]-1];
+      } elsif ($pn) {
+         $replace=$all_menu_items_array->[$pn];
+      }
       $replace=~s/\'/\\\'/g;
       $replace=~s/\"/\\\"/g;
       $replace='"'.$replace.'"' unless
          $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
    }
-   if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-         grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
-      $replace=~s/\'/\\\'/g;
-      $replace=~s/\"/\\\"/g;
-      $replace='"'.$replace.'"' unless
-         $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
-   }
-   while ($text=~m/($sicm_regex)/g) {
+   #if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
+   #      grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
+   #   $replace=~s/\'/\\\'/g;
+   #   $replace=~s/\"/\\\"/g;
+   #   $replace='"'.$replace.'"' unless
+   #      $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
+   #}
+   while ($text=~m/($sicm_regex(?:\{([^}]+)\})*)/sg) {
       my $esc_one=$1;
+      my $menu=$2;
+      $menu||='';
       $esc_one=~s/\[/\\\[/;$esc_one=~s/\]/\\\]/;
       $replace=~s/\s*//s if $text=~/[)]\s*$/s;
-      $text=~s/$esc_one(?!\{[^}]+\})/$replace/g;
+      if ($menu) {
+         if (-1<index $menu, $current_menu_name) {
+            $text=~s/$esc_one/$replace/sg;
+         }
+         next;
+      }
+      $text=~s/$esc_one(?![{])/$replace/g;
    }
    return $text;
 
@@ -2101,6 +2114,11 @@ sub transform_pmsi
                $replace='"'.$replace.'"' unless
                   $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
             }
+            if ($replace=~/^.(?<!["']).*(?!["']).?$/s && $replace=~/\s/s) {
+               $replace='"'.$replace.'"' if
+                  $text!~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/ &&
+                  $replace!~/^eval /;
+            }
             $text=~s/$esc_one/$replace/se;
          }
          my $replace='';
@@ -2111,16 +2129,25 @@ sub transform_pmsi
             $replace=~s/\'/\\\'/sg;
             if ($expand_array_flag) {
                $replace='eval '.$replace;
+            } elsif ($replace=~/^.(?<!["']).*(?!["']).?$/s && $replace=~/\s/s) {
+               $replace='"'.$replace.'"' unless
+                  $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
             }
          } else {
             $replace=$picks_from_parent;
+            if ($replace=~/^.(?<!["']).*(?!["']).?$/s && $replace=~/\s/s) {
+               $replace='"'.$replace.'"' unless
+                  $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
+            }
+
          }
          if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
             $replace=~s/\'/\\\'/g;
             $replace=~s/\"/\\\"/g;
-            $replace='"'.$replace.'"' unless
-               $text=~/^&?(?:.*::)*(\w+)\s*[(]["'].*["'][)]\s*$/;
+            $replace='"'.$replace.'"' if
+               $text!~/^&?(?:.*::)*(\w+)\s*[(]["'].*["'][)]\s*$/ &&
+               $replace!~/^eval /;
          }
          $text=~s/$esc_one/$replace/s;
       }
@@ -3052,12 +3079,6 @@ print "CD1=$cd\n";<STDIN>;
                    ."                         Selections being available.";
             die($die);
          }
-         #if ($numbor=~/^[Ff]$/ && (((wantarray && !$no_wantarray
-         #      #&& (exists ${$MenuUnit_hash_ref}{Select} &&
-         #      && ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}}))) ||
-         #      #${$MenuUnit_hash_ref}{Select} eq 'Many')) ||
-         #      $Persists->{$MenuUnit_hash_ref}{defaults}) ||
-         #      $filtered_menu)) {
          if ($numbor=~/^[Ff]$/ &&
                ($Persists->{$MenuUnit_hash_ref}{defaults} ||
                $filtered_menu)) {
@@ -4031,6 +4052,7 @@ print "CD1=$cd\n";<STDIN>;
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
                                   ."       $@\n       line ".__LINE__;
+print "WHAT IS THE ERROR=$@\n";
                            if ($parent_menu && wantarray && !$no_wantarray) {
                               return '',$FullMenu,$Selected,$Conveyed,
                                      $SavePick,$SaveMMap,$SaveNext,
@@ -5079,7 +5101,7 @@ print "GOING TO RETURN\n";
                         $FullMenu->{$MenuUnit_hash_ref}[2]
                         {$all_menu_items_array[$numbor-1]};
                   if (ref $test_result eq 'CODE') {
-print "GOT CODE\n";<STDIN>;
+#print "GOT CODE\n";<STDIN>;
                      my $cd='';
                      my $sub=$FullMenu->{$MenuUnit_hash_ref}[2]
                               {$all_menu_items_array[$picknum-1]};
@@ -5097,9 +5119,11 @@ print "GOT CODE\n";<STDIN>;
                                \@all_menu_items_array,\%picks,
                                $return_from_child_menu,$log_handle,
                                $MenuUnit_hash_ref->{Name});
+#print "CD=$cd\n<=CD\n";<STDIN>;
                         $cd=&transform_pmsi($cd,
                                $Conveyed,$SaveMMap,
                                $picks_from_parent);
+#print "CD2=$cd\n<=CD2\n";<STDIN>;
                      }
                      $cd=~s/\$CODE\d*\s*=\s*//s;
                      $sub=eval $cd;
@@ -5868,7 +5892,8 @@ print "SAVESEVEN\n";<STDIN>;
       } last if $done;
    }
 #print "DO WE GET HERE MAYBE and SM=$select_many\n";
-   if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) { 
+   #if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
+   if ($select_many || (exists ${$MenuUnit_hash_ref}{Select}{(keys %picks)[0]||''})) {
       my @picks=();
       foreach (sort numerically keys %picks) {
          my $pik=$all_menu_items_array[$_-1];
