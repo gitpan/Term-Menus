@@ -1,3 +1,11 @@
+2013-09-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.46
+
+        * Fix for passing along multiple selections to child
+          menus.
+
+
 2013-09-07  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.45

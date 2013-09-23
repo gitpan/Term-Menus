@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.45';
+our $VERSION = '2.46';
 
 
 use 5.006;
@@ -1973,6 +1973,8 @@ sub transform_sicm
          $replace=$all_menu_items_array->[$pn->{$numbor}->[1]-1];
       } elsif ($pn) {
          $replace=$all_menu_items_array->[$pn];
+      } else {
+         $replace=$all_menu_items_array->[$numbor-1];
       }
       $replace=~s/\'/\\\'/g;
       $replace=~s/\"/\\\"/g;
@@ -2098,8 +2100,10 @@ sub transform_pmsi
             }
             last FE unless $Conveyed->{$1};
             my $replace=$Conveyed->{$1};
+#print "REPLACETHIS=$replace\n";
             if (ref $replace) {
                $replace=&Data::Dump::Streamer::Dump($Conveyed->{$1})->Out();
+#print "REPLACE=$replace\n";
                my $type=ref $Conveyed->{$1};
                $replace=~s/\$$type\d*\s*=\s*//s;
                $replace=~s/\'/\\\'/sg;
@@ -2107,6 +2111,7 @@ sub transform_pmsi
                   $replace='eval '.$replace;
                }
             }
+#print "REPLACEEEE=$replace\n";
             if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                   grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
                $replace=~s/\'/\\\'/g;
@@ -2387,7 +2392,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          $Conveyed->{&pw($_[0])}=$convey;
       #} elsif ($_[3]) {
       #   $convey=$_[3];
-#print "CONVEY_picks_from_parent=$convey\n";<STDIN>;
+#print "CONVEY_picks_from_parent=$_[3]\n";<STDIN>;
       #   $Conveyed->{&pw($_[0])}=$convey; 
       } elsif ($pick) {
          $convey=${$_[1]}[$pick-1];
@@ -2407,7 +2412,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             exists $FullMenu->{$_[0]}[2]{$_[1]->[$pick-1]} &&
             (ref $test_item eq 'HASH' &&
             (values %{$test_item})[0] ne 'recurse')) {
-#print "WHAT IS TEST_ITEM=$test_item and KEYS=",(join " ",keys %{$test_item})," and CONVEY=$convey\n";<STDIN>;
+#print "WHAT IS TEST_ITEM=$test_item and VALUES=",(join " ",values %{$test_item})," and CONVEY=$convey\n";<STDIN>;
          if ((ref $test_item eq 'HASH' &&
                    grep { /Item_/ } keys %{$test_item})
                    || ($test_item=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
@@ -2427,7 +2432,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             if ($test_item=~/$con_regex|$pmsi_regex|
                   $amlm_regex|$sicm_regex|$tpmi_regex/x) {
                $test_item=&transform_sicm($test_item,$numbor,
-                             \@all_menu_items_array,$_[2],
+                             \@all_menu_items_array,$_[2],'',
                              $return_from_child_menu,$log_handle,
                              $_[0]->{Name});
                $test_item=&transform_pmsi($test_item,
@@ -2439,7 +2444,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $cd=&Data::Dump::Streamer::Dump($test_item)->Out();
 print "CD1=$cd\n";<STDIN>;
                   $cd=&transform_sicm($cd,$numbor,
-                         \@all_menu_items_array,$_[2],
+                         \@all_menu_items_array,$_[2],'',
                          $return_from_child_menu,$log_handle,
                          $_[0]->{Name});
                   $cd=&transform_pmsi($cd,
@@ -4491,8 +4496,9 @@ return 'DONE_SUB';
             $pn{$numbor}[1]||=1;
 #print "WHAT IS PN1=$pn{$numbor}[1] and NUMBOR=$numbor and WHAT ARE PICKS=",(join ' ',keys %picks)," and FILTERED=$filtered_menu\n";<STDIN>; 
             my $digital_numbor=($numbor=~/^\d+$/) ? $numbor : 1;
-#print "WHAT ARE THE KEYS=",keys %{${$MenuUnit_hash_ref}{Select}},"\n";<STDIN>;
-            if (($select_many || (exists ${$MenuUnit_hash_ref}{Select}{$numbor}))
+#print "WHAT ARE THE KEYS=",keys %{${$MenuUnit_hash_ref}{Select}}," and CALLERTEST=$callertest and CALLER=$caller and SELECTMANY=$select_many\n";<STDIN>;
+            if (($select_many ||
+                  (exists ${$MenuUnit_hash_ref}{Select}{$numbor}))
                   && $numbor!~/^[Ff]$/) {
 #print "HOWDY DOWDY\n";<STDIN>;
                if ($filtered_menu && (exists
@@ -4705,7 +4711,8 @@ return 'DONE_SUB';
                      unless $filtered_menu;
                   $FullMenu->{$next_menu_ref}[11]=0
                      unless $filtered_menu;
-                  %picks=() unless $select_many;
+                  %picks=() if (!$select_many &&
+                     !exists ${$MenuUnit_hash_ref}{Select}{$numbor});
                   $picks{$numbor}='-' if !(keys %picks) || $numbor!~/^[Ff]$/;
                   ($FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,
                      $convey,$parent_menu)
@@ -5029,7 +5036,8 @@ print "GOING TO RETURN\n";
                            }
                         };
                         if ($@) {
-                           if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (10<length $@ && unpack('a11',$@) eq
+                                 'FATAL ERROR') {
                               if ($parent_menu && wantarray && !$no_wantarray) {
                                  return '',$FullMenu,$Selected,$Conveyed,
                                         $SavePick,$SaveMMap,$SaveNext,
@@ -5116,7 +5124,7 @@ print "GOING TO RETURN\n";
                      if ($Term::Menus::data_dump_streamer) {
                         $cd=&Data::Dump::Streamer::Dump($sub)->Out();
                         $cd=&transform_sicm($cd,$numbor,
-                               \@all_menu_items_array,\%picks,
+                               \@all_menu_items_array,\%picks,'',
                                $return_from_child_menu,$log_handle,
                                $MenuUnit_hash_ref->{Name});
 #print "CD=$cd\n<=CD\n";<STDIN>;
@@ -5213,7 +5221,7 @@ print "GOING TO RETURN\n";
                   my %pick=();
                   $pick{$numbor}='*';
                   %{$SavePick->{$MenuUnit_hash_ref}}=%pick;
-print "SAVESEVEN\n";<STDIN>;
+#print "SAVESEVEN\n";<STDIN>;
                   if ($Term::Menus::fullauto && (!exists
                         $MenuUnit_hash_ref->{'NoPlan'} ||
                         !$MenuUnit_hash_ref->{'NoPlan'}) &&
