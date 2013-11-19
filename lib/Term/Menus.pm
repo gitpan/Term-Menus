@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.46';
+our $VERSION = '2.47';
 
 
 use 5.006;
@@ -790,7 +790,8 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          if $fa_code->[0] && -1==index $fa_code->[0],'Net/FullAuto';
       $fa_code->[0]||='';
       my $argv=join " ",@ARGV;
-      if ($argv!~/--edi*t* *|-e[a-z]|--admin|-V|-v|--VE*R*S*I*O*N*|--welcome/) {
+      if ($argv!~/--edi*t*\s*|-e[a-z]|--admin|-V|-v|--VE*R*S*I*O*N*
+                  |--welcome|--users|--ve*r*s*i*o*n*/xm) {
          if ($fa_code->[0]) {
             if ($Term::Menus::canload->($fa_code->[0])) {
                require $fa_code->[0];
