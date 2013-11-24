@@ -20,9 +20,6 @@ DESCRIPTION
     needed by the application. A separate configuration file is optional.
     Term::Menus is cross platform compatible.
 
-    Term::Menus is a stand-alone - other CPAN modules are not needed for its
-    implementation ( so it's *easy* to install! ;-) )
-
     Term::Menus was initially conceived and designed to work seemlessly with
     the perl based Network Process Automation Utility Module called
     Net::FullAuto (Available in CPAN :-) - however, it is not itself

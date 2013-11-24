@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.47';
+our $VERSION = '2.48';
 
 
 use 5.006;
@@ -6079,9 +6079,6 @@ and customized banners. All this power is simple to implement with a straight
 forward and very intuitive configuration hash structure that mirrors the actual
 menu architechture needed by the application. A separate configuration file is
 optional. Term::Menus is cross platform compatible.
-
-Term::Menus is a stand-alone - other CPAN modules are not needed for its
-implementation ( so it's *easy* to install! ;-) )
 
 Term::Menus was initially conceived and designed to work seemlessly
 with the perl based Network Process Automation Utility Module called
