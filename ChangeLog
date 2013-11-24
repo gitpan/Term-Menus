@@ -1,3 +1,12 @@
+2013-11-24  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.49
+
+        * Re-worked macro expansion for descendant menus.
+
+        * Added step child and grandchild documentation.
+
+
 2013-11-23  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.48

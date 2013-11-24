@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.48';
+our $VERSION = '2.49';
 
 
 use 5.006;
@@ -1915,8 +1915,10 @@ sub transform_sicm
    my $selected=[];my $replace='';
    my $expand_array_flag=0;
    my $sicm_regex=
-      qr/\]s(?:e+lected[-_]*)*i*(?:t+ems[-_]*)
+      qr/\](!)?s(?:e+lected[-_]*)*i*(?:t+ems[-_]*)
          *c*(?:u+rrent[-_]*)*m*(?:e+nu[-_]*)*\[/xi;
+   my $tsmi_regex=qr/\](!)?t(?:e+st[-_]*)*s*(?:e+lected[-_]*)
+         *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
       unless ($text=~/^\s*\]\[\[\s*/s && $text=~/\s*\]\]\[\s*$/s) {
          my $die="\n       FATAL ERROR! - The --RETURN-ARRAY-- Macro"
@@ -1944,19 +1946,6 @@ sub transform_sicm
       }
       $expand_array_flag=1;
    }
-   #WL: while ($text=~m/($sicm_regex(?:\{[^}]+\})*)/sg) {
-   #   my $esc_one=$1;
-   #   $esc_one=~s/["]\s*[.]\s*["]//s;
-   #   $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
-   #   $esc_one=~s/[|]/\\\|/g;
-   #   $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
-   #   while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
-   #      if (-1<index $1, $current_menu_name) {
-   #         $text=~s/$esc_one/\]S\[/sg;
-   #         last WL;
-   #      } else { last }
-   #   }
-   #}
    my @pks=keys %{$picks};
    if (0<$#pks && !$return_from_child_menu) {
       foreach my $key (sort numerically keys %{$picks}) {
@@ -1982,26 +1971,25 @@ sub transform_sicm
       $replace='"'.$replace.'"' unless
          $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
    }
-   #if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
-   #      grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
-   #   $replace=~s/\'/\\\'/g;
-   #   $replace=~s/\"/\\\"/g;
-   #   $replace='"'.$replace.'"' unless
-   #      $text=~/^&?(\w+)\s*[(]["'].*["'][)]\s*$/;
-   #}
-   while ($text=~m/($sicm_regex(?:\{([^}]+)\})*)/sg) {
-      my $esc_one=$1;
-      my $menu=$2;
-      $menu||='';
-      $esc_one=~s/\[/\\\[/;$esc_one=~s/\]/\\\]/;
-      $replace=~s/\s*//s if $text=~/[)]\s*$/s;
-      if ($menu) {
-         if (-1<index $menu, $current_menu_name) {
-            $text=~s/$esc_one/$replace/sg;
+   my $test_regx_flag=0;
+   FE: foreach my $regx ($tsmi_regex,$sicm_regex) {
+      last if $test_regx_flag;
+      while ($text=~m/($regx(?:\{([^}]+)\})*)/sg) {
+         $test_regx_flag=1 if -1<index $regx,'(!)?t(?:';
+         my $esc_one=$1;
+         my $bang=$2;
+         my $menu=$3;
+         $menu||='';
+         $esc_one=~s/\[/\\\[/;$esc_one=~s/\]/\\\]/;
+         $replace=~s/\s*//s if $text=~/[)]\s*$/s;
+         if ($menu) {
+            if (-1<index $menu, $current_menu_name) {
+               $text=~s/$esc_one/$replace/sg;
+            }
+            next;
          }
-         next;
+         $text=~s/$esc_one(?![{])/$replace/g;
       }
-      $text=~s/$esc_one(?![{])/$replace/g;
    }
    return $text;
 
@@ -2055,20 +2043,14 @@ sub transform_pmsi
    my $test_regx_flag=0;
    FE: foreach my $regx ($tpmi_regex,$pmsi_regex) {
       last if $test_regx_flag;
-#print "TEXT=$text\n";
       while ($text=~m/($regx(?:\{[^}]+\})*)/sg) {
          $test_regx_flag=1 if -1<index $regx,'(!)?t(?:';
-         my $esc_one=$1;my $bang=$2||'';
-#print "ESC_ONE=$esc_one<== and BANG=$bang<== and CONVEYED=",&Data::Dump::Streamer::Dump($Conveyed)->Out(),"\n";
+         my $esc_one=$1;my $bang=$2;
          $esc_one=~s/["]\s*[.]\s*["]//s;
          $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
          $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
-#print "esc_one=$esc_one<==\n";
-#print "TEXT=$text<== and REGX=$regx<==\n";sleep 3;
          while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
-#print "ARE WE HERE and REGX=$regx<==\n";sleep 3;
-#print "WHAT IS DOLLARONENOW=$1\n";
-            unless (exists $Conveyed->{$1} || $bang) {
+            unless (exists $Conveyed->{$1} || $bang || $test_regx_flag) {
                my $die="\n       FATAL ERROR! - The Menu Name:  \"$1\""
                       ."\n            describes a Menu that is *NOT* in the"
                       ."\n            invocation history of this process.\n"
@@ -2101,10 +2083,8 @@ sub transform_pmsi
             }
             last FE unless $Conveyed->{$1};
             my $replace=$Conveyed->{$1};
-#print "REPLACETHIS=$replace\n";
             if (ref $replace) {
                $replace=&Data::Dump::Streamer::Dump($Conveyed->{$1})->Out();
-#print "REPLACE=$replace\n";
                my $type=ref $Conveyed->{$1};
                $replace=~s/\$$type\d*\s*=\s*//s;
                $replace=~s/\'/\\\'/sg;
@@ -2112,7 +2092,6 @@ sub transform_pmsi
                   $replace='eval '.$replace;
                }
             }
-#print "REPLACEEEE=$replace\n";
             if ($text=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/ &&
                   grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) {
                $replace=~s/\'/\\\'/g;
@@ -5450,11 +5429,13 @@ print "GOING TO RETURN\n";
                      my $look_at_test_result=
                            &Data::Dump::Streamer::Dump(
                            $test_result_loop)->Out();
-                     my $tpmi_regex=qr/\](!)?t(?:e+st[-_]*)*p*(?:r+vious[-_]*)
+                     my $tspmi_regex=qr/\](!)?t(?:e+st[-_]*)*[p|s]*
+                           (?:r+vious[-_]*|e+lected[-_]*)
                            *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
 #print "LOOK=$look_at_test_result\n";<STDIN>;
-                     if ($look_at_test_result!~/Item_/s ||
-                           $look_at_test_result=~/$tpmi_regex/) {
+                     if (($look_at_test_result!~/Item_/s ||
+                           $look_at_test_result=~/=\s*[']Item_/s) ||
+                           $look_at_test_result=~/$tspmi_regex/) {
                         $picks{$numbor}='';
                         ($FullMenu,$Conveyed,$SaveNext,$Persists,
                            $Selected,$convey,$parent_menu)
@@ -7434,9 +7415,158 @@ B<NOTE:>     It is possible to use the same Result subroutine in
              well - C<]Selected[{Menu_Name}> 
 
              Also, if the same Result subroutine is to be used by
-             multiple menus, all the Menu_Names of those Menu
+             multiple nested menus, all the Menu_Names of those Menu
              blocks should be included in the Named section
              separated by the vertical bar symbol - C<]S[{Menu1_Name|Menu2_Name}>
+
+B<NOTE:>     B<Stepchild and Grandchild Menus> - While on the topic
+             of multiple nested menus, one of the more challenging
+             aspects is preventing child menus from having their
+             macros expanded or populated too "early" during runtime.
+             Using the "Explict Name" convention (C<]Selected[{Menu_Name}>)
+             helps, but there is another issue to be aware of. It is
+             extremely useful (and powerful!) to use previous menu
+             selections to dynamically build and return child menus
+             for some results, but not for others. Code to reflect
+             this goal would ordinarly look like this:
+
+             $result_code = sub {
+
+                my $selection=']S[{current_menu_name}';
+                if ($selection eq 'Return to Main Menu')  {
+
+                   return '{main}<';
+
+                } else {
+
+                   my %next_menu=(
+
+                      Name => 'next_menu',
+                      Item_1 => {
+
+                         Text => ']C[',
+                         Convey => [ ... ],
+
+                      },
+                      Item_2 => { ... },
+
+                   );
+
+                }
+
+             };
+
+             But this may not work correctly. The reason is that
+             Term::Menus identifies menus in result blocks by
+             explicitly looking for the 'Item_' (Item underscore)
+             string in the block. If it finds one it will treat
+             the result as a child menu to be I<immediately>
+             created - not a routine to be evaluated first! So,
+             in this scenario, the routine is acting as a kind
+             of surrogate or "step" parent, since it is not a
+             "real" parent menu. Hence, the "stepchild" menu. In
+             this situation it may be necessary to "trick"
+             Term::Menus into not recognizing the embedded menu
+             (yet) that is part of a conditional structure that
+             will be returned, only if the conditional is true.
+             To do that, you can code this scenario like this:
+
+             $result_code = sub {
+
+                my $selection=']S[{current_menu_name}';
+                if ($selection eq 'Return to Main Menu')  {
+
+                   return '{main}<';
+
+                } else {
+
+                   my %next_menu=(  # This is a "stepchild" menu
+
+                      Name => 'next_menu',
+
+                   );
+                   my $key = 'Item'.'_1';
+                   $next_menu{$key}={
+
+                       Text => ']C[',
+                       Convey => [ ... ],
+
+                   };
+                   $key = 'Item'.'_2'; 
+                   $next_menu{$key}={
+
+                       Text => '. . .',
+
+                   };
+                   return \%next_menu;
+
+                }
+
+             };
+
+             While that works, it is not very elegant (and not
+             Best Practice!). It is better in these situations
+             to substitute the Select (C<]Select[>) or Previous
+             (C<]Previous[>) Macros with a TEST Macro (C<]Test[>
+             or C<]T[> is shorthand):
+
+             $result_code = sub {
+
+                my $selection=']T[{current_menu_name}'; # <-- Note the ]T[
+                if ($selection eq 'Return to Main Menu')  {
+
+                   return '{main}<';
+
+                } else {
+
+                   my %next_menu=(  # "stepchild" menu
+
+                      Name => 'next_menu',
+                      Item_1 => {
+
+                         Text => ']C[',
+                         Convey => [ ... ],
+
+                      },
+                      Item_2 => { ... },
+
+                   );
+
+                }
+
+             };
+
+             The presence of the C<]Test[> macro tells
+             Term::Menus that it's dealing with stepchild menus,
+             and not to evaluate them early.
+
+             However, there are scenario's where you want to
+             evaluate on a condition that does not involve a
+             child or even a step child menu - but a grandchild
+             or great grandchild menu, etc. (This can certainly
+             happen when there is menu re-use or recursion). In
+             these situations Term::Menus will invariably
+             determine there is an error condition (due to the
+             explicitly named menu missing in the history stack)
+             when there isn't - because there is no "obvious"
+             way for Term::Menus to know that an explicitly named
+             menu is not yet "supposed" to exist. In these
+             scenarios the only option will be to suppress the
+             error message and allow macro expansion to otherwise
+             continue unabated. To do that, and allow processing
+             to continue, use a "bang" (or exclamation point)
+             character in the macro syntax after the starting
+             bracket:
+
+             C<my $selection=']!S[{menu_name}';>
+
+             --OR--
+
+             C<my $selection=']!T[{menu_name}';> 
+
+             Hopefully, one or more of these approaches or
+             "tricks" will deliver the results you're after.
+             Whatever works!
 
 B<NOTE:>     if you want to return output from the Result subroutine,
              you must include a 'return' statement. So the sub above:
