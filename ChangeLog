@@ -1,3 +1,10 @@
+2013-12-01  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.50
+
+        * Fixed bug with macro expansion for descendant menus.
+
+
 2013-11-24  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.49

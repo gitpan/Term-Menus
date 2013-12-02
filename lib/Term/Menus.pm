@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.49';
+our $VERSION = '2.50';
 
 
 use 5.006;
@@ -1985,6 +1985,8 @@ sub transform_sicm
          if ($menu) {
             if (-1<index $menu, $current_menu_name) {
                $text=~s/$esc_one/$replace/sg;
+            } else {
+               $test_regx_flag=0;
             }
             next;
          }
@@ -2051,10 +2053,10 @@ sub transform_pmsi
          $esc_one=~s/\{/\{\(/;$esc_one=~s/\}/\)\}/;
          while ($esc_one=~/\{/ && $text=~m/$esc_one/) {
             unless (exists $Conveyed->{$1} || $bang || $test_regx_flag) {
-               my $die="\n       FATAL ERROR! - The Menu Name:  \"$1\""
+               my $die="\n\n       FATAL ERROR! - The Menu Name:  \"$1\""
                       ."\n            describes a Menu that is *NOT* in the"
                       ."\n            invocation history of this process.\n"
-                      ."\n       This Error is usually the result of a missing,"
+                      ."\n       This Error is *usually* the result of a missing,"
                       ."\n            Menu, a Menu block that was not global or"
                       ."\n            was not coded ABOVE the parent Menu hash"
                       ."\n            block. (See Example)\n"
@@ -2071,7 +2073,18 @@ sub transform_pmsi
                       ."\n                        Result => \\%Example_Menu,"
                       ."\n                            ..."
                       ."\n                  );\n"
-                      ."\n";
+                      ."\n       *HOWEVER*: Read the Documentation on \"stepchild\""
+                      ."\n                  and other deeply nested menus. There are"
+                      ."\n                  scenarios with dynamically generated menus"
+                      ."\n                  where Term::Menus simply cannot test for"
+                      ."\n                  menu stack integrity when it encounters"
+                      ."\n                  unexpanded macros in defined but ungenerated"
+                      ."\n                  menus. In these situations this error"
+                      ."\n                  message should be turned off by using the"
+                      ."\n                  \"test\" macro ( ]T[ ) or using an"
+                      ."\n                  exclamation point character with either"
+                      ."\n                  or both the ]S[ (becomes ]!S[) and ]P["
+                      ."\n                  (becomes ]!P[) macros.\n\n";
                if (defined $log_handle &&
                      -1<index $log_handle,'*') {
                   print $log_handle $die;
@@ -2081,7 +2094,10 @@ sub transform_pmsi
                   &Net::FullAuto::FA_Core::handle_error($die);
                } else { die $die }
             }
-            last FE unless $Conveyed->{$1};
+            unless ($Conveyed->{$1}) {
+               $test_regx_flag=0;
+               next FE
+            }
             my $replace=$Conveyed->{$1};
             if (ref $replace) {
                $replace=&Data::Dump::Streamer::Dump($Conveyed->{$1})->Out();
