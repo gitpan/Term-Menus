@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.51';
+our $VERSION = '2.52';
 
 
 use 5.006;
@@ -2438,7 +2438,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                my $cd='';
                if ($Term::Menus::data_dump_streamer) {
                   $cd=&Data::Dump::Streamer::Dump($test_item)->Out();
-print "CD1=$cd\n";<STDIN>;
+#print "CD1=$cd\n";<STDIN>;
                   $cd=&transform_sicm($cd,$numbor,
                          \@all_menu_items_array,$_[2],'',
                          $return_from_child_menu,$log_handle,
@@ -3053,7 +3053,12 @@ print "CD1=$cd\n";<STDIN>;
             if ($Term::Menus::fullauto) {
                if (exists $Net::FullAuto::FA_Core::admin_menus{
                      &pw($MenuUnit_hash_ref)}) {
-                  print "\n   (Type 'help' for Help)\n";
+                  if ($MenuUnit_hash_ref->{Name} eq 'admin') {
+                     print "\n   (Type 'help' for Help)\n";
+                  } else {
+                     print "\n   (Type 'help' for Help)".
+                           "  (Type 'admin' to return to Admin Menu)\n";
+                  }
                } else {
                   print "\n   (Type 'help' for Help)".
                         "  (Type 'admin' for Admin Menu)\n";
@@ -4053,7 +4058,7 @@ print "CD1=$cd\n";<STDIN>;
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
                                   ."       $@\n       line ".__LINE__;
-print "WHAT IS THE ERROR=$@\n";
+#print "WHAT IS THE ERROR=$@\n";
                            if ($parent_menu && wantarray && !$no_wantarray) {
                               return '',$FullMenu,$Selected,$Conveyed,
                                      $SavePick,$SaveMMap,$SaveNext,
@@ -4379,13 +4384,20 @@ return 'DONE_SUB';
             return ']quit['
          } elsif ($Term::Menus::fullauto and $numbor=~/^help$/i) {
             system('man Net::FullAuto');
-         } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i
-               && !exists $Net::FullAuto::FA_Core::admin_menus{
-               &pw($MenuUnit_hash_ref)}) {
-            while (1) {
-               my @menu_output=Menu($Net::FullAuto::FA_Core::admin_menu->())
-                  if $Net::FullAuto::FA_Core::admin_menu;
-               last if $menu_output[0] ne '-' && $menu_output[0] ne '+';
+         #} elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i
+         #      && !exists $Net::FullAuto::FA_Core::admin_menus{
+         #      &pw($MenuUnit_hash_ref)}) {
+         } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i) {
+            if (!exists $Net::FullAuto::FA_Core::admin_menus{
+                  &pw($MenuUnit_hash_ref)}) {
+               while (1) {
+                  my @menu_output=Menu($Net::FullAuto::FA_Core::admin_menu->())
+                     if $Net::FullAuto::FA_Core::admin_menu;
+                  last if $menu_output[0] ne '-' && $menu_output[0] ne '+';
+               }
+            } else {
+               return ['{admin}<'],$FullMenu,$Selected,$Conveyed,
+                       $SavePick,$SaveMMap,$SaveNext,$Persists;
             }
          } elsif (!keys %{$FullMenu->{$MenuUnit_hash_ref}[1]}
                                              && $numbor=~/^[Aa]$/) {
@@ -4928,7 +4940,7 @@ return 'DONE_SUB';
                                         ."       $@\n       line ".__LINE__;
                                  if ($parent_menu && wantarray &&
                                        !$no_wantarray) {
-print "GOING TO RETURN\n";
+#print "GOING TO RETURN\n";
                                     return '',$FullMenu,$Selected,$Conveyed,
                                            $SavePick,$SaveMMap,$SaveNext,
                                            $Persists,$parent_menu,$die;
