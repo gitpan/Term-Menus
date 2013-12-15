@@ -1,3 +1,12 @@
+2013-12-14  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.53
+
+        * Fixed forward and back navigation.
+
+        * Changed fa_defs to fa_global for FullAuto.
+
+
 2013-12-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.52

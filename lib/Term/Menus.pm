@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.52';
+our $VERSION = '2.53';
 
 
 use 5.006;
@@ -469,20 +469,20 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          my $fa_path=$INC{'Net/FullAuto.pm'};
          my $progname=substr($0,(rindex $0,'/')+1,-3);
          substr($fa_path,-3)='';
-         if (-f $fa_path.'/fa_defs.pm') {
-            if (-r $fa_path.'/fa_defs.pm') {
+         if (-f $fa_path.'/fa_global.pm') {
+            if (-r $fa_path.'/fa_global.pm') {
                {
                   no strict 'subs';
-                  require $fa_path.'/fa_defs.pm';
-                  $fa_defs::FA_Secure||='';
-                  if ($fa_defs::FA_Secure &&
-                        -d $fa_defs::FA_Secure.'Defaults') {
+                  require $fa_path.'/fa_global.pm';
+                  $fa_global::FA_Secure||='';
+                  if ($fa_global::FA_Secure &&
+                        -d $fa_global::FA_Secure.'Defaults') {
                      BEGIN { $Term::Menus::facall=caller(2);
                              $Term::Menus::facall||='' };
                      use if (-1<index $Term::Menus::facall,'FullAuto'),
                          "BerkeleyDB";
                      my $dbenv = BerkeleyDB::Env->new(
-                        -Home  => $fa_defs::FA_Secure.'Defaults',
+                        -Home  => $fa_global::FA_Secure.'Defaults',
                         -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
                      ) or die(
                         "cannot open environment for DB: ".
@@ -549,7 +549,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                            $default_modules->{'set'} ne 'none') {
                         my $setname=$default_modules->{'set'};
                         my $stenv = BerkeleyDB::Env->new(
-                           -Home  => $fa_defs::FA_Secure.'Sets',
+                           -Home  => $fa_global::FA_Secure.'Sets',
                            -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
                         ) or die(
                            "cannot open environment for DB: ".
@@ -627,7 +627,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                   }
                }
             } else {
-               warn("WARNING: Cannot read defaults file $fa_path/fa_defs.pm".
+               warn("WARNING: Cannot read defaults file $fa_path/fa_global.pm".
                     " - permission denied (Hint: Perhaps you need to 'Run as ".
                     "Administrator'?)");
             }
@@ -665,9 +665,9 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                   my $fa_path=$INC{'Net/FullAuto.pm'};
                   my $progname=substr($0,(rindex $0,'/')+1,-3);
                   substr($fa_path,-3)='';
-                  if (-f $fa_path.'/fa_defs.pm') {
+                  if (-f $fa_path.'/fa_global.pm') {
                      my $stenv = BerkeleyDB::Env->new(
-                        -Home  => $fa_defs::FA_Secure.'Sets',
+                        -Home  => $fa_global::FA_Secure.'Sets',
                         -Flags => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL
                      ) or die(
                         "cannot open environment for DB: ".
@@ -1339,7 +1339,7 @@ sub Menu
 #print "MENUCALLER=",caller,"\n";<STDIN>;
    my $MenuUnit_hash_ref=$_[0];
 
-   #print "MENU=",&Data::Dump::Streamer::Dump($MenuUnit_hash_ref)->Out(),"\n";;
+   #print "MENU=",&Data::Dump::Streamer::Dump($MenuUnit_hash_ref)->Out(),"\n";
 
    $MenuUnit_hash_ref->{Name}=&pw($MenuUnit_hash_ref);
    my $select_many=0;
@@ -1415,7 +1415,8 @@ sub Menu
          my $die="Can Only Use \"Negate =>\""
                 ."\n\t\tElement in ".__PACKAGE__.".pm when the"
                 ."\n\t\t\"Select =>\" Element is set to \'Many\'\n\n";
-         &Net::FullAuto::FA_Core::handle_error($die) if $Term::Menus::fullauto;
+         &Net::FullAuto::FA_Core::handle_error($die)
+            if $Term::Menus::fullauto;
          die $die;
       }
       my $con_regex=qr/\]c(o+nvey)*\[/i;
@@ -1457,15 +1458,6 @@ sub Menu
                      &Net::FullAuto::FA_Core::handle_error($@);
                   } else { die $@ }
                } else {
-
-            #   my $die="\n       FATAL ERROR! - Error in Convey => "
-            #          ."sub{ *CONTENT* },\n                      code block."
-            #          ." To find error, copy the\n                      "
-            #          ."*CONTENT* to a separate script, and\n"
-            #          ."                      test for the error there. "
-            #          ."Use the\n                      'use strict;' pragma."
-            #          ."\n\n";
-
                   my $die="\n       FATAL ERROR! - The Local "
                          ."System $Term::Menus::local_hostname "
                          ."Conveyed\n"
@@ -2198,7 +2190,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
              #  (Optional)       select_many )
 {
 
-#print "PICKCALLER=",caller," and Argument 7 =>$_[6]<=\n";sleep 3;
+#print "PICKCALLER=",caller," and Argument 7 =>$_[6]<=\n";
 
    #  "pick" --> This function presents the user with
    #  with a list of items from which to choose.
@@ -2241,18 +2233,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
    }
    my $num_pick=$#all_menu_items_array+1;
    my $caller=(caller(1))[3]||'';
-   #unless ($Persists->{unattended}) {
-   #   if ($^O ne 'cygwin') {
-   #      unless ($noclear) {
-   #         if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
-   #            system("cmd /c cls");
-   #            print "\n";
-   #         } else {
-   #            print `${Term::Menus::clearpath}clear`."\n";
-   #         }
-   #      } else { print "ONE\n";print $blanklines }
-   #   } else { print "TWO\n";print $blanklines }
-   #}
    my $numbor=0;                    # Number of Item Selected
    my $ikey='';                     # rawInput Key - key used
                                     #    to end menu. Can be
@@ -2384,19 +2364,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $convey=$convey->[0];
             }
          }
-#print "CONVEY1=$convey and MENU=",$_[0]->{Name},"\n";<STDIN>;
          $Conveyed->{&pw($_[0])}=$convey;
-      #} elsif ($_[3]) {
-      #   $convey=$_[3];
-#print "CONVEY_picks_from_parent=$_[3]\n";<STDIN>;
-      #   $Conveyed->{&pw($_[0])}=$convey; 
       } elsif ($pick) {
          $convey=${$_[1]}[$pick-1];
-#print "CONVEY3=$convey\n";<STDIN>;
          $Conveyed->{&pw($_[0])}=$convey;
       } elsif ($_[3]) {
          $convey=$_[3];
-#print "CONVEY_picks_from_parent=$convey\n";<STDIN>;
          $Conveyed->{&pw($_[0])}=$convey;
       }
       $convey='' if !$convey ||
@@ -2555,24 +2528,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          }
          return $plan_;
       }
-#print "NUMBORX=$numbor<==\n";
       while ($numbor=~/\d+/ &&
             ($numbor<=$start || $start+$choose_num < $numbor ||
             $numbor eq 'admin')) {
          my $menu_text='';my $picknum_for_display='';
-         my ($bout,$berr)=('','');
+         my $bout='';
          $bout=&banner($MenuUnit_hash_ref->{Banner}||$banner,
             $Conveyed,$SaveMMap,$picks_from_parent,$log_handle);
-         #if ($berr && wantarray && !$no_wantarray) {
-         #   if (defined $log_handle &&
-         #         -1<index $log_handle,'*') {
-         #      print $log_handle $berr;
-         #      close($log_handle);
-         #   }
-         #   return '',$berr;
-         #}
          $menu_text.=$bout."\n\n";
-#print "WHAT IS START=$start\n";
          my $picknum=$start+1;
          my $numlist=$choose_num;
          my $mark='';
@@ -2590,6 +2553,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $mark=$mark_blank;
                   substr($mark,-1)=$picks{$picknum}=$return_from_child_menu;
                   %{$SavePick->{$MenuUnit_hash_ref}}=%picks;
+                  $SaveNext={%{$SavePick}};
                   $prev_menu=$picknum;
 #print "DO WE GET HERE3 and SEL=$MenuUnit_hash_ref->{Select}! and $return_from_child_menu\n";
                } else {
@@ -2618,7 +2582,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         $convey=$FullMenu->{$MenuUnit_hash_ref}[3]
                                       {$all_menu_items_array[$picknum-1]}->[0];
                      } else { $convey=$all_menu_items_array[$picknum-1] }
-                     $SaveNext={%{$SavePick}};
                      eval {
                         ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
                            $SaveMMap,$SaveNext,$Persists)=&Menu($FullMenu->
@@ -2667,23 +2630,32 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                        $Net::FullAuto::FA_Core::makeplan->{
                                           'Title'}=$pn{$numbor}[0];
                                     }
+                                    my $n='Number';
+                                    my $planid=
+                                          $Net::FullAuto::FA_Core::makeplan->{
+                                          $n}; 
+                                    my $s=$sub;
+                                    my $item=
+                                          &Data::Dump::Streamer::Dump(
+                                          $s)->Out();
                                     push @{$Net::FullAuto::FA_Core::makeplan->{
                                             'Plan'}},
                                          { Menu   => &pw($MenuUnit_hash_ref),
                                            Number => $numbor,
-                                           PlanID =>
-                                              $Net::FullAuto::FA_Core::makeplan->{Number},
-                                           Item   =>
-                                              &Data::Dump::Streamer::Dump($sub)->Out()
+                                           PlanID => $planid,
+                                           Item   => $item
                                          }
                                  }
                                  eval { @resu=$sub->() };
                                  if ($@) {
-                                    if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
-                                       if ($parent_menu && wantarray && !$no_wantarray) {
-                                          return '',$FullMenu,$Selected,$Conveyed,
-                                                 $SavePick,$SaveMMap,$SaveNext,
-                                                 $Persists,$parent_menu,$@;
+                                    if (10<length $@ && unpack('a11',$@)
+                                          eq 'FATAL ERROR') {
+                                       if ($parent_menu && wantarray
+                                             && !$no_wantarray) {
+                                          return '',$FullMenu,$Selected,
+                                                 $Conveyed,$SavePick,$SaveMMap,
+                                                 $SaveNext,$Persists,
+                                                 $parent_menu,$@;
                                        }
                                        if (defined $log_handle &&
                                              -1<index $log_handle,'*') {
@@ -2691,19 +2663,23 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                           close($log_handle);
                                        }
                                        if ($Term::Menus::fullauto) {
-                                         &Net::FullAuto::FA_Core::handle_error($@);
+                                         &Net::FullAuto::FA_Core::handle_error(
+                                            $@);
                                        } else { die $@ }
                                     } else {
-                                       my $die="\n       FATAL ERROR! - The Local "
-                                              ."System $Term::Menus::local_hostname "
-                                              ."Conveyed\n"
-                                              ."              the Following "
-                                              ."Unrecoverable Error Condition :\n\n"
-                                              ."       $@\n       line ".__LINE__;
-                                       if ($parent_menu && wantarray && !$no_wantarray) {
-                                          return '',$FullMenu,$Selected,$Conveyed,
-                                                 $SavePick,$SaveMMap,$SaveNext,
-                                                 $Persists,$parent_menu,$die;
+                                       my $die=''
+                                          ."\n       FATAL ERROR! - The Local "
+                                          ."System $Term::Menus::local_hostname"
+                                          ." Conveyed\n"
+                                          ."              the Following "
+                                          ."Unrecoverable Error Condition :\n\n"
+                                          ."       $@\n       line ".__LINE__;
+                                       if ($parent_menu && wantarray
+                                             && !$no_wantarray) {
+                                          return '',$FullMenu,$Selected,
+                                                 $Conveyed,$SavePick,$SaveMMap,
+                                                 $SaveNext,$Persists,
+                                                 $parent_menu,$die;
                                        }
                                        if (defined $log_handle &&
                                              -1<index $log_handle,'*') {
@@ -2711,7 +2687,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                           close($log_handle);
                                        }
                                        if ($Term::Menus::fullauto) {
-                                          &Net::FullAuto::FA_Core::handle_error($die);
+                                          &Net::FullAuto::FA_Core::handle_error(
+                                             $die);
                                        } else { die $die }
                                     }
                                  }
@@ -2805,8 +2782,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  }
                               };
                               if ($@) {
-                                 if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
-                                    if ($parent_menu && wantarray && !$no_wantarray) {
+                                 if (10<length $@ && unpack('a11',$@)
+                                       eq 'FATAL ERROR') {
+                                    if ($parent_menu && wantarray
+                                          && !$no_wantarray) {
                                        return '',$FullMenu,$Selected,$Conveyed,
                                               $SavePick,$SaveMMap,$SaveNext,
                                               $Persists,$parent_menu,$@;
@@ -2820,13 +2799,15 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                       &Net::FullAuto::FA_Core::handle_error($@);
                                     } else { die $@ }
                                  } else {
-                                    my $die="\n       FATAL ERROR! - The Local "
-                                           ."System $Term::Menus::local_hostname "
-                                           ."Conveyed\n"
-                                           ."              the Following "
-                                           ."Unrecoverable Error Condition :\n\n"
-                                           ."       $@\n       line ".__LINE__;
-                                    if ($parent_menu && wantarray && !$no_wantarray) {
+                                    my $die=''
+                                       ."\n       FATAL ERROR! - The Local "
+                                       ."System $Term::Menus::local_hostname "
+                                       ."Conveyed\n"
+                                       ."              the Following "
+                                       ."Unrecoverable Error Condition :\n\n"
+                                       ."       $@\n       line ".__LINE__;
+                                    if ($parent_menu && wantarray
+                                          && !$no_wantarray) {
                                        return '',$FullMenu,$Selected,$Conveyed,
                                               $SavePick,$SaveMMap,$SaveNext,
                                               $Persists,$parent_menu,$die;
@@ -2837,7 +2818,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                        close($log_handle);
                                     }
                                     if ($Term::Menus::fullauto) {
-                                       &Net::FullAuto::FA_Core::handle_error($die);
+                                       &Net::FullAuto::FA_Core::handle_error(
+                                          $die);
                                     } else { die $die }
                                  }
                               }
@@ -3111,7 +3093,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $def='.*' if $def eq '*';
                   if ($def) {
                      my $cnt=1;
-                     foreach my $item (sort @{[keys %{${$FullMenu}{$chosen}[5]}]}) {
+                     foreach my $item (
+                           sort @{[keys %{${$FullMenu}{$chosen}[5]}]}) {
                         if ($item=~/$def/) {
                            $picks{$cnt}='*';
                            push @keys, $item;
@@ -3325,7 +3308,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
-                           if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (10<length $@ && unpack('a11',$@)
+                                 eq 'FATAL ERROR') {
                               if ($parent_menu && wantarray && !$no_wantarray) {
                                  return '',$FullMenu,$Selected,$Conveyed,
                                         $SavePick,$SaveMMap,$SaveNext,
@@ -3612,7 +3596,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
-                           if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (10<length $@ && unpack('a11',$@)
+                                 eq 'FATAL ERROR') {
                               if ($parent_menu && wantarray && !$no_wantarray) {
                                  return '',$FullMenu,$Selected,$Conveyed,
                                         $SavePick,$SaveMMap,$SaveNext,
@@ -4102,7 +4087,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                print "\n   WARNING! - You are at the First Menu!\n";
                sleep 2;
             } elsif (grep { /\+|\*/ } values %picks) {
-               $SaveNext={%{$SavePick}};
                return '+',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveMMap,$SaveNext,
@@ -4114,7 +4098,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $SavePick->{$parent_menu}->{$key}='-' if
                      $sp_copy{$key} eq '+';
                }
-               $SaveNext={%{$SavePick}};
                return '-',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveMMap,$SaveNext,
@@ -4131,14 +4114,21 @@ sub pick # USAGE: &pick( ref_to_choices_array,
 #print "MENU UNIT REF=$MenuUnit_hash_ref\n";
 #print "MENU FOR NEXT MENU=",&Data::Dump::Streamer::Dump($tyt)->Out(),"\n";<STDIN>;
 #print "MENUMAP FOR NEXT MENU=",&Data::Dump::Streamer::Dump($MenuMap)->Out(),"\n";<STDIN>;
-            $convey=[]; 
-            if (0<$#{[keys %picks]}) {
-               foreach my $key (sort numerically keys %picks) {
-                  push @{$convey}, $all_menu_items_array[$key-1];
-               }
-            } else {
-               $convey=$all_menu_items_array[(keys %picks)[0]-1];
-            }
+            #$convey=[]; 
+            #if (0<$#{[keys %picks]}) {
+            #   foreach my $key (sort numerically keys %picks) {
+            #      push @{$convey}, $all_menu_items_array[$key-1];
+            #   }
+            #} else {
+            #   $convey=$all_menu_items_array[(keys %picks)[0]-1];
+            #}
+
+            ($FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,
+               $convey,$parent_menu)
+               =$get_result->($MenuUnit_hash_ref,
+               \@all_menu_items_array,\%picks,
+               $picks_from_parent,$FullMenu,$Conveyed,$Selected,
+               $SaveNext,$Persists,$parent_menu);
             eval {
                my ($ignore1,$ignore2,$ignore3)=('','','');
                ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
@@ -4209,7 +4199,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
-                           if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (10<length $@ && unpack('a11',$@)
+                                 eq 'FATAL ERROR') {
                               if ($parent_menu && wantarray && !$no_wantarray) {
                                  return '',$FullMenu,$Selected,$Conveyed,
                                         $SavePick,$SaveMMap,$SaveNext,
@@ -5280,7 +5271,8 @@ return 'DONE_SUB';
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
-                           if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (10<length $@ && unpack('a11',$@)
+                                 eq 'FATAL ERROR') {
                               if ($parent_menu && wantarray && !$no_wantarray) {
                                  return '',$FullMenu,$Selected,$Conveyed,
                                         $SavePick,$SaveMMap,$SaveNext,
@@ -5571,6 +5563,7 @@ return 'DONE_SUB';
                if (ref $test_item eq 'HASH' &&
                      grep { /Item_/ } keys %{$test_item}) {
                   %{$SavePick->{$MenuUnit_hash_ref}}=%picks;
+                  %{$SaveNext->{$MenuUnit_hash_ref}}=%picks;
                   $Conveyed->{&pw($MenuUnit_hash_ref)}=[];
                   if (0<$#{[keys %picks]}) {
                      foreach my $key (sort numerically keys %picks) {
