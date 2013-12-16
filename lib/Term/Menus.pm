@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.53';
+our $VERSION = '2.54';
 
 
 use 5.006;
@@ -469,12 +469,17 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          my $fa_path=$INC{'Net/FullAuto.pm'};
          my $progname=substr($0,(rindex $0,'/')+1,-3);
          substr($fa_path,-3)='';
+         my $username=getlogin || getpwuid($<);
          if (-f $fa_path.'/fa_global.pm') {
             if (-r $fa_path.'/fa_global.pm') {
                {
                   no strict 'subs';
                   require $fa_path.'/fa_global.pm';
                   $fa_global::FA_Secure||='';
+                  $fa_global::FA_Sudo||={};
+                  if (exists $fa_global::FA_Sudo->{$username}) {
+                     $username=$fa_global::FA_Sudo->{$username};
+                  }
                   if ($fa_global::FA_Secure &&
                         -d $fa_global::FA_Secure.'Defaults') {
                      BEGIN { $Term::Menus::facall=caller(2);
@@ -503,7 +508,6 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                " $BerkeleyDB::Error\n";
                         }
                      }
-                     my $username=getlogin || getpwuid($<);
                      if (exists $ENV{'SSH_CONNECTION'} &&
                            exists $ENV{'USER'} && ($ENV{'USER'}
                            ne $username)) {
@@ -570,7 +574,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                   " $BerkeleyDB::Error\n";
                            }
                         }
-                        my $username=getlogin || getpwuid($<);
+                        #my $username=getlogin || getpwuid($<);
                         my $set='';
                         my $status=$std->db_get(
                               $username,$set);
@@ -688,7 +692,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                " $BerkeleyDB::Error\n";
                         }
                      }
-                     my $username=getlogin || getpwuid($<);
+                     #my $username=getlogin || getpwuid($<);
                      my $set='';
                      my $status=$std->db_get(
                            $username,$set);
@@ -4129,11 +4133,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                \@all_menu_items_array,\%picks,
                $picks_from_parent,$FullMenu,$Conveyed,$Selected,
                $SaveNext,$Persists,$parent_menu);
+            my $returned_FullMenu='';
+            my $returned_Selected='';
+            my $returned_Conveyed='';
+            my $returned_SavePick='';
+            my $returned_SaveMMap='';
+            my $returned_SaveNext='';
+            my $returned_Persists='';
             eval {
-               my ($ignore1,$ignore2,$ignore3)=('','','');
-               ($menu_output,$FullMenu,$Selected,$Conveyed,$SavePick,
-                  $SaveMMap,$SaveNext,$Persists,$ignore1,$ignore2,
-                  $ignore3)
+               ($menu_output,$returned_FullMenu,
+                  $returned_Selected,$returned_Conveyed,
+                  $returned_SavePick,$returned_SaveMMap,
+                  $returned_SaveNext,$returned_Persists)
                   =&Menu($FullMenu->
                   {$MenuUnit_hash_ref}[2]
                   {$all_menu_items_array[(keys %{$SavePick->
@@ -4146,6 +4157,33 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
 #print "WHAT IS MENU10=$menu_output\n";
+            if (ref $menu_output eq 'ARRAY' &&
+                  $menu_output->[0]=~/^[{](.*)[}][<]$/) {
+               delete $Selected->{$MenuUnit_hash_ref};
+               delete $Conveyed->{$MenuUnit_hash_ref};
+               delete $SavePick->{$MenuUnit_hash_ref};
+               delete $SaveMMap->{$MenuUnit_hash_ref};
+               delete $SaveNext->{$MenuUnit_hash_ref};
+               delete $Persists->{$MenuUnit_hash_ref};
+               if ($1 eq $MenuUnit_hash_ref->{Name}) {
+                  %picks=();
+                  next;
+               } else {
+                  delete $FullMenu->{$MenuUnit_hash_ref};
+                  return $menu_output,
+                     $FullMenu,$Selected,$Conveyed,
+                     $SavePick,$SaveMMap,$SaveNext,
+                     $Persists;
+               }
+            } else {
+               $FullMenu=$returned_FullMenu;
+               $Selected=$returned_Selected;
+               $Conveyed=$returned_Conveyed;
+               $SavePick=$returned_SavePick;
+               $SaveMMap=$returned_SaveMMap;
+               $SaveNext=$returned_SaveNext;
+               $Persists=$returned_Persists;
+            }
             if ($menu_output eq 'DONE_SUB') {
 #print "DONE_SUB9\n";
                return 'DONE_SUB';
@@ -4375,9 +4413,6 @@ return 'DONE_SUB';
             return ']quit['
          } elsif ($Term::Menus::fullauto and $numbor=~/^help$/i) {
             system('man Net::FullAuto');
-         #} elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i
-         #      && !exists $Net::FullAuto::FA_Core::admin_menus{
-         #      &pw($MenuUnit_hash_ref)}) {
          } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i) {
             if (!exists $Net::FullAuto::FA_Core::admin_menus{
                   &pw($MenuUnit_hash_ref)}) {
@@ -4387,6 +4422,7 @@ return 'DONE_SUB';
                   last if $menu_output[0] ne '-' && $menu_output[0] ne '+';
                }
             } else {
+print "EXCELLENT\n";
                return ['{admin}<'],$FullMenu,$Selected,$Conveyed,
                        $SavePick,$SaveMMap,$SaveNext,$Persists;
             }

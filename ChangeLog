@@ -1,3 +1,13 @@
+2013-12-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.54
+
+        * Fixed return to named Menu after forward and back
+          navigation.
+
+        * Implemented $FA_Sudo in fa_global.pm for FullAuto.
+
+
 2013-12-14  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.53
