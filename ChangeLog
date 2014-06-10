@@ -1,3 +1,14 @@
+2014-06-10  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.55
+
+        * Fixed Default Setting.
+
+        * Added --tutorial for FullAuto and fixed --users.
+
+        * "Finally" got filtered menus working properly (% /)
+
+
 2013-12-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.54
