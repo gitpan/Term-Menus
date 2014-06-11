@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.55';
+our $VERSION = '2.56';
 
 
 use 5.006;
@@ -6387,8 +6387,8 @@ You want to use perl subroutines to create the text items and/or banner:
       push @textlines, "$previous is a Good Utility";
       push @textlines, "$previous is a Bad Utility";
       return @textlines;
-             ## return value must NOT be an array
-             ## not an array reference
+             ## return value must be an array
+             ## NOT an array reference
 
    }
 
@@ -8006,27 +8006,28 @@ the following menus.
 
 The user sees ==>
 
-   Please select all files for immediate transfer:
+   Choose a /bin Utility :
 
-   *  1.        addr2name.awk has  **NOT**  been transferred
-   *  2.        awk.exe has  **NOT**  been transferred
-      3.        gawk-3.1.4.exe has  **NOT**  been transferred
-   *  4.        gawk.exe has  **NOT**  been transferred
-      5.        igawk has  **NOT**  been transferred
-      6.        pgawk-3.1.4.exe has  **NOT**  been transferred
-      7.        pgawk.exe has  **NOT**  been transferred
-   *  8.        822-date has been transferred
-      9.        DllPlugInTester.exe has been transferred
-   *  10.       ELFDump.exe has been transferred
+   *  1.        [.exe
+   *  2.        2to3
+      3.        2to3-3.2
+   *  4.        411toppm.exe
+      5.        a2p.exe
+      6.        aaflip.exe
+      7.        aclocal
+   *  8.        aclocal-1.10
+      9.        aclocal-1.11
+   *  10.       aclocal-1.12
 
    a.  Select All.   c.  Clear All.
    f.  Finish.
 
-   929 Total Choices
+   1925 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward
+   (Type 'quit' to Quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -8034,27 +8035,30 @@ The user sees ==>
 
 The user sees ==>
 
-   Please select all files for immediate transfer:
+   Choose a /bin Utility :
 
-   *  8.        822-date has been transferred
-      9.        DllPlugInTester.exe has been transferred
-   *  10.       ELFDump.exe has been transferred
-      11.       GraphicsMagick++-config has been transferred
-      12.       GraphicsMagick-config has been transferred
-      13.       X11 has been transferred
-      14.       [.exe has been transferred
-      15.       a2p.exe has been transferred
-      16.       aclocal has been transferred
-      17.       aclocal-1.4 has been transferred
+   *  2.        2to3
+      3.        2to3-3.2
+   *  4.        411toppm.exe
+      759.      FvwmCommand.exe
+      1650.     Ted.exe
+      1782.     WPrefs.exe
+      1785.     X
+      1889.     XWin.exe
+      1808.     Xdmx.exe
+      1815.     Xephyr.exe
 
    a.  Select All.   c.  Clear All.
    f.  Finish.
 
-   929 Total Choices
+   (Type '<' to return to previous Menu)
 
-   Press ENTER (or "d") to scroll downward
+   1925 Total Choices
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   Press ENTER (or 'd') to scroll downward
+
+   OR 'u' to scroll upward
+   (Type 'quit' to Quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -8064,35 +8068,41 @@ And if we choose to enter ' B<%> ' I<again>
 
 The user sees ==>
 
-   Please select all files for immediate transfer:
+   Choose a /bin Utility :
 
-      929.      znew has been transferred
-      928.      zmore has been transferred
-      927.      zless has been transferred
-      926.      zipsplit.exe has been transferred
-      925.      zipnote.exe has been transferred
-      924.      zipinfo has been transferred
-      923.      zipgrep has been transferred
-      922.      zipcloak.exe has been transferred
-      921.      zip.exe has been transferred
-      920.      zgrep has been transferred
+      1925.     znew
+      1924.     zmore
+      1923.     zless
+      1922.     zipsplit.exe
+      1921.     zipnote.exe
+      1920.     zipinfo.exe
+      1919.     zipgrep
+      1918.     zipcloak.exe
+      1917.     zip.exe
+      1916.     zgrep
 
    a.  Select All.   c.  Clear All.
    f.  Finish.
 
-   929 Total Choices
+   (Type '<' to return to previous Menu)
 
-   Press ENTER (or "d") to scroll downward
+   1925 Total Choices
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   Press ENTER (or 'd') to scroll downward
+
+   OR 'u' to scroll upward
+   (Type 'quit' to Quit)
 
    PLEASE ENTER A CHOICE:
 
-This submenu of selections works just like any other menu. The user can
+This submenu of sorted selections works just like any other menu. The user can
 deselect an item, clear all items, re-choose all items, etc. The choices made
-here are preserved when-or-if the user navigates back to the original (parent)
+here are preserved when the user navigates back to the original (parent)
 menu. In other words, if Item 1. is deselected in the sorted menu, Item 1.
-will also be deselected in the parent menu above.
+will also be deselected in the parent menu. Navigating back to the
+parent is necessary - the menu will not generate results from a sort menu.
+Use either the B<LEFTARROW> ' B<E<lt>> ' key or Finish key ' B<F> or B<f> ' to
+return to the parent menu, and then continue your menu activities there. 
 
 =back
 
@@ -8101,7 +8111,7 @@ will also be deselected in the parent menu above.
 When working with numerous items in a single menu, it is desirable to see the
 set of choices made before leaving the menu and committing to a non-returnable
 forward (perhaps even critical) process. Term::Menus provides this feature
-with the I<Star> ' B<*> ' key. Assume we have the following menu with 93 Total
+with the I<Star> ' B<*> ' key. Assume we have the following menu with 1925 Total
 Choices. Assume further that we have selected items 1,3,9 & 11. Note that we
 cannot see Item 11 on the first screen since this menu is configured to show
 only 10 Items at a time.
@@ -8112,25 +8122,26 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-   *  1.        /bin Utility - arch
-      2.        /bin Utility - ash
-   *  3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-   *  9.        /bin Utility - chown
-      10.       /bin Utility - cp
+   *  1.        [.exe
+      2.        2to3
+   *  3.        2to3-3.2
+      4.        411toppm.exe
+      5.        a2p.exe
+      6.        aaflip.exe
+      7.        aclocal
+      8.        aclocal-1.10
+   *  9.        aclocal-1.11
+      10.       aclocal-1.12
 
    a.  Select All.   c.  Clear All.
    f.  Finish.
 
-   93 Total Choices
+   1925 Total Choices
 
-   Press ENTER (or "d") to scroll downward
+   Press ENTER (or 'd') to scroll downward
 
-   OR "u" to scroll upward  (Type "quit" to quit)
+   OR 'u' to scroll upward
+   (Type 'quit' to Quit)
 
    PLEASE ENTER A CHOICE:
 
@@ -8140,20 +8151,28 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-   *  1.        /bin Utility - arch
-   *  3.        /bin Utility - awk
-   *  9.        /bin Utility - chown
-   *  11.       /bin Utility - cpio
+   *  1.        [.exe
+   *  3.        2to3-3.2
+   *  9.        aclocal-1.11
+   *  11.       aclocal-1.13
 
-   (Type "quit" to quit)
+   a.  Select All.   c.  Clear All.
+   f.  Finish.
+
+   (Type '<' to return to previous Menu)
+
+   (Type 'quit' to Quit)
 
    PLEASE ENTER A CHOICE:
 
-This submenu of selections works just like any other menu. The user can
-deselect an item, clear all items, re-choose all items, etc. The choices made
-here are preserved when-or-if the user navigates back to the original (parent)
+This submenu of summary selections works just like any other menu. The user 
+can deselect an item, clear all items, re-choose all items, etc. The choices
+made here are preserved when the user navigates back to the original (parent)
 menu. In other words, if Item 1. is deselected in the summary menu, Item 1.
-will also be deselected in the parent menu above.
+will also be deselected in the parent menu. Navigating back to the
+parent is necessary - the menu will not generate results from a summary menu.
+Use either the B<LEFTARROW> ' B<E<lt>> ' key or Finish key ' B<F> or B<f> ' to
+return to the parent menu, and then continue your menu activities there.
 
 =back
 
