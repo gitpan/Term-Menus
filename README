@@ -276,6 +276,34 @@ DESCRIPTION
 
          SELECTIONS = bash is a Good Utility
 
+    * You have a large amount of text, or instructional information, and
+      want a *banner only screen* that displays the banner only (no
+      selections) and that moves to the next screen/menu with just a press
+      of the ENTER key. Yet, you want to preserve selections from earlier
+      menus, and/or return to more menus after user completes reading the
+      banner only screens. You can also navigate backwards and forwards
+      through these screens.
+
+         use Term::Menus:
+
+         my %Menu_1=(
+
+            Name   => 'Menu_1',
+            Banner => "\n   This is a BANNER ONLY display."
+
+         );
+
+         &Menu(\%Menu_1);
+
+      The user sees ==>
+
+         This is a BANNER ONLY display.
+
+
+         (Type 'quit' to Quit)
+
+         Press ENTER to continue ...
+
     * You want to use perl subroutines to create the text items and/or
       banner:
 
@@ -655,7 +683,7 @@ METHODS
           essentially two methods for creating menu items: The *Item_<int>*
           elements, and the "]Convey[" macro (described later). The
           difference being that the "]Convey[" macro turns an Item
-          Conguration Hash into an Item *Template* -> a powerful way to
+          Configuration Hash into an Item *Template* -> a powerful way to
           *Item*-ize large lists or quantities of data that would otherwise
           be difficult - even impossible - to anticipate and cope with
           manually.
@@ -707,7 +735,7 @@ METHODS
           NOTE: Macros (like "]Previous[" ) *can* be used in Banners! :-) (
           See Item Configuration Macros below )
 
-   Item Congfiguration Hash Structures
+   Item Configuration Hash Structures
 
     Each Menu Item can have an independant configurtion. Each Menu
     Configuration Hash Structure consists of elements that define and
@@ -865,25 +893,20 @@ METHODS
 
     *   Result => \%Menu_2 --or -- "&any_method()",
 
-          *Result* is an *optional* element that also has two important
+        * *Result* is an *optional* element that also has two important
           uses:
 
-
-
-          For selecting the child menu next in the chain of operation and
+        * For selecting the child menu next in the chain of operation and
           conveyance,
 
              Result => \%Menu_2,
 
           --or--
 
-
-
-          For building customized method arguements using "&Menu()"'s
+        * For building customized method arguements using "&Menu()"'s
           built-in macros.
 
-
-
+        *
              Result => "&any_method($arg1,\"]Selected[\",\"]Previous[\")",
 
           NOTE: *ALWAYS* be sure to surround the subroutine or method
@@ -1389,7 +1412,6 @@ METHODS
                           sub selected { print "\n   SELECTED ITEM = $_[0]\n";return $_[0] }
 
 ANONYMOUS SUBROUTINES AND MACROS
-
     Term::Menus macros can be used *directly* in the body of anonymous
     subroutines! Ordinary subroutines can be used as illustrated above of
     course, but the macro values can only be passed as arguments to ordinary
@@ -1478,7 +1500,6 @@ ANONYMOUS SUBROUTINES AND MACROS
            print "   \nSELECTION = $selection\n";
 
 RECURSIVELY CALLED MENUS
-
     There are occasions where it is desirable to re-use the same Menu
     template/hash configuration with dynamically discovered data. One
     obvious example of this is navigating directory trees. Each subsequent
@@ -1631,7 +1652,6 @@ RECURSIVELY CALLED MENUS
            }
 
 USAGE and NAVIGATION
-
     Usage of "&pick()" and/or "&Menu()" during the runtime of a script in
     which one or both are included, is simple and intuitive. Nearly
     everything the end user needs in terms of instruction is included
@@ -1891,7 +1911,7 @@ USAGE and NAVIGATION
     see the set of choices made before leaving the menu and committing to a
     non-returnable forward (perhaps even critical) process. Term::Menus
     provides this feature with the *Star* ' * ' key. Assume we have the
-    following menu with 1925 Total Choices. Assume further that we have
+    following menu with 93 Total Choices. Assume further that we have
     selected items 1,3,9 & 11. Note that we cannot see Item 11 on the first
     screen since this menu is configured to show only 10 Items at a time.
 
