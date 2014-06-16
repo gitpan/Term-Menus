@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.57';
+our $VERSION = '2.58';
 
 
 use 5.006;
@@ -2420,7 +2420,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       if (($pick &&
             exists $FullMenu->{$_[0]}[2]{$_[1]->[$pick-1]} &&
             (ref $test_item eq 'HASH' &&
-            (values %{$test_item})[0] ne 'recurse')) || $show_banner_only) {
+            (values %{$test_item})[0] ne 'recurse')) || ref $test_item eq 'CODE') {
          if ((ref $test_item eq 'HASH' &&
                    ((grep { /Item_/ } keys %{$test_item}) ||
                    ($show_banner_only && (grep { /Banner/ }
@@ -2529,7 +2529,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          $Selected->{$_[0]}{$pick}=$test_item if $pick;
          if ($pick && ref $_[0]->{$FullMenu->{$_[0]}
                [4]{$_[1]->[$pick-1]}}{'Result'} eq 'HASH') {
-            $SaveNext->{$_[0]}=$FullMenu->{$_[0]}[2]->
+            $SaveNext->{$_[0]}=$FullMenu->{$_[0]}[2]
                {$_[1]->[$pick-1]};
          }
       }
@@ -2602,7 +2602,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $mark=$mark_blank;
                   substr($mark,-1)=$picks{$picknum}=$return_from_child_menu;
                   %{$SavePick->{$MenuUnit_hash_ref}}=%picks;
-                  $SaveNext={%{$SavePick}};
                   $prev_menu=$picknum;
 #print "DO WE GET HERE3 and SEL=$MenuUnit_hash_ref->{Select}! and $return_from_child_menu\n";
                } else {
@@ -4188,12 +4187,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $SaveNext->{$MenuUnit_hash_ref} &&
                   ((grep { /-|\+/ } values %picks) || $show_banner_only)) {
             $MenuMap=$SaveMMap->{$MenuUnit_hash_ref};
-            ($FullMenu,$Conveyed,$SaveNext,$Persists,$Selected,
-               $convey,$parent_menu)
-               =$get_result->($MenuUnit_hash_ref,
-               \@all_menu_items_array,\%picks,
-               $picks_from_parent,$FullMenu,$Conveyed,$Selected,
-               $SaveNext,$Persists,$parent_menu);
             my $returned_FullMenu='';
             my $returned_Selected='';
             my $returned_Conveyed='';
@@ -4593,7 +4586,6 @@ return 'DONE_SUB';
                      } elsif ($picks{$pick} eq '+') {
                         &delete_Selected($MenuUnit_hash_ref,$pick,
                            $Selected,$SavePick,$SaveNext,$Persists);
-                        $SaveNext={%{$SavePick}};
                         delete $picks{$pick};
                         delete $items{$pick};
                      }
@@ -4645,7 +4637,6 @@ return 'DONE_SUB';
                   } else {
                      &delete_Selected($MenuUnit_hash_ref,$numbor,
                          $Selected,$SavePick,$SaveNext,$Persists);
-                     $SaveNext={%{$SavePick}};
                      delete $picks{$numbor};
                      delete $items{$numbor};
                   }
@@ -4767,7 +4758,6 @@ return 'DONE_SUB';
                         foreach my $key (keys %{$SaveNext}) {
                            delete $SaveNext->{$key};
                         }
-                        $SaveNext={%{$SavePick}};
                         if ($picks{$numbor} eq '*') {
                            delete $picks{$numbor};
                            delete $items{$numbor};
@@ -4782,7 +4772,6 @@ return 'DONE_SUB';
                      if ($prev_menu && $prev_menu!=$numbor) {
                         $FullMenu->{$cur_menu}[5]='ERASE';
                         $hidedefaults=0;
-                        $SaveNext={%{$SavePick}};
                         &delete_Selected($cur_menu,$prev_menu,
                            $Selected,$SavePick,$SaveNext,$Persists);
                         delete $picks{$prev_menu};
@@ -4933,7 +4922,6 @@ return 'DONE_SUB';
                            $SavePick->{$parent_menu}->{$key}='-' if
                               $sp_copy{$key} eq '+';
                         }
-                        $SaveNext={%{$SavePick}};
                         return '-',
                            $FullMenu,$Selected,$Conveyed,
                            $SavePick,$SaveMMap,$SaveNext,
@@ -5275,7 +5263,7 @@ return 'DONE_SUB';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-print "RETURN RESU3=$resu[0]<==\n";
+#print "RETURN RESU3=$resu[0]<==\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
@@ -5557,11 +5545,9 @@ print "RETURN RESU3=$resu[0]<==\n";
                      my $tspmi_regex=qr/\](!)?t(?:e+st[-_]*)*[p|s]*
                            (?:r+vious[-_]*|e+lected[-_]*)
                            *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
-#print "LOOK=$look_at_test_result\n";<STDIN>;
                      if (($look_at_test_result!~/Item_/s ||
                            $look_at_test_result=~/=\s*[']Item_/s) ||
-                           $look_at_test_result=~/$tspmi_regex/ ||
-                           $look_at_test_result=~/Result\s*[=][>]/) {
+                           $look_at_test_result=~/$tspmi_regex/) {
                         $picks{$numbor}='';
                         ($FullMenu,$Conveyed,$SaveNext,$Persists,
                            $Selected,$convey,$parent_menu)
@@ -5678,10 +5664,6 @@ print "RETURN RESU3=$resu[0]<==\n";
                $test_item||='';
                if ((ref $test_item eq 'HASH' &&
                      grep { /Item_/ } keys %{$test_item}) || $show_banner_only) {
-                  unless ($show_banner_only) {
-                     %{$SavePick->{$MenuUnit_hash_ref}}=%picks;
-                     %{$SaveNext->{$MenuUnit_hash_ref}}=%picks;
-                  }
                   $Conveyed->{&pw($MenuUnit_hash_ref)}=[];
                   if (0<$#{[keys %picks]}) {
                      foreach my $key (sort numerically keys %picks) {
