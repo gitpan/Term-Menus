@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.58';
+our $VERSION = '2.59';
 
 
 use 5.006;
@@ -5623,8 +5623,14 @@ return 'DONE_SUB';
                         }
                      } elsif (ref $resu[0] eq 'HASH') {
                         if (grep { /Item_/ } keys %{$resu[0]}) {
-                           $FullMenu->{$MenuUnit_hash_ref}[2]{$pn{$numbor}[0]}=
-                              $resu[0];
+                           if (exists $FullMenu->{$parent_menu}[2]
+                                 {'__FA_Banner__'}) {
+                              $FullMenu->{$MenuUnit_hash_ref}[2]
+                                 {'__FA_Banner__'}=$resu[0];
+                           } else {
+                              $FullMenu->{$MenuUnit_hash_ref}[2]
+                                 {$pn{$numbor}[0]}=$resu[0];
+                           }
                         } else {
                            $FullMenu->{$MenuUnit_hash_ref}[2]{'__FA_Banner__'}=
                               $resu[0];
