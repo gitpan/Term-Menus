@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.59';
+our $VERSION = '2.60';
 
 
 use 5.006;
@@ -451,7 +451,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                                                      ###
    #####################################################################
 
-   our $fullauto=0;
+   our $fullauto=0;$new_user_flag=1;
    if (defined caller(2) && -1<index caller(2),'FullAuto') {
       $fullauto=1;
       my $default_modules='';
@@ -549,7 +549,6 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                      $dbenv->close();
                      undef $dbenv;
                      unless (keys %{$default_modules}) {
-                        $new_user_flag=1;
                         $default_modules->{'set'}='none';
                         $default_modules->{'fa_code'}=
                            'Net/FullAuto/Distro/fa_code_demo.pm';
@@ -563,6 +562,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                            'Net/FullAuto/Distro/fa_menu_demo.pm';
                      } elsif (exists $default_modules->{'set'} &&
                            $default_modules->{'set'} ne 'none') {
+                        $new_user_flag=0;
                         my $setname=$default_modules->{'set'};
                         my $stenv = BerkeleyDB::Env->new(
                            -Home  => $fa_global::FA_Secure.'Sets',
@@ -614,6 +614,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
                                   "From Default Set $setname ".
                                   "(Change with fa --set)"];
                      } else {
+                        $new_user_flag=0; 
                         if (exists $default_modules->{'fa_code'}) {
                            $fa_code=[$default_modules->{'fa_code'},
                                      "From Default Setting ".
@@ -675,6 +676,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
          }
          foreach my $e (('set','code','conf','host','maps','menu')) {
             if (exists $A{$e}) {
+               $new_user_flag=0;
                if ($e eq 'set') {
                   no strict 'subs';
                   my $setname=$A{$e};
@@ -761,33 +763,39 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
             $abspath=~s/\.exe$//;
             $abspath.='.pl';
             if (defined $main::fa_code && $main::fa_code) {
+               $new_user_flag=0;
                $fa_code=$main::fa_code;
                my $p=abs_path($0);
                $fa_code=[$fa_code,
                          "From \$fa_code variable in $abspath"];
             }
             if (defined $main::fa_conf && $main::fa_conf) {
+               $new_user_flag=0;
                $fa_conf=$main::fa_conf;
                $fa_conf=[$fa_conf,
                          "From \$fa_conf variable in $abspath"];
             }
             if (defined $main::fa_host && $main::fa_host) {
+               $new_user_flag=0;
                $fa_host=$main::fa_host;
                $fa_host=[$fa_host,
                          "From \$fa_host variable in $abspath"];
             }
             if (defined $main::fa_maps && $main::fa_maps) {
+               $new_user_flag=0;
                $fa_maps=$main::fa_maps;
                $fa_maps=[$fa_maps,
                          "From \$fa_maps variable in $abspath"];
             }
             if (defined $main::fa_menu && $main::fa_menu) {
+               $new_user_flag=0;
                $fa_menu=$main::fa_menu;
                $fa_menu=[$fa_menu,
                          "From \$fa_menu variable in $abspath"];
             }
          }
       } else {
+         $new_user_flag=0;
          my $abspath=abs_path($0);
          $abspath=~s/\.exe$//;
          $abspath.='.pl';
@@ -2420,7 +2428,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       if (($pick &&
             exists $FullMenu->{$_[0]}[2]{$_[1]->[$pick-1]} &&
             (ref $test_item eq 'HASH' &&
-            (values %{$test_item})[0] ne 'recurse')) || ref $test_item eq 'CODE') {
+            (values %{$test_item})[0] ne 'recurse')) ||
+            ref $test_item eq 'CODE') {
          if ((ref $test_item eq 'HASH' &&
                    ((grep { /Item_/ } keys %{$test_item}) ||
                    ($show_banner_only && (grep { /Banner/ }
@@ -2462,7 +2471,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                          $picks_from_parent);
                }
                $cd=~s/\$CODE\d*\s*=\s*//s;
-#print "CD=$cd<==\n";<STDIN>;
+#print "CD2=$cd<==\n";<STDIN>;
                eval { $test_item=eval $cd };
                if ($@) {
                   if (unpack('a11',$@) eq 'FATAL ERROR') {
@@ -5193,7 +5202,6 @@ return 'DONE_SUB';
                         $FullMenu->{$MenuUnit_hash_ref}[2]
                         {$all_menu_items_array[$numbor-1]};
                   if (ref $test_result eq 'CODE') {
-#print "GOT CODE\n";<STDIN>;
                      my $cd='';
                      my $sub=$FullMenu->{$MenuUnit_hash_ref}[2]
                               {$all_menu_items_array[$picknum-1]};
@@ -5211,11 +5219,11 @@ return 'DONE_SUB';
                                \@all_menu_items_array,\%picks,'',
                                $return_from_child_menu,$log_handle,
                                $MenuUnit_hash_ref->{Name});
-#print "CD=$cd\n<=CD\n";<STDIN>;
+#print "CD3=$cd\n<=CD\n";<STDIN>;
                         $cd=&transform_pmsi($cd,
                                $Conveyed,$SaveMMap,
                                $picks_from_parent);
-#print "CD2=$cd\n<=CD2\n";<STDIN>;
+#print "CD4=$cd\n<=CD2\n";<STDIN>;
                      }
                      $cd=~s/\$CODE\d*\s*=\s*//s;
                      $sub=eval $cd;
@@ -5546,7 +5554,7 @@ return 'DONE_SUB';
                            (?:r+vious[-_]*|e+lected[-_]*)
                            *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
                      if (($look_at_test_result!~/Item_/s ||
-                           $look_at_test_result=~/=\s*[']Item_/s) ||
+                           $look_at_test_result=~/[']Item_\d+['][,]/s) ||
                            $look_at_test_result=~/$tspmi_regex/) {
                         $picks{$numbor}='';
                         ($FullMenu,$Conveyed,$SaveNext,$Persists,
@@ -5564,7 +5572,7 @@ return 'DONE_SUB';
                                $Conveyed,$SaveMMap,
                                $picks_from_parent);
                         $cd=~s/\$CODE\d*\s*=\s*//s;
-#print "WHAT IS CD=$cd<==\n";<STDIN>;
+#print "WHAT IS CD5=$cd<==\n";<STDIN>;
                         $test_result_loop=eval $cd;
                      }
                      eval { @resu=$test_result_loop->() };
