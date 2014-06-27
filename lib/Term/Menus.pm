@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.60';
+our $VERSION = '2.61';
 
 
 use 5.006;
@@ -5553,8 +5553,11 @@ return 'DONE_SUB';
                      my $tspmi_regex=qr/\](!)?t(?:e+st[-_]*)*[p|s]*
                            (?:r+vious[-_]*|e+lected[-_]*)
                            *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
-                     if (($look_at_test_result!~/Item_/s ||
-                           $look_at_test_result=~/[']Item_\d+['][,]/s) ||
+                     my $trim_look=$look_at_test_result;
+                     $trim_look=~s/^.*(\$CODE\d+\s*=\s*.*$)/$1/s;
+                     if ((($trim_look!~/Item_/s &&
+                           $trim_look!~/[']Result['][,]/s) ||
+                           $trim_look=~/=\s*[']Item_/s) ||
                            $look_at_test_result=~/$tspmi_regex/) {
                         $picks{$numbor}='';
                         ($FullMenu,$Conveyed,$SaveNext,$Persists,
@@ -5616,6 +5619,7 @@ return 'DONE_SUB';
 #print "RETURN RESU6=@resu<==\n";<STDIN>;
                      if (0==$#resu && ref $resu[0] eq 'CODE') {
                         $test_result_loop=$resu[0];
+                        $SaveNext->{$MenuUnit_hash_ref}=$resu[0];
                         next;
                      } else {
                         last;
