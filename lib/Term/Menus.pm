@@ -6,16 +6,16 @@ package Term::Menus;
 #
 #    by Brian M. Kelly. <Brian.Kelly@fullautosoftware.net>
 #
-#    You may distribute under the terms of the GNU General
+#    You may distribute under the terms of the GNU Affero General
 #    Public License, as specified in the LICENSE file.
-#    (http://opensource.org/licenses/gpl-3.0.html).
+#    <http://www.gnu.org/licenses/agpl.html>.
 #
 #    http://www.fullautosoftware.net/
 
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.62';
+our $VERSION = '2.63';
 
 
 use 5.006;
@@ -8324,5 +8324,5 @@ Copyright (C) 2000-2014
 by Brian M. Kelly.
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License.
-(http://opensource.org/licenses/gpl-3.0.html).
+modify it under the terms of the GNU Affero General Public License.
+(http://www.gnu.org/licenses/agpl.html).
