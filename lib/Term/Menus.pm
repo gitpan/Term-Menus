@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.61';
+our $VERSION = '2.62';
 
 
 use 5.006;
@@ -5739,6 +5739,8 @@ return 'DONE_SUB';
                      $menu_result=$FullMenu->{$MenuUnit_hash_ref}[2]
                                   {$all_menu_items_array[$numbor-1]};
                   }
+                  $SaveNext->{$MenuUnit_hash_ref}=$menu_result
+                     unless exists $SaveNext->{$MenuUnit_hash_ref};
                   eval {
                      ($menu_output,$returned_FullMenu,
                         $returned_Selected,$returned_Conveyed,
