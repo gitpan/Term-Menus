@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.63';
+our $VERSION = '2.64';
 
 
 use 5.006;
@@ -2604,7 +2604,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          my $mark_flg=0;my $prev_menu=0;
          $numlist=1 if $numbor eq 'admin';
          while (0 < $numlist) {
-            #my $add_star_to_picks=0;
             if (exists $picks{$picknum}) {
                $mark_flg=1;
                if ($return_from_child_menu) {
@@ -2902,10 +2901,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         substr($mark,-1)='+';
                         $start=$FullMenu->{$MenuUnit_hash_ref}[11];
                      }
-                  } #else {
-                     #$add_star_to_picks=1;
-                     #$picks{$picknum}='*';
-                  #}
+                  }
                }
             } else {
                $mark='';
@@ -2926,10 +2922,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   eq '*' || $all_menu_items_array[$picknum-1]=~
                   /$FullMenu->{$MenuUnit_hash_ref}[5]{
                   $all_menu_items_array[$picknum-1]}/)) {
-               #$picks{$picknum}='*';
-               #$add_star_to_picks=1;
                $mark=$mark_blank;
                substr($mark,-1)='*';$mark_flg=1;
+               $SavePick->{$MenuUnit_hash_ref}{$picknum}='*';
             }
             $picknum_for_display=$picknum;
             if (ref $FullMenu->{$MenuUnit_hash_ref}[8] eq 'HASH'
@@ -2956,12 +2951,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $filtered_menu=1;
                } 
             }
-            #$picks{$picknum_for_display}='*' if $add_star_to_picks;
             $pn{$picknum_for_display}=
                [ $all_menu_items_array[$picknum-1],$picknum ];
             $menu_text.="   $mark  $picknum_for_display. "
                        ."\t$all_menu_items_array[$picknum-1]\n";
-            if (exists $FullMenu->{$MenuUnit_hash_ref}[6]{$all_menu_items_array[$picknum-1]}) {
+            if (exists $FullMenu->{$MenuUnit_hash_ref}[6]
+                  {$all_menu_items_array[$picknum-1]}) {
                my $tstt=$FullMenu->{$MenuUnit_hash_ref}[6]
                         {$all_menu_items_array[$picknum-1]};
                if ($tstt=~/many/i) {
@@ -4875,14 +4870,23 @@ return 'DONE_SUB';
                   my $returned_SaveMMap='';
                   my $returned_SaveNext='';
                   my $returned_Persists='';
+                  my $menu_result='';
+                  if (exists $Selected->{$cur_menu}
+                        {'__FA_Banner__'}) {
+                     $menu_result=$Selected->{$cur_menu}
+                                  {'__FA_Banner__'};
+                     $menu_result=$menu_result->() if ref
+                        $menu_result eq 'CODE';
+                  } else {
+                     $menu_result=$FullMenu->{$cur_menu}[2]
+                                  {$all_menu_items_array[$numbor-1]};
+                  }
                   eval {
                      ($menu_output,$returned_FullMenu,
                         $returned_Selected,$returned_Conveyed,
                         $returned_SavePick,$returned_SaveMMap,
                         $returned_SaveNext,$returned_Persists)
-                        =&Menu($FullMenu->
-                        {$cur_menu}[2]
-                        {$all_menu_items_array[$numbor-1]},$convey,
+                        =&Menu($menu_result,$convey,
                         $recurse_level,$FullMenu,
                         $Selected,$Conveyed,$SavePick,
                         $SaveMMap,$SaveNext,$Persists,
