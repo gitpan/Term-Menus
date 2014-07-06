@@ -5,7 +5,7 @@ use inc::Module::Install;
 name            'Term-Menus';
 sign;
 author          'Brian M. Kelly <Brian.Kelly@fullautosoftware.net>';
-license         'AGPL-3.0';
+license         'gpl-3.0';
 all_from        'lib/Term/Menus.pm';
 
 requires        'Data::Dump::Streamer'      => 0;

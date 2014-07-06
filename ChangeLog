@@ -1,3 +1,10 @@
+2014-07-06  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.65
+
+        * Fixed printing of blanklines.
+
+
 2014-06-29  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.64

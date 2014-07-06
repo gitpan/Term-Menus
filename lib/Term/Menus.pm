@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.64';
+our $VERSION = '2.65';
 
 
 use 5.006;
@@ -3023,6 +3023,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      print "\n";
                   } else {
                      print `${Term::Menus::clearpath}clear`."\n";
+                     print $blanklines
                   }
                } else { print $blanklines }
             } else { print $blanklines }
