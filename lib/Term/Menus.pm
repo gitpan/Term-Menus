@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.65';
+our $VERSION = '2.66';
 
 
 use 5.006;
@@ -1340,6 +1340,8 @@ sub banner
    } elsif (keys %{$Conveyed} || $picks_from_parent) {
       $banner=&transform_pmsi($banner,
          $Conveyed,$SaveMMap,$picks_from_parent);
+   } else {
+      chomp($banner);
    }
    if ($banner && ($banner=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
          && grep { $1 eq $_ } list_module('main',$Term::Menus::fa_code)) &&
@@ -4234,6 +4236,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                delete $SaveNext->{$MenuUnit_hash_ref};
                delete $Persists->{$MenuUnit_hash_ref};
                if ($1 eq $MenuUnit_hash_ref->{Name}) {
+                  delete $FullMenu->{$MenuUnit_hash_ref}[2]
+                         {'__FA_Banner__'};
                   %picks=();
                   next;
                } else {
@@ -5771,23 +5775,18 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
                   } elsif (ref $menu_output eq 'ARRAY' &&
-                        $menu_output->[0]=~/^[{]$test_for_menu_name[}][<]$/) {
+                        $menu_output->[0]=~
+                        /^[{]$test_for_menu_name[}][<]$/) {
                      delete $Selected->{$MenuUnit_hash_ref};
                      delete $Conveyed->{$MenuUnit_hash_ref};
                      delete $SavePick->{$MenuUnit_hash_ref};
                      delete $SaveMMap->{$MenuUnit_hash_ref};
                      delete $SaveNext->{$MenuUnit_hash_ref};
                      delete $Persists->{$MenuUnit_hash_ref};
-                     if ($test_for_menu_name eq $MenuUnit_hash_ref->{Name}) {
-                        %picks=();
-                        next;
-                     } else {
-                        delete $FullMenu->{$MenuUnit_hash_ref};
-                        return $menu_output,
-                           $FullMenu,$Selected,$Conveyed,
-                           $SavePick,$SaveMMap,$SaveNext,
-                           $Persists;
-                     }
+                     delete $FullMenu->{$MenuUnit_hash_ref}[2]
+                            {'__FA_Banner__'};
+                     %picks=();
+                     next;
                   } elsif ($menu_output) {
                      return $menu_output;
                   } else {
