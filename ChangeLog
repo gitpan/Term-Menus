@@ -1,5 +1,12 @@
 2014-07-08  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.67
+
+        * Implemented Scrolling with Arrow Character
+
+
+2014-07-08  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 2.66
 
         * Delete __FA_Banner__ when back to parent.

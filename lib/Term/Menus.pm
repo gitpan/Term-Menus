@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.66';
+our $VERSION = '2.67';
 
 
 use 5.006;
@@ -815,7 +815,7 @@ BEGIN { ##  Begin  Net::FullAuto  Settings
       $fa_code->[0]||='';
       my $argv=join " ",@ARGV;
       if ($argv!~/--edi*t*\s*|-e[a-z]|--admin|-V|-v|--VE*R*S*I*O*N*|
-                  --users|--ve*r*s*i*o*n*|--cat|--tutorial/xm) {
+                  --users|--ve*r*s*i*o*n*|--cat|--tutorial|--figlet/xm) {
          if ($fa_code->[0]) {
             if ($Term::Menus::canload->($fa_code->[0])) {
                require $fa_code->[0];
@@ -1433,6 +1433,7 @@ sub Menu
       #########################################
 
    while (++$num) {
+      $start=$FullMenu->{$MenuUnit_hash_ref}[11]||0;
       @convey=();
       unless (exists $Items{$num}) {
          if (exists $MenuUnit_hash_ref->{Banner}) {
@@ -1644,6 +1645,15 @@ sub Menu
    $display_this_many_items=$_[0]->{Display}
       if exists $_[0]->{Display};
 
+   if (exists $MenuUnit_hash_ref->{Scroll} &&
+         ref $MenuUnit_hash_ref->{Scroll} ne 'ARRAY') {
+      $MenuUnit_hash_ref->{Scroll}='>' if
+         $MenuUnit_hash_ref->{Scroll} eq '1';
+      $MenuUnit_hash_ref->{Scroll}=1 if 
+         $MenuUnit_hash_ref->{Scroll}=~/\\1/;
+      $MenuUnit_hash_ref->{Scroll}=
+         [ $MenuUnit_hash_ref->{Scroll},1 ];
+   }
 
    ############################################
    # End MenuUnit Breakdown
@@ -2955,8 +2965,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             }
             $pn{$picknum_for_display}=
                [ $all_menu_items_array[$picknum-1],$picknum ];
-            $menu_text.="   $mark  $picknum_for_display. "
-                       ."\t$all_menu_items_array[$picknum-1]\n";
+            my $scroll=' ';
+            if (exists $MenuUnit_hash_ref->{Scroll}
+               && $MenuUnit_hash_ref->{Scroll}->[1] eq $picknum) {
+               $scroll=$MenuUnit_hash_ref->{Scroll}->[0]; 
+            }
+            my $picknum_display=sprintf "%-7s",$picknum_for_display;
+            $menu_text.="   $scroll$mark  $picknum_display"
+                       ."$all_menu_items_array[$picknum-1]\n";
             if (exists $FullMenu->{$MenuUnit_hash_ref}[6]
                   {$all_menu_items_array[$picknum-1]}) {
                my $tstt=$FullMenu->{$MenuUnit_hash_ref}[6]
@@ -4544,34 +4560,123 @@ return 'DONE_SUB';
             $Persists->{$parent_menu}{defaults}=0 if defined $parent_menu; 
          }
          if ($numbor=~/^u$/i || $ikey eq 'UPARROW' || $ikey eq 'PAGEUP') {
-            if (0<=$start-$display_this_many_items) {
+            if ($ikey ne 'PAGEUP' && exists $MenuUnit_hash_ref->{Scroll}
+                  && $MenuUnit_hash_ref->{Scroll}) {
+               $MenuUnit_hash_ref->{Scroll}->[1]-- unless
+                  $MenuUnit_hash_ref->{Scroll}->[1]==1;
+               my $remainder=0;my $curscreennum=0;
+               $remainder=$choose_num % $num_pick if $num_pick;
+               #$curscreennum=($start+$remainder==$num_pick)?
+               #      $start+$remainder:$start+$choose_num;
+print "CSN=$curscreennum and START=$start and SCROLL=$MenuUnit_hash_ref->{Scroll}->[1] and DIS=$display_this_many_items\n";
+               if ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
+print "GOOD\n";
+                  if ($display_this_many_items<$num_pick-$start
+                        || $remainder) {
+                     $start=$start-$display_this_many_items;
+                     $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+                  }
+               } else { next }
+               $numbor=$start+$choose_num+1;
+               last;
+            } elsif (0<=$start-$display_this_many_items) {
                $start=$start-$display_this_many_items;
+               $MenuUnit_hash_ref->{Scroll}->[1]=$start+$choose_num
+                  if $ikey eq 'PAGEUP' &&
+                  exists $MenuUnit_hash_ref->{Scroll}
+                  && $MenuUnit_hash_ref->{Scroll};
                $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
             } else {
                $start=$FullMenu->{$MenuUnit_hash_ref}[11]=0;
             }
             $numbor=$start+$choose_num+1;
             last;
+         } elsif ($ikey eq 'END') {
+            $FullMenu->{$MenuUnit_hash_ref}[11]=$num_pick;
+            $MenuUnit_hash_ref->{Scroll}->[1]=$num_pick if
+               $MenuUnit_hash_ref->{Scroll} &&
+               $MenuUnit_hash_ref->{Scroll};
+            $hidedefaults=0;
+            my $remainder=$choose_num % $num_pick;
+            $start=$num_pick-$remainder;
+            last;
+         } elsif ($ikey eq 'HOME') {
+            $FullMenu->{$MenuUnit_hash_ref}[11]=0;
+            $MenuUnit_hash_ref->{Scroll}->[1]=1 if
+               $MenuUnit_hash_ref->{Scroll} &&
+               $MenuUnit_hash_ref->{Scroll}; 
+            $hidedefaults=0;
+            $start=0;
+            last;
          } elsif (((!$ikey || $ikey eq 'ENTER') &&
                ($numbor=~/^()$/ || $numbor=~/^\n/)) || $numbor=~/^d$/i
                || $ikey eq 'DOWNARROW' || $ikey eq 'PAGEDOWN') {
-            if ($show_banner_only) {
-               if (exists $MenuUnit_hash_ref->{Result}) {
-                  $numbor='f';
-                  $picks{'__FA_Banner__'}='';
-               } else {
-                  return 'DONE_SUB';
-               }
-            } elsif ($display_this_many_items<$num_pick-$start) {
-               $start=$start+$display_this_many_items;
-               $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
-            } else {
-               $start=$FullMenu->{$MenuUnit_hash_ref}[11]=0;
-            }
-            unless ($show_banner_only) {
+            if (($ikey eq 'DOWNARROW' || $numbor=~/^d$/i) &&
+                  exists $MenuUnit_hash_ref->{Scroll}
+                  && $MenuUnit_hash_ref->{Scroll}) {
+               my $remainder=0;my $curscreennum=0;
+               $remainder=$choose_num % $num_pick if $num_pick;
+               $curscreennum=($start+$remainder==$num_pick)?
+                     $start+$remainder:$start+$choose_num;
+               my $s_num=$MenuUnit_hash_ref->{Scroll}->[1];
+               $MenuUnit_hash_ref->{Scroll}->[1]++
+                  if $MenuUnit_hash_ref->{Scroll}->[1]!=$num_pick;
+               if ($curscreennum<$MenuUnit_hash_ref->{Scroll}->[1]) {
+                  if ($display_this_many_items<$num_pick-$start) {
+                     $start=$start+$display_this_many_items;
+                     $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+                  }
+               } else { next }
                $hidedefaults=0;
                $numbor=$start+$choose_num+1;
                last;
+            } elsif ($ikey eq 'ENTER' && exists $MenuUnit_hash_ref->{Scroll}
+                  && $MenuUnit_hash_ref->{Scroll} && !$show_banner_only) {
+               $numbor=$MenuUnit_hash_ref->{Scroll}->[1];
+               $MenuUnit_hash_ref->{Scroll}->[1]++;
+            } else {
+               if ($show_banner_only) {
+                  if (exists $MenuUnit_hash_ref->{Result}) {
+                     $numbor='f';
+                     $picks{'__FA_Banner__'}='';
+print "CHOOSENUM=$choose_num and NUMPICK=$num_pick\n";
+                     my $remainder=0;
+                     $remainder=$choose_num % $num_pick if $num_pick;
+                     my $curscreennum=($start+$remainder==$num_pick)?
+                     $start+$remainder:$start+$choose_num;
+print "PS=$parent_menu->{Scroll} and CSN=$curscreennum and NUM_PIC=$num_pick\n";
+                     my $numpick=0;
+                     if (exists $parent_menu->{Scroll} &&
+                           ref $parent_menu->{Scroll} eq 'ARRAY') {
+                        $numpick=$#{[keys %{$FullMenu->{$parent_menu}[2]}]};
+                        if ($curscreennum<$parent_menu->{Scroll}->[1] &&
+                           $parent_menu->{Scroll}->[1]<$numpick) {
+print "SHOULD BE HERE\n";
+                        $FullMenu->{$parent_menu}[11]=
+                           $parent_menu->{Scroll}->[1];
+                        }
+                     }
+                     if ($parent_menu->{Scroll}->[1]-1==$numpick) {
+                        $FullMenu->{$parent_menu}[11]=
+                           --$parent_menu->{Scroll}->[1];
+                     }
+                  } else {
+                     return 'DONE_SUB';
+                  }
+               } elsif ($display_this_many_items<$num_pick-$start) {
+                  $start=$start+$display_this_many_items;
+                  $MenuUnit_hash_ref->{Scroll}->[1]=$start+1 if
+                     exists $MenuUnit_hash_ref->{Scroll}
+                     && $MenuUnit_hash_ref->{Scroll};
+                  $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+               } else {
+                  $start=$FullMenu->{$MenuUnit_hash_ref}[11]=0;
+               }
+               unless ($show_banner_only || $numbor!~/^\d+/) {
+                  $hidedefaults=0;
+                  $numbor=$start+$choose_num+1;
+                  last;
+               }
             }
          } chomp $numbor;
          if (!((keys %picks) && $numbor=~/^[Ff]$/) &&
@@ -5786,6 +5891,8 @@ return 'DONE_SUB';
                      delete $FullMenu->{$MenuUnit_hash_ref}[2]
                             {'__FA_Banner__'};
                      %picks=();
+                     $start=$FullMenu->{$MenuUnit_hash_ref}[11]-1 if
+                        $start+$choose_num<$FullMenu->{$MenuUnit_hash_ref}[11];
                      next;
                   } elsif ($menu_output) {
                      return $menu_output;
