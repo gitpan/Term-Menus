@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.68';
+our $VERSION = '2.69';
 
 
 use 5.006;
@@ -4565,7 +4565,7 @@ return 'DONE_SUB';
                $MenuUnit_hash_ref->{Scroll}->[1]-- unless
                   $MenuUnit_hash_ref->{Scroll}->[1]==1;
                my $remainder=0;my $curscreennum=0;
-               $remainder=$choose_num % $num_pick if $num_pick;
+               $remainder=$num_pick % $choose_num if $num_pick;
                if ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
                   if ($display_this_many_items<$num_pick-$start
                         || $remainder) {
@@ -4574,10 +4574,12 @@ return 'DONE_SUB';
                   }
                } else { next }
                $numbor=$start+$choose_num+1;
+               $hidedefaults=0;
                last;
             } elsif (0<=$start-$display_this_many_items) {
                $start=$start-$display_this_many_items;
-               $MenuUnit_hash_ref->{Scroll}->[1]=$start+$choose_num
+               $MenuUnit_hash_ref->{Scroll}->[1]=
+                  $start+$display_this_many_items
                   if $ikey eq 'PAGEUP' &&
                   exists $MenuUnit_hash_ref->{Scroll}
                   && $MenuUnit_hash_ref->{Scroll};
@@ -4586,6 +4588,7 @@ return 'DONE_SUB';
                $start=$FullMenu->{$MenuUnit_hash_ref}[11]=0;
             }
             $numbor=$start+$choose_num+1;
+            $hidedefaults=0;
             last;
          } elsif ($ikey eq 'END') {
             $FullMenu->{$MenuUnit_hash_ref}[11]=$num_pick;
@@ -4593,7 +4596,10 @@ return 'DONE_SUB';
                $MenuUnit_hash_ref->{Scroll} &&
                $MenuUnit_hash_ref->{Scroll};
             $hidedefaults=0;
-            my $remainder=$choose_num % $num_pick;
+            if ($num_pick==$start+$choose_num) {
+               next;
+            }
+            my $remainder=$num_pick % $choose_num;
             $start=$num_pick-$remainder;
             last;
          } elsif ($ikey eq 'HOME') {
@@ -4611,7 +4617,7 @@ return 'DONE_SUB';
                   exists $MenuUnit_hash_ref->{Scroll}
                   && $MenuUnit_hash_ref->{Scroll}) {
                my $remainder=0;my $curscreennum=0;
-               $remainder=$choose_num % $num_pick if $num_pick;
+               $remainder=$num_pick % $choose_num if $num_pick;
                $curscreennum=($start+$remainder==$num_pick)?
                      $start+$remainder:$start+$choose_num;
                my $s_num=$MenuUnit_hash_ref->{Scroll}->[1];
@@ -4621,6 +4627,9 @@ return 'DONE_SUB';
                   if ($display_this_many_items<$num_pick-$start) {
                      $start=$start+$display_this_many_items;
                      $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+                  } else {
+                     $start=$start+$remainder;
+                     $FullMenu->{$MenuUnit_hash_ref}[11]=$num_pick;
                   }
                } else { next }
                $hidedefaults=0;
@@ -4662,7 +4671,7 @@ return 'DONE_SUB';
                      exists $MenuUnit_hash_ref->{Scroll}
                      && $MenuUnit_hash_ref->{Scroll};
                   $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
-               } else {
+               } elsif ($ikey ne 'PAGEDOWN') {
                   $start=$FullMenu->{$MenuUnit_hash_ref}[11]=0;
                }
                unless ($show_banner_only || $numbor!~/^\d+/) {
@@ -5886,6 +5895,8 @@ return 'DONE_SUB';
                      %picks=();
                      $start=$FullMenu->{$MenuUnit_hash_ref}[11]-1 if
                         $start+$choose_num<$FullMenu->{$MenuUnit_hash_ref}[11];
+                     $choose_num=$num_pick-$start if
+                        $display_this_many_items>=$num_pick-$start;
                      next;
                   } elsif ($menu_output) {
                      return $menu_output;
