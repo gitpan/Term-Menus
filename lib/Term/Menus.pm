@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.67';
+our $VERSION = '2.68';
 
 
 use 5.006;
@@ -4566,11 +4566,7 @@ return 'DONE_SUB';
                   $MenuUnit_hash_ref->{Scroll}->[1]==1;
                my $remainder=0;my $curscreennum=0;
                $remainder=$choose_num % $num_pick if $num_pick;
-               #$curscreennum=($start+$remainder==$num_pick)?
-               #      $start+$remainder:$start+$choose_num;
-print "CSN=$curscreennum and START=$start and SCROLL=$MenuUnit_hash_ref->{Scroll}->[1] and DIS=$display_this_many_items\n";
                if ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
-print "GOOD\n";
                   if ($display_this_many_items<$num_pick-$start
                         || $remainder) {
                      $start=$start-$display_this_many_items;
@@ -4639,19 +4635,16 @@ print "GOOD\n";
                   if (exists $MenuUnit_hash_ref->{Result}) {
                      $numbor='f';
                      $picks{'__FA_Banner__'}='';
-print "CHOOSENUM=$choose_num and NUMPICK=$num_pick\n";
                      my $remainder=0;
                      $remainder=$choose_num % $num_pick if $num_pick;
                      my $curscreennum=($start+$remainder==$num_pick)?
                      $start+$remainder:$start+$choose_num;
-print "PS=$parent_menu->{Scroll} and CSN=$curscreennum and NUM_PIC=$num_pick\n";
                      my $numpick=0;
                      if (exists $parent_menu->{Scroll} &&
                            ref $parent_menu->{Scroll} eq 'ARRAY') {
                         $numpick=$#{[keys %{$FullMenu->{$parent_menu}[2]}]};
                         if ($curscreennum<$parent_menu->{Scroll}->[1] &&
                            $parent_menu->{Scroll}->[1]<$numpick) {
-print "SHOULD BE HERE\n";
                         $FullMenu->{$parent_menu}[11]=
                            $parent_menu->{Scroll}->[1];
                         }
