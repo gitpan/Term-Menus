@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.71';
+our $VERSION = '2.72';
 
 
 use 5.006;
@@ -4649,9 +4649,8 @@ return 'DONE_SUB';
                      my $curscreennum=($start+$remainder==$num_pick)?
                      $start+$remainder:$start+$choose_num;
                      my $numpick=0;
-                     if ($parent_menu) {
-                        if (exists $parent_menu->{Scroll} &&
-                              ref $parent_menu->{Scroll} eq 'ARRAY') {
+                     if ($parent_menu and exists $parent_menu->{Scroll}) {
+                        if (ref $parent_menu->{Scroll} eq 'ARRAY') {
                            $numpick=$#{[keys %{$FullMenu->{$parent_menu}[2]}]};
                            if ($curscreennum<$parent_menu->{Scroll}->[1] &&
                               $parent_menu->{Scroll}->[1]<$numpick) {
@@ -4659,6 +4658,7 @@ return 'DONE_SUB';
                               $parent_menu->{Scroll}->[1];
                            }
                         }
+                        $parent_menu->{Scroll}->[1]||=0;
                         if ($parent_menu->{Scroll}->[1]-1==$numpick) {
                            $FullMenu->{$parent_menu}[11]=
                               --$parent_menu->{Scroll}->[1];
