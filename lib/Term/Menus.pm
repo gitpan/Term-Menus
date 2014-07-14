@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.69';
+our $VERSION = '2.70';
 
 
 use 5.006;
@@ -4866,7 +4866,7 @@ return 'DONE_SUB';
                                     {$all_menu_items_array[$numbor-1]};
                      }
                   }
-                  chomp($numbor);
+                  chomp($numbor) if $numbor;
                   unless ($numbor_is_eff) {
                      if (exists $picks{$numbor}) {
                         $FullMenu->{$cur_menu}[5]='ERASE';
@@ -4929,7 +4929,7 @@ return 'DONE_SUB';
                         push @{$Conveyed->{&pw($cur_menu)}},
                                $all_menu_items_array[$key-1];
                      }
-                  } else {
+                  } elsif ($numbor) {
                      $Conveyed->{&pw($cur_menu)}=
                         $all_menu_items_array[$numbor-1];
                   }
