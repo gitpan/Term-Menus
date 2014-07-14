@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.72';
+our $VERSION = '2.73';
 
 
 use 5.006;
@@ -3049,12 +3049,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             if ($select_many || (keys %{${$MenuUnit_hash_ref}{Select}})) {
                print "\n";
                unless (keys %{$FullMenu->{$MenuUnit_hash_ref}[1]}) {
-                  print "   a.  Select All.";$ch=1;
+                  print "   a.  Select All";$ch=1;
                }
                if ($mark_flg==1 || $Persists->{$MenuUnit_hash_ref}{defaults}) {
-                  print "   c.  Clear All.";print "\n" if $ch;
+                  print "   c.  Clear All";#print "\n" if $ch;
                }
-               print "   f.  Finish.\n";
+               print "   f.  FINISH\n";
                if ($filtered_menu) {
                   print "\n   (Type '<' to return to previous Menu)\n";
                }
@@ -3067,7 +3067,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                if ($Persists->{$MenuUnit_hash_ref}{defaults}) {
                   print "\n";
                   print "   c.  Clear Default Selection.\n";
-                  print "   f.  Finish with Default Selection.\n";
+                  print "   f.  FINISH with Default Selection.\n";
                   if ($filtered_menu) {
                      print "\n   (Type '<' to return to previous Menu)\n";
                   } else {
@@ -3079,55 +3079,32 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
             }
             if ($display_this_many_items<$num_pick) {
-               print "\n   $num_pick Total Choices\n",
-                     "\n   Press ENTER \(or 'd'\) to scroll downward\n",
-                     "\n   OR 'u' to scroll upward  ";
-               if ($Term::Menus::fullauto) {
-                  if (exists $Net::FullAuto::FA_Core::admin_menus{
-                        &pw($MenuUnit_hash_ref)}) {
-                     print "\(Type 'quit' to Quit Admin Menu\)\n";
-                  } else {
-                     print "\(Type 'quit' to Quit FullAuto\)\n";
-                  }
-               } else {
-                  print "\n   \(Type 'quit' to Quit\)\n";
+               my $len=length $num_pick;my $pad='';
+               foreach my $n (1..$len) {
+                  $pad.=' '; 
                }
-            } elsif ($Term::Menus::fullauto) {
-               if (exists $Net::FullAuto::FA_Core::admin_menus{
-                        &pw($MenuUnit_hash_ref)}) {
-                  print "\n   \(Type 'quit' to Quit Admin Menu\)\n";
-               } else {
-                  print "\n   \(Type 'quit' to Quit FullAuto\)\n";
-               }
-            } else { print"\n   \(Type 'quit' to Quit\)\n" }
-            if ($Term::Menus::fullauto) {
-               if (exists $Net::FullAuto::FA_Core::admin_menus{
-                     &pw($MenuUnit_hash_ref)}) {
-                  if ($MenuUnit_hash_ref->{Name} eq 'admin') {
-                     print "\n   (Type 'help' for Help)\n";
-                  } else {
-                     print "\n   (Type 'help' for Help)".
-                           "  (Type 'admin' to return to Admin Menu)\n";
-                  }
-               } else {
-                  print "\n   (Type 'help' for Help)".
-                        "  (Type 'admin' for Admin Menu)\n";
-               }
-            }
+               print "$pad                     ___",
+                     "\n   $num_pick Total Choices   ",
+                     "|_v_| Scroll with ARROW keys ".
+                     "  [F1] for HELP\n";
+            } else { print"\n   \(Press [F1] for HELP\)\n" }
             if ($Term::Menus::term_input) {
                print "\n";
                if ($show_banner_only) {
-                  ($numbor,$ikey)=rawInput(
+                  ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   Press ENTER to continue ... ");
                } else {
-                  ($numbor,$ikey)=rawInput("   PLEASE ENTER A CHOICE: ");
-               } 
+                  ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
+                     "   PLEASE ENTER A CHOICE: ");
+               }
                print "\n";
             } else {
                if ($show_banner_only) {
-                  print"\n   Press ENTER to continue ... ";
+                  print "\n   \([ESC] to Quit\)",
+                        "   Press ENTER to continue ... ";
                } else {
-                  print"\n   PLEASE ENTER A CHOICE: ";
+                  print "\n   \([ESC] to Quit\)",
+                        "   PLEASE ENTER A CHOICE: ";
                }
                $numbor=<STDIN>;
             } $picknum_for_display=$numbor;chomp $picknum_for_display;
@@ -3196,13 +3173,15 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            "       selections, BUT -> You have not actually\n",
                            "       selected anything!\n\n       Do you wish ",
                            "to quit or re-attempt selecting?\n\n       ",
-                           "Type 'quit' to quit or ENTER to continue ... ";
+                           "Press [ESC] to quit or ENTER to continue ... ";
                      if ($Term::Menus::term_input) {
                         print "\n";
-                        ($choice,$ikey)=rawInput("   PLEASE ENTER A CHOICE: ");
+                        ($choice,$ikey)=rawInput("   \([ESC] to Quit\)".
+                           "   PLEASE ENTER A CHOICE: ");
                         print "\n";
                      } else {
-                        print"\n   PLEASE ENTER A CHOICE: ";
+                        print "   \([ESC] to Quit\)",
+                              "\n   PLEASE ENTER A CHOICE: ";
                         $choice=<STDIN>;
                      } 
                      chomp($choice);
@@ -4497,10 +4476,13 @@ return 'DONE_SUB';
             } elsif ($menu_output) {
                return $menu_output;
             }
-         } elsif ($numbor=~/^quit$/i) {
+         } elsif ($ikey eq 'Escape' || $numbor=~/^quit|exit|bye$/i) {
             return ']quit['
-         } elsif ($Term::Menus::fullauto and $numbor=~/^help$/i) {
+         } elsif ($Term::Menus::fullauto and $ikey eq 'F1' ||
+               $numbor=~/^help$/i) {
             system('man Net::FullAuto');
+         } elsif ($ikey eq 'F1' || $numbor=~/^help$/i) {
+            system('man Term::Menus');
          } elsif ($Term::Menus::fullauto and $numbor=~/^admin$/i) {
             if (!exists $Net::FullAuto::FA_Core::admin_menus{
                   &pw($MenuUnit_hash_ref)}) {
@@ -6340,13 +6322,13 @@ The user sees ==>
 
    Please Pick an Item:
 
-      1.        First Item
-      2.        Second Item
-      3.        Third Item
+       1      First Item
+       2      Second Item
+       3      Third Item
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< 2 >-<ENTER>----------------------------------
 
@@ -6369,47 +6351,43 @@ The user sees ==>
 
    Please Pick an Item:
 
-      1.        arch
-      2.        ash
-      3.        awk
-      4.        basename
-      5.        bash
-      6.        cat
-      7.        chgrp
-      8.        chmod
-      9.        chown
-      10.       cp
+       1      arch
+       2      ash
+       3      awk
+       4      basename
+       5      bash
+       6      cat
+       7      chgrp
+       8      chmod
+       9      chown
+       10     cp
 
-   93 Total Choices
+   a.  Select All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --<ENTER>--------------------------------------
 
    Please Pick an Item:
 
-      11.       cpio
-      12.       csh
-      13.       cut
-      14.       date
-      15.       dd
-      16.       df
-      17.       echo
-      18.       ed
-      19.       egrep
-      20.       env
+       11      cpio
+       12      csh
+       13      cut
+       14      date
+       15      dd
+       16      df
+       17      echo
+       18      ed
+       19      egrep
+       20      env
 
-   93 Total Choices
+   a.  Select All   f.  FINISH
+                        ___
+   93  Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 14 >-<ENTER>----------------------------------
 
@@ -6443,27 +6421,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< 3 >-<ENTER>----------------------------------
 
@@ -6473,27 +6446,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-   *  3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-   *  7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+    *  3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+    *  7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< f >-<ENTER>----------------------------------
 
@@ -6555,27 +6523,22 @@ The user sees ==>
       9.        /bin Utility - chown
       10.       /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.   FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< 5 >-<ENTER>----------------------------------
 
    Choose an Answer :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< 1 >-<ENTER>----------------------------------
 
@@ -6607,10 +6570,7 @@ The user sees ==>
 
    This is a BANNER ONLY display.
 
-
-   (Type 'quit' to Quit)
-
-   Press ENTER to continue ...
+   ([ESC] to Quit)   Press ENTER to continue ...
 
 =item *
 
@@ -6675,38 +6635,33 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 5 >-<ENTER>----------------------------------
 
    Choose an Answer for bash :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 1 >-<ENTER>----------------------------------
 
@@ -6793,38 +6748,33 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 5 >-<ENTER>----------------------------------
 
    Choose an Answer for bash :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 1 >-<ENTER>----------------------------------
 
@@ -7200,27 +7150,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-   *  4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-   *  9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+    *  4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+    *  9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 =back
 
@@ -7245,26 +7190,22 @@ B<NOTE:> See the B<RECURSIVELY CALLED MENUS> section for more information.
 
 The user sees ==>
 
-   d  1.        bin
-   d  2.        blib
-   d  3.        dist
-   d  4.        inc
-   d  5.        lib
-   d  6.        Module
-   d  7.        t
-      8.        briangreat2.txt
-   *  9.        ChangeLog
-      10.       close.perl
+    d  1      bin
+    d  2      blib
+    d  3      dist
+    d  4      inc
+    d  5      lib
+    d  6      Module
+    d  7      t
+       8      briangreat2.txt
+    *  9      ChangeLog
+       10     close.perl
 
-   a.  Select All.   f.  Finish.
+   a.  Select All   f.  FINISH
+                       ___
+   49 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   49 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 =back
 
@@ -7408,27 +7349,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 B<NOTE:>     C<]C[>  can be used as a shorthand for  C<]Convey[>.
 
@@ -7486,38 +7422,33 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
 
-   93 Total Choices
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 5 >-<ENTER>----------------------------------
 
    Choose an Answer :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 1 >-<ENTER>----------------------------------
 
@@ -7597,40 +7528,40 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-      5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+       5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 5 >-<ENTER>----------------------------------
 
    Is bash Good or Bad? :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 1 >-<ENTER>----------------------------------
 
    Who commented on bash? :
 
-      1.        Bob said bash is a Good Utility!
-      2.        Mary said bash is a Good Utility!
+       1      Bob said bash is a Good Utility!
+       2      Mary said bash is a Good Utility!
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 2 >-<ENTER>----------------------------------
 
@@ -8128,16 +8059,11 @@ The user sees ==>
       9.        /bin Utility - chown
       10.       /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 --< 5 >-<ENTER>----------------------------------
 
@@ -8145,12 +8071,12 @@ The user sees ==>
 
    Choose an Answer :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
 
 In the above example, suppose that the user "fat-fingered" his/her
@@ -8169,12 +8095,12 @@ The user sees ==>
 
    Choose an Answer :
 
-      1.        bash is a Good Utility
-      2.        bash is a Bad Utility
+       1      bash is a Good Utility
+       2      bash is a Bad Utility
 
-   (Type "quit" to quit)
+   (Press [F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
 
  --<  >  >-<ENTER>-----------------------------
 
@@ -8182,27 +8108,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1.        /bin Utility - arch
-      2.        /bin Utility - ash
-      3.        /bin Utility - awk
-      4.        /bin Utility - basename
-   -  5.        /bin Utility - bash
-      6.        /bin Utility - cat
-      7.        /bin Utility - chgrp
-      8.        /bin Utility - chmod
-      9.        /bin Utility - chown
-      10.       /bin Utility - cp
+       1      /bin Utility - arch
+       2      /bin Utility - ash
+       3      /bin Utility - awk
+       4      /bin Utility - basename
+    -  5      /bin Utility - bash
+       6      /bin Utility - cat
+       7      /bin Utility - chgrp
+       8      /bin Utility - chmod
+       9      /bin Utility - chown
+       10     /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 Note in the above example the Dash ' B<-> ' in front of item B<5.> This informs
 the user that s/he had previously selected this item. To clear the selection,
@@ -8231,16 +8152,11 @@ made in the child menu.
       9.        /bin Utility - chown
       10.       /bin Utility - cp
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                       ___
+   93 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   93 Total Choices
-
-   Press ENTER (or "d") to scroll downward
-
-   OR "u" to scroll upward  (Type "quit" to quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 =back
 
@@ -8261,28 +8177,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-   *  1.        [.exe
-   *  2.        2to3
-      3.        2to3-3.2
-   *  4.        411toppm.exe
-      5.        a2p.exe
-      6.        aaflip.exe
-      7.        aclocal
-   *  8.        aclocal-1.10
-      9.        aclocal-1.11
-   *  10.       aclocal-1.12
+    *  1      [.exe
+    *  2      2to3
+       3      2to3-3.2
+    *  4      411toppm.exe
+       5      a2p.exe
+       6      aaflip.exe
+       7      aclocal
+    *  8      aclocal-1.10
+       9      aclocal-1.11
+    *  10     aclocal-1.12
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                         ___
+   1925 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   1925 Total Choices
-
-   Press ENTER (or 'd') to scroll downward
-
-   OR 'u' to scroll upward
-   (Type 'quit' to Quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< % >-<ENTER>----------------------------------
 
@@ -8301,19 +8211,13 @@ The user sees ==>
       1808.     Xdmx.exe
       1815.     Xephyr.exe
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
 
    (Type '<' to return to previous Menu)
+                          ___
+   1925  Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   1925 Total Choices
-
-   Press ENTER (or 'd') to scroll downward
-
-   OR 'u' to scroll upward
-   (Type 'quit' to Quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 And if we choose to enter ' B<%> ' I<again>
 
@@ -8323,30 +8227,24 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-      1925.     znew
-      1924.     zmore
-      1923.     zless
-      1922.     zipsplit.exe
-      1921.     zipnote.exe
-      1920.     zipinfo.exe
-      1919.     zipgrep
-      1918.     zipcloak.exe
-      1917.     zip.exe
-      1916.     zgrep
+       1925     znew
+       1924     zmore
+       1923     zless
+       1922     zipsplit.exe
+       1921     zipnote.exe
+       1920     zipinfo.exe
+       1919     zipgrep
+       1918     zipcloak.exe
+       1917     zip.exe
+       1916     zgrep
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
 
    (Type '<' to return to previous Menu)
+                         ___
+   1925 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP 
 
-   1925 Total Choices
-
-   Press ENTER (or 'd') to scroll downward
-
-   OR 'u' to scroll upward
-   (Type 'quit' to Quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 This submenu of sorted selections works just like any other menu. The user can
 deselect an item, clear all items, re-choose all items, etc. The choices made
@@ -8354,7 +8252,7 @@ here are preserved when the user navigates back to the original (parent)
 menu. In other words, if Item 1. is deselected in the sorted menu, Item 1.
 will also be deselected in the parent menu. Navigating back to the
 parent is necessary - the menu will not generate results from a sort menu.
-Use either the B<LEFTARROW> ' B<E<lt>> ' key or Finish key ' B<F> or B<f> ' to
+Use either the B<LEFTARROW> ' B<E<lt>> ' key or FINISH key ' B<F> or B<f> ' to
 return to the parent menu, and then continue your menu activities there. 
 
 =back
@@ -8377,28 +8275,22 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-   *  1.        [.exe
-      2.        2to3
-   *  3.        2to3-3.2
-      4.        411toppm.exe
-      5.        a2p.exe
-      6.        aaflip.exe
-      7.        aclocal
-      8.        aclocal-1.10
-   *  9.        aclocal-1.11
-      10.       aclocal-1.12
+    *  1      [.exe
+       2      2to3
+    *  3      2to3-3.2
+       4      411toppm.exe
+       5      a2p.exe
+       6      aaflip.exe
+       7      aclocal
+       8      aclocal-1.10
+    *  9      aclocal-1.11
+       10     aclocal-1.12
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
+                         ___
+   1925 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
 
-   1925 Total Choices
-
-   Press ENTER (or 'd') to scroll downward
-
-   OR 'u' to scroll upward
-   (Type 'quit' to Quit)
-
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 --< * >-<ENTER>----------------------------------
 
@@ -8406,19 +8298,18 @@ The user sees ==>
 
    Choose a /bin Utility :
 
-   *  1.        [.exe
-   *  3.        2to3-3.2
-   *  9.        aclocal-1.11
-   *  11.       aclocal-1.13
+    *  1      [.exe
+    *  3      2to3-3.2
+    *  9      aclocal-1.11
+    *  11     aclocal-1.13
 
-   a.  Select All.   c.  Clear All.
-   f.  Finish.
+   a.  Select All   c.  Clear All   f.  FINISH
 
    (Type '<' to return to previous Menu)
 
-   (Type 'quit' to Quit)
+   ([F1] for HELP)
 
-   PLEASE ENTER A CHOICE:
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
 
 This submenu of summary selections works just like any other menu. The user 
 can deselect an item, clear all items, re-choose all items, etc. The choices
@@ -8426,7 +8317,7 @@ made here are preserved when the user navigates back to the original (parent)
 menu. In other words, if Item 1. is deselected in the summary menu, Item 1.
 will also be deselected in the parent menu. Navigating back to the
 parent is necessary - the menu will not generate results from a summary menu.
-Use either the B<LEFTARROW> ' B<E<lt>> ' key or Finish key ' B<F> or B<f> ' to
+Use either the B<LEFTARROW> ' B<E<lt>> ' key or FINISH key ' B<F> or B<f> ' to
 return to the parent menu, and then continue your menu activities there.
 
 =back
