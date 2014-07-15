@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.73';
+our $VERSION = '2.74';
 
 
 use 5.006;
@@ -4477,6 +4477,7 @@ return 'DONE_SUB';
                return $menu_output;
             }
          } elsif ($ikey eq 'Escape' || $numbor=~/^quit|exit|bye$/i) {
+            print "\n" if $^O ne 'cygwin';
             return ']quit['
          } elsif ($Term::Menus::fullauto and $ikey eq 'F1' ||
                $numbor=~/^help$/i) {
