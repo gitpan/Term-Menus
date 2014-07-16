@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.75';
+our $VERSION = '2.76';
 
 
 use 5.006;
@@ -1647,10 +1647,6 @@ sub Menu
 
    if (exists $MenuUnit_hash_ref->{Scroll} &&
          ref $MenuUnit_hash_ref->{Scroll} ne 'ARRAY') {
-      $MenuUnit_hash_ref->{Scroll}='>' if
-         $MenuUnit_hash_ref->{Scroll} eq '1';
-      $MenuUnit_hash_ref->{Scroll}=1 if 
-         $MenuUnit_hash_ref->{Scroll}=~/\\1/;
       $MenuUnit_hash_ref->{Scroll}=
          [ $MenuUnit_hash_ref->{Scroll},1 ];
    }
@@ -2967,8 +2963,17 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                [ $all_menu_items_array[$picknum-1],$picknum ];
             my $scroll=' ';
             if (exists $MenuUnit_hash_ref->{Scroll}
-               && $MenuUnit_hash_ref->{Scroll}->[1] eq $picknum) {
-               $scroll=$MenuUnit_hash_ref->{Scroll}->[0]; 
+                  && ($MenuUnit_hash_ref->{Scroll}->[1] eq $picknum
+                  || $MenuUnit_hash_ref->{Scroll}->[0] eq $picknum)) {
+               if ($MenuUnit_hash_ref->{Scroll}->[0]) {
+                  if ($MenuUnit_hash_ref->{Scroll}->[0] eq $picknum) {
+                     $MenuUnit_hash_ref->{Scroll}->[1]=$picknum;
+                     $MenuUnit_hash_ref->{Scroll}->[0]=0;
+                     $scroll='>';
+                  }
+               } else {
+                  $scroll='>';
+               }
             }
             my $picknum_display=sprintf "%-7s",$picknum_for_display;
             $menu_text.="   $scroll$mark  $picknum_display"
@@ -3065,9 +3070,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
             } else {
                if ($Persists->{$MenuUnit_hash_ref}{defaults}) {
-                  print "\n";
-                  print "   c.  Clear Default Selection.\n";
-                  print "   f.  FINISH with Default Selection.\n";
+                  print "\n",
+                        "   c.  Clear Default Selection.",
+                        "   f.  FINISH with Default Selection.\n";
                   if ($filtered_menu) {
                      print "\n   (Type '<' to return to previous Menu)\n";
                   } else {
@@ -4180,6 +4185,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $SavePick->{$parent_menu}->{$key}='-' if
                      $sp_copy{$key} eq '+';
                }
+               $parent_menu->{Scroll}->[1]||=0;
+               if ($parent_menu->{Scroll}->[1]>1) {
+                  $FullMenu->{$parent_menu}[11]=
+                     --$parent_menu->{Scroll}->[1];
+               }
                return '-',
                   $FullMenu,$Selected,$Conveyed,
                   $SavePick,$SaveMMap,$SaveNext,
@@ -4649,9 +4659,9 @@ return 'DONE_SUB';
                         if (ref $parent_menu->{Scroll} eq 'ARRAY') {
                            $numpick=$#{[keys %{$FullMenu->{$parent_menu}[2]}]};
                            if ($curscreennum<$parent_menu->{Scroll}->[1] &&
-                              $parent_menu->{Scroll}->[1]<$numpick) {
-                           $FullMenu->{$parent_menu}[11]=
-                              $parent_menu->{Scroll}->[1];
+                                 $parent_menu->{Scroll}->[1]<$numpick) {
+                              $FullMenu->{$parent_menu}[11]=
+                                 $parent_menu->{Scroll}->[1];
                            }
                         }
                         $parent_menu->{Scroll}->[1]||=0;
