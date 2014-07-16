@@ -1,3 +1,12 @@
+2014-07-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.75
+
+        * Added Shell Out functionality
+
+        * Fixed UPARROW when only one item on last screen
+
+
 2014-07-15  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.74

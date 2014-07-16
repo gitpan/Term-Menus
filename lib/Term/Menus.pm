@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.74';
+our $VERSION = '2.75';
 
 
 use 5.006;
@@ -4551,7 +4551,8 @@ return 'DONE_SUB';
                $remainder=$num_pick % $choose_num if $num_pick;
                if ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
                   if ($display_this_many_items<$num_pick-$start
-                        || $remainder) {
+                        || $remainder || (!$remainder &&
+                        $num_pick==$start+1)) {
                      $start=$start-$display_this_many_items;
                      $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
                   }
@@ -4593,6 +4594,18 @@ return 'DONE_SUB';
             $hidedefaults=0;
             $start=0;
             last;
+         } elsif ($numbor && unpack('a1',$numbor) eq '!') {
+            # SHELLOUT shellout
+            my $username=getlogin || getpwuid($<);
+            my $cmd=unpack('x1 a*',$numbor);
+            print "\n";
+            unless ($^O eq 'cygwin') {
+               system("su -l -c$cmd $username");
+            } else {
+               system($cmd);
+            }
+            print "\nPress ENTER to continue";<STDIN>;
+            next;
          } elsif (((!$ikey || $ikey eq 'ENTER') &&
                ($numbor=~/^()$/ || $numbor=~/^\n/)) || $numbor=~/^d$/i
                || $ikey eq 'DOWNARROW' || $ikey eq 'PAGEDOWN') {
@@ -8320,6 +8333,68 @@ will also be deselected in the parent menu. Navigating back to the
 parent is necessary - the menu will not generate results from a summary menu.
 Use either the B<LEFTARROW> ' B<E<lt>> ' key or FINISH key ' B<F> or B<f> ' to
 return to the parent menu, and then continue your menu activities there.
+
+=back
+
+=head3 Shell Out to Command Environment ' B<!>I<command> '
+
+=head1
+
+Borrowed from the editor vi, users can run any command environment command
+(typically a shell command) without leaving their Term::Menus session or even
+context. At anytime, a user can type an exclamation point ' B<!> ' followed
+by the command they wish to run, and that command will be run and the results
+returned for viewing.
+
+=over 4
+
+The user sees ==>
+
+   Choose a /bin Utility :
+
+    *  1      [.exe
+       2      2to3
+    *  3      2to3-3.2
+       4      411toppm.exe
+       5      a2p.exe
+       6      aaflip.exe
+       7      aclocal
+       8      aclocal-1.10
+    *  9      aclocal-1.11
+       10     aclocal-1.12
+
+   a.  Select All   c.  Clear All   f.  FINISH
+                         ___
+   1925 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
+
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE: 
+
+--< !hostname >-<ENTER>----------------------------------
+
+The user sees ==>
+
+   Choose a /bin Utility :
+
+    *  1      [.exe
+       2      2to3
+    *  3      2to3-3.2
+       4      411toppm.exe
+       5      a2p.exe
+       6      aaflip.exe
+       7      aclocal
+       8      aclocal-1.10
+    *  9      aclocal-1.11
+       10     aclocal-1.12
+
+   a.  Select All   c.  Clear All   f.  FINISH
+                         ___
+   1925 Total Choices   |_v_| Scroll with ARROW keys   [F1] for HELP
+
+   ([ESC] to Quit)   PLEASE ENTER A CHOICE:
+
+central_server
+
+Press ENTER to continue
 
 =back
 
