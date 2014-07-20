@@ -1,3 +1,12 @@
+2014-07-18  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.77
+
+        * Implemented forms. Now there are 'Input' screens with
+          configurable text boxes (new macros). Ground breaking
+          NEW functionality. (awaiting documentation)
+
+
 2014-07-16  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.76

@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.76';
+our $VERSION = '2.77';
 
 
 use 5.006;
@@ -1285,7 +1285,11 @@ sub banner
    my $Conveyed=$_[1]||{};
    my $SaveMMap=$_[2]||'';
    my $picks_from_parent=$_[3]||'';
-   my $log_handle=$_[4]||'';
+   my $numbor=$_[4]||'';
+   my $ikey=$_[5]||'';
+   my $input=$_[6]||{};
+   my $MenuUnit_hash_ref=$_[7]||{};
+   my $log_handle=$_[8]||'';
    $banner||='';
    if (ref $banner eq 'CODE') {
       my $banner_code=$banner;
@@ -1355,7 +1359,10 @@ sub banner
          eval "\@banner=$banner";
       }
       $banner=join '',@banner;
-   } return $banner;
+   }
+   return transform_mbio(transform_mbii($banner,$numbor,$ikey,$input,
+             $MenuUnit_hash_ref,$log_handle),$MenuUnit_hash_ref,
+             $Conveyed,$SaveMMap,$picks_from_parent,$log_handle);
 
 }
 
@@ -1891,6 +1898,9 @@ sub test_hashref {
    if (ref $hashref_to_test eq 'HASH') {
       if (grep { /Item_/ } keys %{$hashref_to_test}) {
          return 1;
+      } elsif (exists $hashref_to_test->{Input} &&
+            $hashref_to_test->{Input}) {
+         return 1; 
       } else {
          my $die="\n      FATAL ERROR! - Unable to verify Menu\n"
              ."\n      This Error is usually the result of a Menu"
@@ -2030,6 +2040,210 @@ sub transform_sicm
    }
    return $text;
 
+}
+
+sub transform_mbio
+{
+
+   my $text=$_[0]||'';
+   my $input=$_[1]||{};
+   my $log_handle=$_[2]||'';
+   my $MenuUnit_hash_ref=$_[3]||{};
+   my $Conveyed=$_[4]||'';
+   my $SaveMMap=$_[5]||'';
+   my $picks_from_parent=$_[6]||'';
+   my $tobi_regex=qr/\](!)?o(?:u+tput[-_]*)*b*(?:a+nner[-_]*)
+         *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+   my $test_regx_flag=0;
+   FE: foreach my $regx ($tobi_regex) {
+      last if $test_regx_flag;
+      while ($text=~m/($regx(?:\{[^}]+\})*)/sg) {
+         $test_regx_flag=1 if -1<index $regx,'(!)?t(?:';
+         my $esc_one=$1;my $bang=$2;
+         my $length_of_macro=length $esc_one;
+         $esc_one=~s/["]\s*[.]\s*["]//s;
+         $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+         my $instructions=$esc_one;
+         $instructions=~s/^\\[]][^[]+\\[[]\s*[{](.*?)[}]$/$1/;
+         $instructions=~/^(.*?),(.*?)$/;
+         my $input_macro=$1;my $code=$2;
+         $code=~s/["']//g;
+         $code="\$main::$code";
+         my $input_text=$input->{$input_macro};
+         $code=eval $code;
+         my $cd=&Data::Dump::Streamer::Dump($code)->Out();
+         $cd=&transform_pmsi($cd,
+              $Conveyed,$SaveMMap,
+              $picks_from_parent);
+         $cd=~s/\$CODE\d*\s*=\s*//s;
+         $code=eval $cd;
+         my $output='';
+         $output=$code->($input_text) if $input_text!~/^\s*$/;
+         my $out_height=$output=~tr/\n//;
+         my @output=split /\n/,$output;
+         my @newtext=();
+         foreach my $line (split "\n",$text) {
+            if ($line=~/^(.*)$esc_one(.*)$/) {
+               my $front_of_line=$1;my $back_of_line=$2;
+               my $frlen=length $front_of_line;
+               my $bottomline=pop @output||'';
+               $bottomline=$front_of_line.$bottomline.$back_of_line;
+               foreach my $ln (@output) {
+                  my $pad=sprintf "%-${frlen}s",'';
+                  push @newtext,$pad.$ln;
+               }
+               push @newtext,$bottomline;
+            } else {
+               push @newtext,$line;
+            } 
+         } $text=join "\n",@newtext;
+      }
+   }
+   return $text,$input;
+
+}
+
+sub transform_mbii
+{
+
+   my $text=$_[0]||'';
+   my $numbor=$_[1]||'';
+   my $ikey=$_[2]||'';
+   my $input=$_[3]||{};
+   my $MenuUnit_hash_ref=$_[4]||{};
+   my $log_handle=$_[4]||'';
+   my $tbii_regex=qr/\](!)?i(?:n+put[-_]*)*b*(?:a+nner[-_]*)
+         *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+   my $test_regx_flag=0;
+   if ($ikey eq 'TAB' && exists $input->{focus}) {
+      $input->{focus}->[0]=$input->{focus}->[2]->{$input->{focus}->[0]};
+      $ikey='';$numbor='';
+   }
+   
+   FE: foreach my $regx ($tbii_regex) {
+      last if $test_regx_flag;
+      my $fill_focus=0;
+      $fill_focus=1 unless exists $input->{focus};
+      while ($text=~m/($regx(?:\{[^}]+\})*)/sg) {
+         $test_regx_flag=1 if -1<index $regx,'(!)?t(?:';
+         my $esc_one=$1;my $bang=$2;
+         my $length_of_macro=length $esc_one;
+         $esc_one=~s/["]\s*[.]\s*["]//s;
+         $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+         my $instructions=$esc_one;
+         $instructions=~s/^\\[]][^[]+\\[[]\s*[{](.*?)[}]$/$1/;
+         $instructions='('.$instructions.')';
+         my @instructions=eval $instructions;
+         unless (exists $input->{$instructions[0]}) {
+            $input->{$instructions[0]}=$instructions[1];
+            $numbor='';
+         }
+         $input->{$instructions[0]}||='';
+         if ($fill_focus) {
+            unless (exists $input->{focus}) {
+               my $default_focus=$instructions[0];
+               if (exists $MenuUnit_hash_ref->{Focus} &&
+                     $MenuUnit_hash_ref->{Focus}) {
+                  $default_focus=$MenuUnit_hash_ref->{Focus};
+               }  
+               $input->{focus}=[$default_focus,[$instructions[0]],{}];
+            } else {
+               $input->{focus}->[2]->{
+                  $input->{focus}->[1][$#{$input->{focus}->[1]}]}
+                  =$instructions[0];
+               push @{$input->{focus}->[1]},$instructions[0];
+               $input->{focus}->[2]->{$instructions[0]}=
+                  $input->{focus}->[1]->[0];
+            }
+         }
+         my @newtext=();
+         foreach my $line (split "\n",$text) {
+            if ($line=~/^(.*)$esc_one(.*)$/) {
+               my $front_of_line=$1;my $back_of_line=$2;
+               my $box_top_bottom='';my @sides=('| ',' |');
+               if ($#instructions==2 and $instructions[2]>0) {
+                  if ($input->{focus}->[0] eq $instructions[0]) {
+                     for (1..$instructions[2]) {
+                        $box_top_bottom.='=';
+                     }
+                     @sides=('[ ',' ]');
+                  } else {
+                     for (1..$instructions[2]) {
+                        $box_top_bottom.='-';
+                     }
+                  }
+               }
+               if ($input->{focus}->[0] eq $instructions[0]) {
+                  if ($ikey eq 'BACKSPACE') {
+                     chop $input->{$instructions[0]};
+                  } elsif ($ikey ne 'TAB' && $numbor) {
+                     $input->{$instructions[0]}.=$numbor if $numbor;
+                  } elsif ($ikey eq 'DELETE') {
+                     $input->{$instructions[0]}='';
+                  }
+               }
+               my $insert=$sides[0];
+               $insert.=$input->{$instructions[0]};
+               my $insert_num_of_spaces=$instructions[2]-2;
+               $insert=sprintf "%-${insert_num_of_spaces}s",$insert;
+               $insert.=$sides[1];
+               my $frlen=length $front_of_line;
+               my $box_top_line='';
+               my $box_mid_line='';
+               my $box_bot_line='';
+               my $length_of_front_and_macro=$frlen+$length_of_macro;
+               if ($#newtext==-1 || $#newtext==0) {
+                  $box_top_line=sprintf "%-${frlen}s",'';
+                  $box_top_line.=$box_top_bottom;
+               } else {
+                  my $front_of_box_top=unpack("a$frlen",$newtext[$#newtext-1]);
+                  $front_of_box_top=sprintf "%-${frlen}s",$front_of_box_top
+                     if length $front_of_box_top<$frlen;
+                  my $back_of_box_top='';
+                  if ($length_of_front_and_macro<=length
+                        $newtext[$#newtext-1]) {
+                     $back_of_box_top=unpack("x$length_of_front_and_macro a*",
+                        $newtext[$#newtext-1]);
+                  }
+                  $box_top_line=$front_of_box_top.
+                     $box_top_bottom.$back_of_box_top;
+               }
+               if ($#newtext==-1) {
+                  $box_mid_line=sprintf "%-${frlen}s",'';
+                  $box_mid_line.=$insert;
+               } else {
+                  my $elem=($#newtext==0)?0:$#newtext;
+                  my $front_of_box_mid=sprintf "%-${frlen}s",'';
+                  if ($newtext[$elem]!~/^\s*$/) {
+                     $front_of_box_mid=unpack("a$frlen",$newtext[$elem]);
+                     $front_of_box_mid=sprintf "%-${frlen}s",$front_of_box_mid
+                        if length $front_of_box_mid<$frlen;
+                  }
+                  my $back_of_box_mid='';
+                  if ($length_of_front_and_macro<=length $newtext[$elem]) {
+                     $back_of_box_mid=unpack("x$length_of_front_and_macro a*",
+                        $newtext[$elem]);
+                  }
+                  $box_mid_line=$front_of_box_mid.
+                     $insert.$back_of_box_mid;
+               }
+               $box_bot_line=$front_of_line.$box_top_bottom.$back_of_line;
+               if ($#newtext==-1) {
+                  push @newtext,$box_top_line;
+                  push @newtext,$box_mid_line;
+               } elsif ($#newtext==0) {
+                  unshift @newtext,$box_top_line;
+                  $newtext[1]=$box_mid_line;
+               } else {
+                  $newtext[$#newtext-1]=$box_top_line;
+                  $newtext[$#newtext]=$box_mid_line;
+               } push @newtext, $box_bot_line;
+            } else {
+               push @newtext,$line;
+            }
+         } $text=join "\n",@newtext;
+      }
+   } return $text, $input;
 }
 
 sub transform_pmsi
@@ -2445,7 +2659,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                    || ($test_item=~/^&?(?:.*::)*(\w+)\s*[(]?.*[)]?\s*$/
                    && grep { $1 eq $_ } list_module(
                    'main',$Term::Menus::fa_code))
-                   || ref $test_item eq 'CODE') {
+                   || ref $test_item eq 'CODE' ||
+                   &test_hashref($test_item)) {
             my $con_regex=qr/\]c(o+nvey)*\[/i;
             my $tpmi_regex=qr/\](!)?t(?:e+st[-_]*)*p*(?:r+vious[-_]*)
                   *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
@@ -2554,7 +2769,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
              $Persists,$Selected,$convey,$parent_menu;
    };
 
-   my $filtered_menu=0;my $defaults_exist=0;
+   my $filtered_menu=0;my $defaults_exist=0;my $input='';
    while (1) {
       if ($num_pick-$start<=$display_this_many_items) {
          $choose_num=$num_pick-$start;
@@ -2595,11 +2810,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       }
       while ($numbor=~/\d+/ &&
             ($numbor<=$start || $start+$choose_num < $numbor ||
-            $numbor eq 'admin')) {
+            $numbor eq 'admin') || $input) {
          my $menu_text='';my $picknum_for_display='';
          my $bout='';
-         $bout=&banner($MenuUnit_hash_ref->{Banner}||$banner,
-            $Conveyed,$SaveMMap,$picks_from_parent,$log_handle);
+         ($bout,$input)=&banner($MenuUnit_hash_ref->{Banner}||$banner,
+            $Conveyed,$SaveMMap,$picks_from_parent,
+            $numbor,$ikey,$input,$MenuUnit_hash_ref,$log_handle);
          $menu_text.=$bout."\n\n";
          my $picknum=$start+1;
          my $numlist=$choose_num;
@@ -3095,7 +3311,15 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             } else { print"\n   \(Press [F1] for HELP\)\n" }
             if ($Term::Menus::term_input) {
                print "\n";
-               if ($show_banner_only) {
+               if (exists $MenuUnit_hash_ref->{Input} &&
+                     $MenuUnit_hash_ref->{Input}) {
+                  ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
+                     "   Press ENTER when finished ",1);
+                  next unless $ikey eq 'ENTER' || $ikey eq 'ESC' ||
+                     $ikey eq 'UPARROW' || $ikey eq 'DOWNARROW' ||
+                     $ikey eq 'LEFTARROW' || $ikey eq 'RIGHTARROW' ||
+                     $ikey eq 'F1';
+               } elsif ($show_banner_only) {
                   ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   Press ENTER to continue ... ");
                } else {
@@ -4486,7 +4710,7 @@ return 'DONE_SUB';
             } elsif ($menu_output) {
                return $menu_output;
             }
-         } elsif ($ikey eq 'Escape' || $numbor=~/^quit|exit|bye$/i) {
+         } elsif ($ikey eq 'ESC' || $numbor=~/^quit|exit|bye$/i) {
             print "\n" if $^O ne 'cygwin';
             return ']quit['
          } elsif ($Term::Menus::fullauto and $ikey eq 'F1' ||
