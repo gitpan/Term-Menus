@@ -1,5 +1,12 @@
 2014-07-18  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.78
+
+        * Added two variables from FullAuto to EXPORT
+
+
+2014-07-18  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 2.77
 
         * Implemented forms. Now there are 'Input' screens with

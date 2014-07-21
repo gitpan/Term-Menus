@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.77';
+our $VERSION = '2.78';
 
 
 use 5.006;
@@ -221,7 +221,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_DATABASE_LOCKING %DB_FCNTL_LOCKING
             %DB_TXN_WRITE_NOSYNC %DB_ENV_NO_OUTPUT_SET
             %DB_user_BEGIN %DB_EVENT_WRITE_FAILED
-            %DB_MPOOL_NOLOCK %DB_VERSION_MINOR
+            %DB_MPOOL_NOLOCK %DB_VERSION_MINOR %transform_mbii
             %DB_REP_CREATE %DB_REP_DEFAULT_PRIORITY
             %DB_REP_LEASE_TIMEOUT %DB_REP_CLIENT
             %DB_TXN_LOCK_OPTIMIST %DB_LOCK_DEADLOCK
@@ -234,7 +234,7 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %DB_ENV_TXN_WRITE_NOSYNC %DB_ENV_LOCKING
             %DB_IMMUTABLE_KEY %DB_MUTEX_SHARED %DB_HEAP
             %DB_CHKSUM_SHA1 %DB_ENV_TXN_SNAPSHOT
-            %DB_VERSION_MAJOR %DB_ENV_HOTBACKUP
+            %DB_VERSION_MAJOR %DB_ENV_HOTBACKUP %transform_mbio
             %DB_TEST_POSTDESTROY %DB_FORCESYNC %DB_DUP
             %DB_NOSERVER_HOME %DB_SEQ_INC %DB_FIXEDLEN
             %DB_LOG_VERIFY_CAF %DB_TXN_TOKEN_SIZE
