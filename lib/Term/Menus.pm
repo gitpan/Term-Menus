@@ -15,10 +15,12 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.79';
+our $VERSION = '2.80';
 
 
 use 5.006;
+
+my $menu_return_debug=0;
 
 use strict;
 use warnings;
@@ -2871,7 +2873,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            $Selected,$Conveyed,$SavePick,
                            $SaveMMap,$SaveNext,$Persists,
                            $MenuUnit_hash_ref,$no_wantarray);
-                     };
+                     }; # MENU RETURN MENURETURN 1
+                     print "MENU RETURN 1\n" if $menu_return_debug;
                      die $@ if $@;
                      chomp($menu_output) if !(ref $menu_output);
                      if ($menu_output eq '-') {
@@ -2885,7 +2888,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         substr($mark,-1)='+';
                         $start=$FullMenu->{$MenuUnit_hash_ref}[11];
                      } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB1\n";
                         return 'DONE_SUB';
                      } elsif ($menu_output eq 'DONE') {
                         if (1==$recurse_level) {
@@ -2977,7 +2979,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                           !$no_wantarray) {
                                        return @resu;
                                     } else {
-#print "RETURN RESU9\n";
                                        return return_result($resu[0],
                                           $MenuUnit_hash_ref,$Conveyed);
                                     } return 'DONE_SUB';
@@ -3107,17 +3108,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  if (0<$#resu && wantarray && !$no_wantarray) {
                                     return @resu;
                                  } else {
-#print "RETURN RESU10\n";
                                     return return_result($resu[0],
                                        $MenuUnit_hash_ref,$Conveyed);
                                  }
                               }
                            }
-#print "DONE_SUB2\n";
- return 'DONE_SUB';
+                           return 'DONE_SUB';
                         } else { return 'DONE' }
                      } elsif ($menu_output) {
-#print "WHAT IS MENU3=$menu_output\n";<STDIN>;
                         return $menu_output;
                      } else {
                         $picks{$picknum}='+';
@@ -3366,7 +3364,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
             @keys=keys %picks;
             if (-1==$#keys) {
                if ($Persists->{$MenuUnit_hash_ref}{defaults}) {
-#print "WHY DO WE THINK DEFAULTS EXIST?\n";
                   if ($filtered_menu) {
                      $chosen=$parent_menu;
                   }
@@ -3386,7 +3383,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                } else {
                   @keys=keys %{$SavePick->{$parent_menu}};
                   if (-1==$#keys) {
-### DO CONDITIONAL FOR THIS!!!!!!!!!!!!!!!!!
                      if ($^O ne 'cygwin') {
                         unless ($noclear) {
                            if ($^O eq 'MSWin32' || $^O eq 'MSWin64') {
@@ -3395,8 +3391,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            } else {
                               print `${Term::Menus::clearpath}clear`."\n";
                            }
-                        } else { print "FIVE\n";print $blanklines }
-                     } else { print "SIX\n";print $blanklines }
+                        } else { print $blanklines }
+                     } else { print $blanklines }
                      print "\n\n       Attention USER! :\n\n       ",
                            "You have selected \"f\" to finish your\n",
                            "       selections, BUT -> You have not actually\n",
@@ -3457,7 +3453,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   } $dupseen{$txt}='';
                }
             }
-#print "RETURNING4 and PICKD=@pickd\n";#<STDIN>;
             if ($return_values && $Term::Menus::fullauto &&
                    (!exists ${$MenuUnit_hash_ref}{'NoPlan'} ||
                    !${$MenuUnit_hash_ref}{'NoPlan'}) &&
@@ -3480,7 +3475,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                }
             }
             return \@pickd if $return_values;
-#print "DONE2\n";
             return 'DONE';
          } elsif ($numbor=~/^\s*%(.*)/s) {
             # PERCENT SYMBOL SORT ORDER
@@ -3553,7 +3547,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $Selected,$Conveyed,$SavePick,
                   $SaveMMap,$SaveNext,$Persists,
                   $MenuUnit_hash_ref,$no_wantarray);
-            };
+            }; # MENU RETURN MENURETURN 2
+            print "MENU RETURN 2\n" if $menu_return_debug;
             die $@ if $@;
             if (-1<$#return_from_filtered_menu) {
                if ((values %{$menu_output})[0] eq 'recurse') {
@@ -3576,17 +3571,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                die $@ if $@;
             }
             chomp($menu_output) if !(ref $menu_output);
-#print "WHAT IS MENU4=$menu_output\n";
             if ($menu_output eq '-') {
                %picks=%{$SavePick->{$chosen}};
-               #%picks=%{$SavePick->{$MenuUnit_hash_ref}};
                $start=$FullMenu->{$MenuUnit_hash_ref}[11];
             } elsif ($menu_output eq '+') {
                %picks=%{$SavePick->{$chosen}};
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
                $start=$FullMenu->{$MenuUnit_hash_ref}[11];
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB3\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -3662,7 +3654,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-#print "RETURN RESU11\n";
                               return return_result($resu[0],
                                  $MenuUnit_hash_ref,$Conveyed);
                            }
@@ -3777,17 +3768,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU12\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   }
-#print "DONE_SUB4\n";
- return 'DONE_SUB';
+                  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
-#print "WHAT IS MENU5=$menu_output\n";
                return $menu_output;
             } else {
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
@@ -3796,7 +3784,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          } elsif ($numbor=~/^\*\s*$/s) {
             # SHOW DEFAULT SELECTIONS using STAR symbol
             if ($filtered_menu) {
-               print "\n   WARNING!: Only -ONE- Level of Filtering is Supported!\n";
+               print "\n   WARNING!: Only -ONE- Level of Filtering",
+                     " is Supported!\n";
                sleep 2;
                last;
             }
@@ -3862,9 +3851,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $Selected,$Conveyed,$SavePick,
                   $SaveMMap,$SaveNext,$Persists,
                   $MenuUnit_hash_ref,$no_wantarray);
-            };
+            }; # MENU RETURN MENURETURN 3
+            print "MENU RETURN 3\n" if $menu_return_debug;
             die $@ if $@;
-#print "WHAT IS MENU6=$menu_output\n";
             chomp($menu_output) if !(ref $menu_output);
             if ($menu_output eq '-') {
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
@@ -3873,7 +3862,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
                $start=${$FullMenu}{$MenuUnit_hash_ref}[11];
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB5\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -3895,13 +3883,15 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                  =$pn{$numbor}[0];
                            }
+                           my $n='Number';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
                                 { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
-                                     $Net::FullAuto::FA_Core::makeplan->{Number},
-                                  Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
+                                     $Net::FullAuto::FA_Core::makeplan->{$n},
+                                  Item   => 
+                                     &Data::Dump::Streamer::Dump($sub)->Out() }
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
@@ -3947,7 +3937,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-#print "RETURN RESU13\n";
                               return return_result($resu[0],
                                  $MenuUnit_hash_ref,$Conveyed);
                            }
@@ -3969,12 +3958,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                     =$pn{$numbor}[0];
                               }
+                              my $n='Number';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
-                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                        $Net::FullAuto::FA_Core::makeplan->{$n},
                                      Item   => "&$subfile$sub" }
                            }
                            eval "\@resu=\&$subfile$sub";
@@ -4061,17 +4051,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU14\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   }
-#print "DONE_SUB6\n";
- return 'DONE_SUB';
+                  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output) {
-#print "WHAT IS MENU7=$menu_output\n";
                return $menu_output;
             } else {
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
@@ -4154,7 +4141,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $Selected,$Conveyed,$SavePick,
                   $SaveMMap,$SaveNext,$Persists,
                   $MenuUnit_hash_ref,$no_wantarray);
-            };
+            }; # MENU RETURN MENURETURN 4
+            print "MENU RETURN 4\n" if $menu_return_debug;
             die $@ if $@;
             if (-1<$#return_from_filtered_menu) {
                if ((values %{$menu_output})[0] eq 'recurse') {
@@ -4173,11 +4161,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $return_from_filtered_menu[0],
                      $MenuUnit_hash_ref,
                      $return_from_filtered_menu[2]);
-               };
+               }; # MENU RETURN MENURETURN 5
+               print "MENU RETURN 5\n" if $menu_return_debug;
                die $@ if $@;
             }
             chomp($menu_output) if !(ref $menu_output);
-#print "WHAT IS MENU8=$menu_output\n";sleep 3;
             if (($menu_output eq '-') && exists
                   $SavePick->{$MenuUnit_hash_ref}) {
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
@@ -4187,7 +4175,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                %picks=%{$SavePick->{$MenuUnit_hash_ref}};
                $start=$FullMenu->{$MenuUnit_hash_ref}[11];
             } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB7\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -4209,17 +4196,20 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                  =$pn{$numbor}[0];
                            }
+                           my $n='Number';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
                                 { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
-                                     $Net::FullAuto::FA_Core::makeplan->{Number},
-                                  Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
+                                     $Net::FullAuto::FA_Core::makeplan->{$n},
+                                  Item   => 
+                                     &Data::Dump::Streamer::Dump($sub)->Out() }
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
-                           if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
+                           if (10<length $@ && unpack('a11',$@) eq
+                                 'FATAL ERROR') {
                               if ($parent_menu && wantarray && !$no_wantarray) {
                                  return '',$FullMenu,$Selected,$Conveyed,
                                         $SavePick,$SaveMMap,$SaveNext,
@@ -4260,7 +4250,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-#print "RETURN RESU15\n";
                               return return_result($resu[0],
                                  $MenuUnit_hash_ref,$Conveyed);
                            }
@@ -4282,12 +4271,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                     =$pn{$numbor}[0];
                               }
+                              my $n='Number';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
-                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                        $Net::FullAuto::FA_Core::makeplan->{$n},
                                      Item   => "&$subfile$sub" }
                            }
                            eval "\@resu=\&$subfile$sub";
@@ -4354,7 +4344,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                   ."              the Following "
                                   ."Unrecoverable Error Condition :\n\n"
                                   ."       $@\n       line ".__LINE__;
-#print "WHAT IS THE ERROR=$@\n";
                            if ($parent_menu && wantarray && !$no_wantarray) {
                               return '',$FullMenu,$Selected,$Conveyed,
                                      $SavePick,$SaveMMap,$SaveNext,
@@ -4375,22 +4364,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU16\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   }
-#print "DONE_SUB8\n";
- return 'DONE_SUB';
+                  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
                $return_from_child_menu='-';
             } elsif ($menu_output eq '+') {
                $return_from_child_menu='+';
             } elsif ($menu_output) {
-#print "WHAT IS MENU_OUTPUT=${$menu_output}[0]<==\n" if ref $menu_output eq 'ARRAY';
-#print "WHAT IS MENU9=",(join ' ',@{$menu_output}),"\n" if ref $menu_output eq 'ARRAY';
                return $menu_output;
             }
          } elsif (($numbor=~/^\</ || $ikey eq 'LEFTARROW') && $FullMenu) {
@@ -4452,10 +4437,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $Selected,$Conveyed,$SavePick,
                   $SaveMMap,$SaveNext,$Persists,
                   $MenuUnit_hash_ref,$no_wantarray);
-            };
+            }; # MENU RETURN MENURETURN 6
+            print "MENU RETURN 6\n" if $menu_return_debug;
             die $@ if $@;
             chomp($menu_output) if !(ref $menu_output);
-#print "WHAT IS MENU10=$menu_output<==\n";<STDIN>;
             if (ref $menu_output eq 'ARRAY' &&
                   $menu_output->[0]=~/^[{](.*)[}][<]$/) {
                delete $Selected->{$MenuUnit_hash_ref};
@@ -4486,7 +4471,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $Persists=$returned_Persists;
             }
             if ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB9\n";
                return 'DONE_SUB';
             } elsif ($menu_output eq 'DONE') {
                if (1==$recurse_level) {
@@ -4528,13 +4512,15 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                  =$pn{$numbor}[0];
                            }
+                           my $n='Number';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
                                 { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
-                                     $Net::FullAuto::FA_Core::makeplan->{Number},
-                                  Item   => &Data::Dump::Streamer::Dump($sub)->Out() }
+                                     $Net::FullAuto::FA_Core::makeplan->{$n},
+                                  Item   => 
+                                     &Data::Dump::Streamer::Dump($sub)->Out() }
                         }
                         eval { @resu=$sub->() };
                         if ($@) {
@@ -4580,7 +4566,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-#print "RETURN RESU17\n";
                               return return_result($resu[0],
                                  $MenuUnit_hash_ref,$Conveyed);
                            }
@@ -4602,12 +4587,13 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                                  $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                     =$pn{$numbor}[0];
                               }
+                              my $n='Number';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
-                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                        $Net::FullAuto::FA_Core::makeplan->{$n},
                                      Item   => "&$subfile$sub" }
                            }
                            eval "\@resu=\&$subfile$sub";
@@ -4694,14 +4680,12 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU18\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
                      }
                   } 
-#print "DONE_SUB10\n";
-return 'DONE_SUB';
+                  return 'DONE_SUB';
                } else { return 'DONE' }
             } elsif ($menu_output eq '-') {
                $return_from_child_menu='-';
@@ -4779,11 +4763,18 @@ return 'DONE_SUB';
          if ($numbor=~/^u$/i || $ikey eq 'UPARROW' || $ikey eq 'PAGEUP') {
             if ($ikey ne 'PAGEUP' && exists $MenuUnit_hash_ref->{Scroll}
                   && $MenuUnit_hash_ref->{Scroll}) {
-               $MenuUnit_hash_ref->{Scroll}->[1]-- unless
-                  $MenuUnit_hash_ref->{Scroll}->[1]==1;
+               $MenuUnit_hash_ref->{Scroll}->[1]-- if
+                  $MenuUnit_hash_ref->{Scroll}->[1]!=1;
                my $remainder=0;my $curscreennum=0;
-               $remainder=$num_pick % $choose_num if $num_pick;
-               if ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
+               $remainder=$num_pick % $display_this_many_items if $num_pick;
+               $curscreennum=($start+$remainder==$num_pick)?
+                     $start+$remainder:$start+$choose_num;
+               if ($curscreennum-$remainder==
+                     $MenuUnit_hash_ref->{Scroll}->[1] &&
+                     $curscreennum==$num_pick) {
+                  $start=$start-$display_this_many_items;
+                  $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+               } elsif ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
                   if ($display_this_many_items<$num_pick-$start
                         || $remainder || (!$remainder &&
                         $num_pick==$start+1)) {
@@ -4850,7 +4841,6 @@ return 'DONE_SUB';
                $remainder=$num_pick % $choose_num if $num_pick;
                $curscreennum=($start+$remainder==$num_pick)?
                      $start+$remainder:$start+$choose_num;
-               my $s_num=$MenuUnit_hash_ref->{Scroll}->[1];
                $MenuUnit_hash_ref->{Scroll}->[1]++
                   if $MenuUnit_hash_ref->{Scroll}->[1]!=$num_pick;
                if ($curscreennum<$MenuUnit_hash_ref->{Scroll}->[1]) {
@@ -4868,7 +4858,8 @@ return 'DONE_SUB';
             } elsif ($ikey eq 'ENTER' && exists $MenuUnit_hash_ref->{Scroll}
                   && $MenuUnit_hash_ref->{Scroll} && !$show_banner_only) {
                $numbor=$MenuUnit_hash_ref->{Scroll}->[1];
-               $MenuUnit_hash_ref->{Scroll}->[1]++;
+               $MenuUnit_hash_ref->{Scroll}->[1]++
+                  if $MenuUnit_hash_ref->{Scroll}->[1]!=$num_pick;
             } else {
                if ($show_banner_only) {
                   if (exists $MenuUnit_hash_ref->{Result}) {
@@ -4882,17 +4873,14 @@ return 'DONE_SUB';
                      if ($parent_menu and exists $parent_menu->{Scroll}) {
                         if (ref $parent_menu->{Scroll} eq 'ARRAY') {
                            $numpick=$#{[keys %{$FullMenu->{$parent_menu}[2]}]};
-                           if ($curscreennum<$parent_menu->{Scroll}->[1] &&
+                           if ($curscreennum+$display_this_many_items
+                                 <$parent_menu->{Scroll}->[1] &&
                                  $parent_menu->{Scroll}->[1]<$numpick) {
                               $FullMenu->{$parent_menu}[11]=
                                  $parent_menu->{Scroll}->[1];
                            }
                         }
                         $parent_menu->{Scroll}->[1]||=0;
-                        if ($parent_menu->{Scroll}->[1]-1==$numpick) {
-                           $FullMenu->{$parent_menu}[11]=
-                              --$parent_menu->{Scroll}->[1];
-                        }
                      }
                   } else {
                      return 'DONE_SUB';
@@ -4999,7 +4987,8 @@ return 'DONE_SUB';
                            exists ${$FullMenu}{$MenuUnit_hash_ref}[1]->{
                            $all_menu_items_array[$key-1]}
                            && (grep { $items{$numbor} eq $_ }
-                           @{${$FullMenu}{$MenuUnit_hash_ref}[1]->{$all_menu_items_array[$key-1]}})) {
+                           @{${$FullMenu}{$MenuUnit_hash_ref}[1]->{
+                           $all_menu_items_array[$key-1]}})) {
                         my $warn="\n   WARNING! You Cannot Select ";
                         $warn.="Line $numbor while Line $key is Selected!\n";
                         print "$warn";sleep 2;
@@ -5235,7 +5224,8 @@ return 'DONE_SUB';
                         $Selected,$Conveyed,$SavePick,
                         $SaveMMap,$SaveNext,$Persists,
                         $cur_menu,$no_wantarray);
-                  };
+                  }; # MENU RETURN MENURETURN 7
+                  print "MENU RETURN 7\n" if $menu_return_debug;
                   die $@ if $@;
                   if (ref $menu_output eq 'ARRAY' &&
                         $menu_output->[0]=~/^[{](.*)[}][<]$/) {
@@ -5247,6 +5237,20 @@ return 'DONE_SUB';
                      delete $Persists->{$MenuUnit_hash_ref};
                      if ($1 eq $MenuUnit_hash_ref->{Name}) {
                         %picks=();
+                        my $remainder=0;my $curscreennum=0;
+                        $remainder=$num_pick % $choose_num if $num_pick;
+                        $curscreennum=($start+$remainder==$num_pick)?
+                           $start+$remainder:$start+$choose_num;
+                        if ($curscreennum<$MenuUnit_hash_ref->{Scroll}->[1]) {
+                           if ($display_this_many_items<$num_pick-$start) {
+                              $start=$start+$display_this_many_items;
+                              $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+                              $choose_num=$num_pick-$start;
+                           } else {
+                              $start=$start+$remainder;
+                              $FullMenu->{$MenuUnit_hash_ref}[11]=$num_pick;
+                           }
+                        }
                         next;
                      } else {
                         delete $FullMenu->{$MenuUnit_hash_ref};
@@ -5265,7 +5269,6 @@ return 'DONE_SUB';
                      $Persists=$returned_Persists;
                   }
                   chomp($menu_output) if !(ref $menu_output);
-#print "WHAT IS MENU12=$menu_output<==\n";
                   if ($filtered_menu) {
                      if (grep { /\+|\*/ } values %picks) {
                         return '+',
@@ -5289,12 +5292,10 @@ return 'DONE_SUB';
                   } elsif ($menu_output eq '+') {
                      $return_from_child_menu='+';
                   } elsif ($menu_output eq 'DONE_SUB') {
-#print "DONE_SUB11\n";
                      return 'DONE_SUB';
                   } elsif ($menu_output eq 'DONE' and 1<$recurse_level) {
                      return 'DONE';
                   } elsif ($menu_output) {
-#print "WHAT IS MENU12=$menu_output<==\n";
                      return $menu_output;
                   } else {
                      if ($Term::Menus::fullauto && (!exists
@@ -5336,12 +5337,13 @@ return 'DONE_SUB';
                                  $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                     =$all_menu_items_array[$numbor-1];
                               }
+                              my $n='Numbor';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                      'Plan'}},
                                    { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
-                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                        $Net::FullAuto::FA_Core::makeplan->{$n},
                                      Item   =>
                                         &Data::Dump::Streamer::Dump($sub)->Out()
                                    }
@@ -5373,7 +5375,6 @@ return 'DONE_SUB';
                                         ."       $@\n       line ".__LINE__;
                                  if ($parent_menu && wantarray &&
                                        !$no_wantarray) {
-#print "GOING TO RETURN\n";
                                     return '',$FullMenu,$Selected,$Conveyed,
                                            $SavePick,$SaveMMap,$SaveNext,
                                            $Persists,$parent_menu,$die;
@@ -5393,7 +5394,6 @@ return 'DONE_SUB';
                               if (0<$#resu && wantarray && !$no_wantarray) {
                                  return @resu;
                               } else {
-#print "RETURN RESU1\n";
                                  return return_result($resu[0],
                                     $MenuUnit_hash_ref,$Conveyed);
                               }
@@ -5415,13 +5415,14 @@ return 'DONE_SUB';
                                     $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                        =$all_menu_items_array[$numbor-1];
                                  }
+                                 my $n='Number';
                                  push @{$Net::FullAuto::FA_Core::makeplan->{
                                          'Plan'}},
-                                      { Menu   => &pw($MenuUnit_hash_ref),
-                                        Number => $numbor,
-                                        PlanID =>
-                                           $Net::FullAuto::FA_Core::makeplan->{Number},
-                                        Item   => "&$subfile$sub" }
+                                   { Menu   => &pw($MenuUnit_hash_ref),
+                                     Number => $numbor,
+                                     PlanID =>
+                                        $Net::FullAuto::FA_Core::makeplan->{$n},
+                                     Item   => "&$subfile$sub" }
                               }
                               eval "\@resu=\&$subfile$sub";
                               my $firsterr=$@||'';
@@ -5519,14 +5520,12 @@ return 'DONE_SUB';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-#print "RETURN RESU2\n";
                               return return_result($resu[0],
                                  $MenuUnit_hash_ref,$Conveyed);
                            }
                         }
                      }
-#print "DONE_SUB12\n";
- return 'DONE_SUB';
+                     return 'DONE_SUB';
                   }
                }
             } elsif ($FullMenu && $caller eq $callertest &&
@@ -5619,7 +5618,6 @@ return 'DONE_SUB';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU3=$resu[0]<==\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
@@ -5629,8 +5627,8 @@ return 'DONE_SUB';
                         (!grep { $1 eq $_ } list_module('main',
                         $Term::Menus::fa_code) && $picks{$numbor} ne '*'))) {
                      my $die="The \"Result12 =>\" Setting\n              -> "
-                            ."$test_result\n              Found in the Menu Unit -> "
-                            .$MenuUnit_hash_ref
+                            ."$test_result\n              Found in the Menu "
+                            ."Unit -> ".$MenuUnit_hash_ref
                             ."\n              is NOT a Menu Unit\,"
                             ."\ and it is NOT a Valid Subroutine.\n\n"
                             ."\n              Cannot Determine "
@@ -5661,7 +5659,6 @@ return 'DONE_SUB';
                   my %pick=();
                   $pick{$numbor}='*';
                   %{$SavePick->{$MenuUnit_hash_ref}}=%pick;
-#print "SAVESEVEN\n";<STDIN>;
                   if ($Term::Menus::fullauto && (!exists
                         $MenuUnit_hash_ref->{'NoPlan'} ||
                         !$MenuUnit_hash_ref->{'NoPlan'}) &&
@@ -5700,12 +5697,13 @@ return 'DONE_SUB';
                               $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                  =$pn{$numbor}[0];
                            }
+                           my $n='Number';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                   'Plan'}},
                                 { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
-                                     $Net::FullAuto::FA_Core::makeplan->{Number},
+                                     $Net::FullAuto::FA_Core::makeplan->{$n},
                                   Item   => 
                                      &Data::Dump::Streamer::Dump($sub)->Out()
                                 }
@@ -5754,7 +5752,6 @@ return 'DONE_SUB';
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
-#print "RETURN RESU4\n";
                               return return_result($resu[0],
                                  $MenuUnit_hash_ref,$Conveyed);
                            }
@@ -5776,12 +5773,13 @@ return 'DONE_SUB';
                                  $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                     =$pn{$numbor}[0];
                               }
+                              my $n='Number';
                               push @{$Net::FullAuto::FA_Core::makeplan->{
                                       'Plan'}},
                                    { Menu   => &pw($MenuUnit_hash_ref),
                                      Number => $numbor,
                                      PlanID =>
-                                        $Net::FullAuto::FA_Core::makeplan->{Number},
+                                        $Net::FullAuto::FA_Core::makeplan->{$n},
                                      Item   => "&$subfile$sub" }
                            }
                            eval "\@resu=\&$subfile$sub";
@@ -5868,7 +5866,6 @@ return 'DONE_SUB';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU5\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
@@ -5876,7 +5873,6 @@ return 'DONE_SUB';
                      $done=1;last
                   }
                } else { $done=1;last }
-#print "DONE_SUB13\n";
                return 'DONE_SUB';
             } elsif (($show_banner_only && exists $MenuUnit_hash_ref->
                   {Result} && ref $MenuUnit_hash_ref->{Result}
@@ -5964,7 +5960,6 @@ return 'DONE_SUB';
                            } else { die $die }
                         }
                      }
-#print "RETURN RESU6=@resu<==\n";<STDIN>;
                      if (0==$#resu && ref $resu[0] eq 'CODE') {
                         $test_result_loop=$resu[0];
                         $SaveNext->{$MenuUnit_hash_ref}=$resu[0];
@@ -6029,7 +6024,8 @@ return 'DONE_SUB';
                }
                $test_item||='';
                if ((ref $test_item eq 'HASH' &&
-                     grep { /Item_/ } keys %{$test_item}) || $show_banner_only) {
+                     grep { /Item_/ } keys %{$test_item}) ||
+                     $show_banner_only) {
                   $Conveyed->{&pw($MenuUnit_hash_ref)}=[];
                   if (0<$#{[keys %picks]}) {
                      foreach my $key (sort numerically keys %picks) {
@@ -6099,7 +6095,8 @@ return 'DONE_SUB';
                         $Selected,$Conveyed,$SavePick,
                         $SaveMMap,$SaveNext,$Persists,
                         $MenuUnit_hash_ref,$no_wantarray);
-                  };
+                  }; # MENU RETURN MENURETURN 8
+                  print "MENU RETURN 8\n" if $menu_return_debug;
                   die $@ if $@;
                   chomp($menu_output) if !(ref $menu_output);
                   my $test_for_menu_name=$MenuUnit_hash_ref->{Name};
@@ -6222,7 +6219,6 @@ return 'DONE_SUB';
                         if (0<$#resu && wantarray && !$no_wantarray) {
                            return @resu;
                         } else {
-#print "RETURN RESU7\n";
                            return return_result($resu[0],
                               $MenuUnit_hash_ref,$Conveyed);
                         }
@@ -6244,12 +6240,13 @@ return 'DONE_SUB';
                               $Net::FullAuto::FA_Core::makeplan->{'Title'}
                                  =$pn{$numbor}[0];
                            }
+                           my $n='Number';
                            push @{$Net::FullAuto::FA_Core::makeplan->{
                                    'Plan'}},
                                 { Menu   => &pw($MenuUnit_hash_ref),
                                   Number => $numbor,
                                   PlanID =>
-                                    $Net::FullAuto::FA_Core::makeplan->{Number},
+                                    $Net::FullAuto::FA_Core::makeplan->{$n},
                                   Item   => "&$subfile$sub" }
                         }
                         eval "\@resu=\&$subfile$sub";
@@ -6310,7 +6307,6 @@ return 'DONE_SUB';
                         }
                      }
                   };
-#print "ARE WE HERE????\n";sleep 10;
                   if ($@) {
                      if (10<length $@ && unpack('a11',$@) eq 'FATAL ERROR') {
                         if ($parent_menu && wantarray && !$no_wantarray) {
@@ -6360,15 +6356,13 @@ return 'DONE_SUB';
                      if (0<$#resu && wantarray && !$no_wantarray) {
                         return @resu;
                      } else {
-#print "RETURN RESU8=$resu[0]\n";
                         return return_result($resu[0],
                            $MenuUnit_hash_ref,$Conveyed);
                      }
                   }
                   $done=1;last
                }
-#print "DONE_SUB14\n";sleep 5;
- return 'DONE_SUB';
+               return 'DONE_SUB';
             } else { $done=1 }
             last if !$return_from_child_menu;
          }
@@ -6389,7 +6383,6 @@ return 'DONE_SUB';
                 $SavePick,$SaveMMap,$SaveNext,
                 $Persists,$parent_menu;
       } else {
-#print "RETURNING PICKS HERE\n";
          return @picks;
       }
    }
