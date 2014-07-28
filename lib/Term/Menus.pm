@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.80';
+our $VERSION = '2.81';
 
 
 use 5.006;
@@ -3313,13 +3313,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $MenuUnit_hash_ref->{Input}) {
                   ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   Press ENTER when finished ",1);
-                  next unless $ikey eq 'ENTER' || $ikey eq 'ESC' ||
+                  next unless ($ikey eq 'ENTER' || $ikey eq 'ESC' ||
                      $ikey eq 'UPARROW' || $ikey eq 'DOWNARROW' ||
                      $ikey eq 'LEFTARROW' || $ikey eq 'RIGHTARROW' ||
-                     $ikey eq 'F1';
+                     $ikey eq 'F1');
                } elsif ($show_banner_only) {
                   ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   Press ENTER to continue ... ");
+                   
                } else {
                   ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   PLEASE ENTER A CHOICE: ");
@@ -5241,14 +5242,14 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         $remainder=$num_pick % $choose_num if $num_pick;
                         $curscreennum=($start+$remainder==$num_pick)?
                            $start+$remainder:$start+$choose_num;
-                        if ($curscreennum<$MenuUnit_hash_ref->{Scroll}->[1]) {
-                           if ($display_this_many_items<$num_pick-$start) {
-                              $start=$start+$display_this_many_items;
-                              $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+                        if ($curscreennum<$MenuUnit_hash_ref->{Scroll}->[1]
+                               && $display_this_many_items<$num_pick-$start) {
+                           $start=$start+$display_this_many_items;
+                           $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
+                           if ($start+$remainder==$num_pick) {
                               $choose_num=$num_pick-$start;
-                           } else {
-                              $start=$start+$remainder;
-                              $FullMenu->{$MenuUnit_hash_ref}[11]=$num_pick;
+                           } else { 
+                              $choose_num=$display_this_many_items;
                            }
                         }
                         next;
