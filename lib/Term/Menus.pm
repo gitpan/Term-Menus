@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.81';
+our $VERSION = '2.82';
 
 
 use 5.006;
@@ -2818,7 +2818,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
          ($bout,$input)=&banner($MenuUnit_hash_ref->{Banner}||$banner,
             $Conveyed,$SaveMMap,$picks_from_parent,
             $numbor,$ikey,$input,$MenuUnit_hash_ref,$log_handle);
-         $menu_text.=$bout."\n\n";
+         $menu_text.=$bout."\n";
          my $picknum=$start+1;
          my $numlist=$choose_num;
          my $mark='';
@@ -3306,7 +3306,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      "\n   $num_pick Total Choices   ",
                      "|_v_| Scroll with ARROW keys ".
                      "  [F1] for HELP\n";
-            } else { print"\n   \(Press [F1] for HELP\)\n" }
+            } else { print "\n   \(Press [F1] for HELP\)\n" }
             if ($Term::Menus::term_input) {
                print "\n";
                if (exists $MenuUnit_hash_ref->{Input} &&
