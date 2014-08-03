@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.82';
+our $VERSION = '2.83';
 
 
 use 5.006;
@@ -3302,9 +3302,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                foreach my $n (1..$len) {
                   $pad.=' '; 
                }
-               print "$pad                     ___",
+               print $pad,
                      "\n   $num_pick Total Choices   ",
-                     "|_v_| Scroll with ARROW keys ".
+                     "[v][^] Scroll with ARROW keys ".
                      "  [F1] for HELP\n";
             } else { print "\n   \(Press [F1] for HELP\)\n" }
             if ($Term::Menus::term_input) {
@@ -4778,7 +4778,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                } elsif ($start==$MenuUnit_hash_ref->{Scroll}->[1]) {
                   if ($display_this_many_items<$num_pick-$start
                         || $remainder || (!$remainder &&
-                        $num_pick==$start+1)) {
+                        (($num_pick==$start+1) ||
+                        ($num_pick==$start+$display_this_many_items)))) {
                      $start=$start-$display_this_many_items;
                      $FullMenu->{$MenuUnit_hash_ref}[11]=$start;
                   }
@@ -4810,7 +4811,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                next;
             }
             my $remainder=$num_pick % $choose_num;
-            $start=$num_pick-$remainder;
+            if ($remainder) {
+               $start=$num_pick-$remainder;
+            } else {
+               $start=$num_pick-$display_this_many_items;
+            }
             last;
          } elsif ($ikey eq 'HOME') {
             $FullMenu->{$MenuUnit_hash_ref}[11]=0;
