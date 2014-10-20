@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.83';
+our $VERSION = '2.84';
 
 
 use 5.006;
@@ -275,7 +275,8 @@ use vars qw(@EXPORT @EXPORT_OK %term_input %test %Dump %tosspass %b
             %list_module %DB_STREAM_READ %DB_LOG_BLOB
             %DB_STREAM_SYNC_WRITE %DB_CHKSUM_FAIL
             %DB_EVENT_REP_AUTOTAKEOVER_FAILED %DB_VERB_MVCC
-            %DB_REPMGR_ISVIEW %DB_MUTEX_PROCESS_ONLY);
+            %DB_REPMGR_ISVIEW %DB_MUTEX_PROCESS_ONLY
+            %transform_mbir);
 
 @EXPORT = qw(pick Menu get_Menu_map);
 
@@ -1030,7 +1031,7 @@ if ($^O ne 'MSWin32' && $^O ne 'MSWin64') {
 our %LookUpMenuName=();
 our $MenuMap=[];
 
-our $noclear=0; # set to one to turn off clear for debugging
+our $noclear=1; # set to one to turn off clear for debugging
 
 sub check_for_dupe_menus {
 
@@ -1287,7 +1288,7 @@ sub banner
    my $Conveyed=$_[1]||{};
    my $SaveMMap=$_[2]||'';
    my $picks_from_parent=$_[3]||'';
-   my $numbor=$_[4]||'';
+   my $numbor=(defined $_[4])?$_[4]:'';
    my $ikey=$_[5]||'';
    my $input=$_[6]||{};
    my $MenuUnit_hash_ref=$_[7]||{};
@@ -1363,7 +1364,7 @@ sub banner
       $banner=join '',@banner;
    }
    return transform_mbio(transform_mbii($banner,$numbor,$ikey,$input,
-             $MenuUnit_hash_ref,$log_handle),$MenuUnit_hash_ref,
+             $MenuUnit_hash_ref,$Conveyed,$log_handle),$MenuUnit_hash_ref,
              $Conveyed,$SaveMMap,$picks_from_parent,$log_handle);
 
 }
@@ -1800,6 +1801,7 @@ sub Menu
 
 sub pw {
 
+   ## pw [p]ad [w]alker
    #print "PWCALLER=",caller,"\n";
    return $_[0]->{Name} if exists $_[0]->{Name};
    my @packages=();
@@ -2105,15 +2107,52 @@ sub transform_mbio
 
 }
 
+sub transform_mbir
+{
+
+   ## mbir - [m]enu [b]anner [i]nput [r]esults
+   my $text=$_[0]||'';
+   my $Conveyed=$_[1]||{};
+   my $MenuUnit_hash_ref=$_[2]||'';
+   my $log_handle=$_[3]||'';
+   my $tbii_regex=qr/\](!)?i(?:n+put[-_]*)*b*(?:a+nner[-_]*)
+         *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+   my $test_regx_flag=0;
+   FE: foreach my $regx ($tbii_regex) {
+      last if $test_regx_flag;
+      while ($text=~m/($regx(?:\{[^}]+\})*)/sg) {
+         $test_regx_flag=1 if -1<index $regx,'(!)?t(?:';
+         my $esc_one=$1;my $bang=$2;
+         my $length_of_macro=length $esc_one;
+         $esc_one=~s/["]\s*[.]\s*["]//s;
+         $esc_one=~s/\]/\\\]/;$esc_one=~s/\[/\\\[/;
+         my $instructions=$esc_one;
+         $instructions=~s/^\\[]][^[]+\\[[]\s*[{](.*?)[}]$/$1/;
+         $instructions='('.$instructions.')';
+         my @instructions=eval $instructions;
+         next if $#instructions==2;
+         if ($#instructions==1) {
+            if (exists $Conveyed->{$instructions[0].'_mbir'}) {
+               my $item=$instructions[0].'_mbir';
+               my $replace=$Conveyed->{$item}->{$instructions[1]};
+               $text=~s/$esc_one/$replace/s;
+            }
+         }
+      }
+   } return $text;
+}
+
 sub transform_mbii
 {
 
+   ## mbii - [m]enu [b]anner [i]nput [i]tems
    my $text=$_[0]||'';
-   my $numbor=$_[1]||'';
+   my $numbor=(defined $_[1])?$_[1]:'';
    my $ikey=$_[2]||'';
    my $input=$_[3]||{};
    my $MenuUnit_hash_ref=$_[4]||{};
-   my $log_handle=$_[4]||'';
+   my $Conveyed=$_[5]||'';
+   my $log_handle=$_[6]||'';
    my $tbii_regex=qr/\](!)?i(?:n+put[-_]*)*b*(?:a+nner[-_]*)
          *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
    my $test_regx_flag=0;
@@ -2140,7 +2179,8 @@ sub transform_mbii
             $input->{$instructions[0]}=$instructions[1];
             $numbor='';
          }
-         $input->{$instructions[0]}||='';
+         $input->{$instructions[0]}='' unless defined
+            $input->{$instructions[0]};
          if ($fill_focus) {
             unless (exists $input->{focus}) {
                my $default_focus=$instructions[0];
@@ -2178,14 +2218,16 @@ sub transform_mbii
                if ($input->{focus}->[0] eq $instructions[0]) {
                   if ($ikey eq 'BACKSPACE') {
                      chop $input->{$instructions[0]};
-                  } elsif ($ikey ne 'TAB' && $numbor) {
-                     $input->{$instructions[0]}.=$numbor if $numbor;
                   } elsif ($ikey eq 'DELETE') {
                      $input->{$instructions[0]}='';
+                  } elsif ($ikey ne 'TAB' && defined $numbor) {
+                     $input->{$instructions[0]}.=$numbor;
                   }
                }
                my $insert=$sides[0];
                $insert.=$input->{$instructions[0]};
+               $Conveyed->{&pw($MenuUnit_hash_ref).'_mbir'}->
+                  {$instructions[0]}=$input->{$instructions[0]};
                my $insert_num_of_spaces=$instructions[2]-2;
                $insert=sprintf "%-${insert_num_of_spaces}s",$insert;
                $insert.=$sides[1];
@@ -2268,23 +2310,25 @@ sub transform_pmsi
    $text=~s/\s?$//s;
    if ((-1<index $text,'][[') && (-1<index $text,']][')) {
       unless ($text=~/^\s*\]\[\[\s*/s && $text=~/\s*\]\]\[\s*$/s) {
-         my $die="\n       FATAL ERROR! - The --RETURN-ARRAY-- Macro"
-                ."\n            Boundary indicators: '][[' and ']]['"
-                ."\n            are only supported at the beginning"
-                ."\n            and end of the return instructions."
-                ."\n            Nothing but white space should precede"
-                ."\n            the left indicator, nor extend beyond"
-                ."\n            the right indicator.\n"
-                ."\n       Your String:\n"
-                ."\n            $text\n"
-                ."\n       Remedy: Recreate your return instructions"
-                ."\n            to conform to this convention. Also"
-                ."\n            be sure to use the Macro delimiter"
-                ."\n            indicator ']|[' to denote return array"
-                ."\n            element separation boundaries."
-                ."\n       Example:\n"
-                ."\n            '][[ ]S[ ]|[ ]P[{Menu_One} ]|[ SomeString ]]['"
-                ."\n";
+         my $die=<<DIE;
+
+       FATAL ERROR! - The --RETURN-ARRAY-- Macro
+            Boundary indicators: '][[' and ']]['
+            are only supported at the beginning
+            and end of the return instructions.
+            Nothing but white space should precede
+            the left indicator, nor extend beyond
+            the right indicator.
+       Your String:
+            $text
+       Remedy: Recreate your return instructions
+            to conform to this convention. Also
+            be sure to use the Macro delimiter
+            indicator ']|[' to denote return array
+            element separation boundaries.
+       Example:
+            '][[ ]S[ ]|[ ]P[{Menu_One} ]|[ SomeString ]]['
+DIE
          if (defined $log_handle &&
                -1<index $log_handle,'*') {
             print $log_handle $die;
@@ -2673,8 +2717,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   *s*(?:e+lected[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
             my $amlm_regex=qr/\]a(n+cestor[-_]*)*m*(e+nu[-_]*)
                   *l*(a+bel[-_]*)*m*(a+p[-_]*)*\[/xi;
+            my $tbii_regex=qr/\](!)?i(?:n+put[-_]*)*b*(?:a+nner[-_]*)
+                  *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
             if ($test_item=~/$con_regex|$pmsi_regex|
-                  $amlm_regex|$sicm_regex|$tpmi_regex/x) {
+                  $amlm_regex|$sicm_regex|$tpmi_regex|$tbii_regex/x) {
                $test_item=&transform_sicm($test_item,$numbor,
                              \@all_menu_items_array,$_[2],'',
                              $return_from_child_menu,$log_handle,
@@ -2682,6 +2728,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                $test_item=&transform_pmsi($test_item,
                        $Conveyed,$SaveMMap,
                        $picks_from_parent,$log_handle);
+               $test_item=&transform_mbir($test_item,
+                       $Conveyed,$MenuUnit_hash_ref,$log_handle);
             } elsif (ref $test_item eq 'CODE') {
                my $cd='';
                if ($Term::Menus::data_dump_streamer) {
@@ -2694,6 +2742,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $cd=&transform_pmsi($cd,
                          $Conveyed,$SaveMMap,
                          $picks_from_parent);
+                  $cd=&transform_mbir($cd,$Conveyed,$MenuUnit_hash_ref,
+                         $log_handle);
                }
                $cd=~s/\$CODE\d*\s*=\s*//s;
 #print "CD2=$cd<==\n";<STDIN>;
@@ -3313,6 +3363,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $MenuUnit_hash_ref->{Input}) {
                   ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   Press ENTER when finished ",1);
+print "NUMBORRRRRRRRRRRR=$numbor\n";
                   next unless ($ikey eq 'ENTER' || $ikey eq 'ESC' ||
                      $ikey eq 'UPARROW' || $ikey eq 'DOWNARROW' ||
                      $ikey eq 'LEFTARROW' || $ikey eq 'RIGHTARROW' ||
@@ -3404,6 +3455,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         print "\n";
                         ($choice,$ikey)=rawInput("   \([ESC] to Quit\)".
                            "   PLEASE ENTER A CHOICE: ");
+print "CHOICE=$choice\n";<STDIN>;
                         print "\n";
                      } else {
                         print "   \([ESC] to Quit\)",
@@ -5924,6 +5976,8 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         $cd=&transform_pmsi($cd,
                                $Conveyed,$SaveMMap,
                                $picks_from_parent);
+                        $cd=&transform_mbir($cd,
+                               $Conveyed,$MenuUnit_hash_ref,$log_handle);
                         $cd=~s/\$CODE\d*\s*=\s*//s;
 #print "WHAT IS CD5=$cd<==\n";<STDIN>;
                         $test_result_loop=eval $cd;

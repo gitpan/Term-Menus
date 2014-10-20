@@ -1,3 +1,11 @@
+2014-10-20  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.84
+
+        * Updated Forms to save values that can now be accessed
+          from other menus and result routines.
+
+
 2014-08-03  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.83
