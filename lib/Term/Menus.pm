@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.84';
+our $VERSION = '2.85';
 
 
 use 5.006;
@@ -1557,12 +1557,15 @@ sub Menu
                   next if exists $Items{$num}->{Exclude} &&
                         $text=~/$Items{$num}->{Exclude}/;
                   push @{$picks}, $text;
-               } else { next }
+               } else {
+                  next;
+               }
             } elsif (exists $Items{$num}->{Exclude} &&
                $text=~/$Items{$num}->{Exclude}/) {
                next;
-            } else { push @{$picks}, $text }
-
+            } else {
+               push @{$picks}, $text;
+            }
             if (exists $Items{$num}->{Convey} &&
                   $Items{$num}->{Convey} ne '') {
                $convey{$text}=[$item,$Items{$num}->{Convey}];
@@ -2654,6 +2657,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
       my $parent_menu=$_[9];
       my $pick=(keys %{$_[2]})[0] || 1;
       $_[1]->[$pick-1]||='';
+      my $gotmany=(exists $MenuUnit_hash_ref->{Select} &&
+            $MenuUnit_hash_ref->{Select}) ? 1 : 0;
+      $FullMenu->{$_[0]}[3]={} unless $gotmany;
       if ($pick && exists $FullMenu->{$_[0]}[3]{$_[1]->[$pick-1]}) {
          if ($pick && exists $_[0]->{$FullMenu->{$_[0]}
                             [4]{$_[1]->[$pick-1]}}{Convey}) {
@@ -2732,7 +2738,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                        $Conveyed,$MenuUnit_hash_ref,$log_handle);
             } elsif (ref $test_item eq 'CODE') {
                my $cd='';
-               if ($Term::Menus::data_dump_streamer) {
+               if ($Term::Menus::data_dump_streamer && !$show_banner_only) {
                   $cd=&Data::Dump::Streamer::Dump($test_item)->Out();
 #print "CD1=$cd\n";<STDIN>;
                   $cd=&transform_sicm($cd,$numbor,
@@ -3363,7 +3369,6 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                      $MenuUnit_hash_ref->{Input}) {
                   ($numbor,$ikey)=rawInput("   \([ESC] to Quit\)".
                      "   Press ENTER when finished ",1);
-print "NUMBORRRRRRRRRRRR=$numbor\n";
                   next unless ($ikey eq 'ENTER' || $ikey eq 'ESC' ||
                      $ikey eq 'UPARROW' || $ikey eq 'DOWNARROW' ||
                      $ikey eq 'LEFTARROW' || $ikey eq 'RIGHTARROW' ||
@@ -3404,6 +3409,8 @@ print "NUMBORRRRRRRRRRRR=$numbor\n";
                ($Persists->{$MenuUnit_hash_ref}{defaults} ||
                $filtered_menu)) {
             # FINISH
+            delete $main::maintain_scroll_flag->{$MenuUnit_hash_ref}
+               if defined $main::maintain_scroll_flag;
             my $choice='';my @keys=();
             my $chosen='';
             if ($filtered_menu) {
@@ -3455,7 +3462,6 @@ print "NUMBORRRRRRRRRRRR=$numbor\n";
                         print "\n";
                         ($choice,$ikey)=rawInput("   \([ESC] to Quit\)".
                            "   PLEASE ENTER A CHOICE: ");
-print "CHOICE=$choice\n";<STDIN>;
                         print "\n";
                      } else {
                         print "   \([ESC] to Quit\)",
@@ -4448,9 +4454,11 @@ print "CHOICE=$choice\n";<STDIN>;
                      $sp_copy{$key} eq '+';
                }
                $parent_menu->{Scroll}->[1]||=0;
-               if ($parent_menu->{Scroll}->[1]>1) {
-                  $FullMenu->{$parent_menu}[11]=
-                     --$parent_menu->{Scroll}->[1];
+               $main::maintain_scroll_flag||={};
+               if ($parent_menu->{Scroll}->[1]>1 &&
+                     !exists $main::maintain_scroll_flag->{$parent_menu}) {
+                  --$parent_menu->{Scroll}->[1];
+                  $main::maintain_scroll_flag->{$parent_menu}='';
                }
                return '-',
                   $FullMenu,$Selected,$Conveyed,
@@ -4892,6 +4900,8 @@ print "CHOICE=$choice\n";<STDIN>;
          } elsif (((!$ikey || $ikey eq 'ENTER') &&
                ($numbor=~/^()$/ || $numbor=~/^\n/)) || $numbor=~/^d$/i
                || $ikey eq 'DOWNARROW' || $ikey eq 'PAGEDOWN') {
+            delete $main::maintain_scroll_flag->{$MenuUnit_hash_ref}
+               if defined $main::maintain_scroll_flag;
             if (($ikey eq 'DOWNARROW' || $numbor=~/^d$/i) &&
                   exists $MenuUnit_hash_ref->{Scroll}
                   && $MenuUnit_hash_ref->{Scroll}) {
@@ -4961,10 +4971,14 @@ print "CHOICE=$choice\n";<STDIN>;
          } chomp $numbor;
          if (!((keys %picks) && $numbor=~/^[Ff]$/) &&
                $numbor!~/^\d+|admin$/ && !$return_from_child_menu) {
+            delete $main::maintain_scroll_flag->{$MenuUnit_hash_ref}
+               if defined $main::maintain_scroll_flag;
             $numbor=$start+$choose_num+1;
             last;
          } elsif (exists $pn{$numbor} || ((keys %picks) && $numbor=~/^[Ff]$/)) {
             # NUMBOR CHOSEN
+            delete $main::maintain_scroll_flag->{$MenuUnit_hash_ref}
+               if defined $main::maintain_scroll_flag;
             delete $picks{'__FA_Banner__'} if exists $picks{'__FA_Banner__'};
             %pn=() unless %pn;
             my $callertest=__PACKAGE__."::Menu";
@@ -5955,12 +5969,17 @@ print "CHOICE=$choice\n";<STDIN>;
                      my $tspmi_regex=qr/\](!)?t(?:e+st[-_]*)*[p|s]*
                            (?:r+vious[-_]*|e+lected[-_]*)
                            *m*(?:e+nu[-_]*)*i*(?:t+ems[-_]*)*\[/xi;
+                     my $sicm_regex=
+                           qr/\](!)?s(?:e+lected[-_]*)*i*(?:t+ems[-_]*)
+                           *c*(?:u+rrent[-_]*)*m*(?:e+nu[-_]*)*\[/xi;
                      my $trim_look=$look_at_test_result;
                      $trim_look=~s/^.*(\$CODE\d+\s*=\s*.*$)/$1/s;
                      if ((($trim_look!~/Item_/s &&
                            $trim_look!~/[']Result['][,]/s) ||
                            $trim_look=~/=\s*[']Item_/s) ||
-                           $look_at_test_result=~/$tspmi_regex/) {
+                           $look_at_test_result=~/$tspmi_regex/ ||
+                           $trim_look=~/$sicm_regex/) {
+                        %picks=() unless $select_many;
                         $picks{$numbor}='';
                         ($FullMenu,$Conveyed,$SaveNext,$Persists,
                            $Selected,$convey,$parent_menu)
@@ -5969,6 +5988,7 @@ print "CHOICE=$choice\n";<STDIN>;
                            $FullMenu,$Conveyed,$Selected,$SaveNext,
                            $Persists,$parent_menu);
                         my $cd=$look_at_test_result;
+                        unless ($show_banner_only) {
                         $cd=&transform_sicm($cd,$numbor,
                                \@all_menu_items_array,\%picks,\%pn,
                                $return_from_child_menu,$log_handle,
@@ -5978,6 +5998,7 @@ print "CHOICE=$choice\n";<STDIN>;
                                $picks_from_parent);
                         $cd=&transform_mbir($cd,
                                $Conveyed,$MenuUnit_hash_ref,$log_handle);
+                        }
                         $cd=~s/\$CODE\d*\s*=\s*//s;
 #print "WHAT IS CD5=$cd<==\n";<STDIN>;
                         $test_result_loop=eval $cd;
@@ -6037,7 +6058,7 @@ print "CHOICE=$choice\n";<STDIN>;
                            return \@resu;
                         }
                      } elsif (ref $resu[0] eq 'HASH') {
-                        if (grep { /Item_/ } keys %{$resu[0]}) {
+                        if (grep { /Item_/ } keys %{$resu[0]} && $parent_menu) {
                            if (exists $FullMenu->{$parent_menu}[2]
                                  {'__FA_Banner__'}) {
                               $FullMenu->{$MenuUnit_hash_ref}[2]
