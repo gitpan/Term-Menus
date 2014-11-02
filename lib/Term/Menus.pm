@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.85';
+our $VERSION = '2.86';
 
 
 use 5.006;
@@ -2738,7 +2738,9 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                        $Conveyed,$MenuUnit_hash_ref,$log_handle);
             } elsif (ref $test_item eq 'CODE') {
                my $cd='';
-               if ($Term::Menus::data_dump_streamer && !$show_banner_only) {
+               if ($Term::Menus::data_dump_streamer && (!$show_banner_only
+                     || (exists $MenuUnit_hash_ref->{Input} 
+                     && $MenuUnit_hash_ref->{Input}==1))) {
                   $cd=&Data::Dump::Streamer::Dump($test_item)->Out();
 #print "CD1=$cd\n";<STDIN>;
                   $cd=&transform_sicm($cd,$numbor,
@@ -5987,21 +5989,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            \@all_menu_items_array,\%picks,$picks_from_parent,
                            $FullMenu,$Conveyed,$Selected,$SaveNext,
                            $Persists,$parent_menu);
-                        my $cd=$look_at_test_result;
-                        unless ($show_banner_only) {
-                        $cd=&transform_sicm($cd,$numbor,
-                               \@all_menu_items_array,\%picks,\%pn,
-                               $return_from_child_menu,$log_handle,
-                               $MenuUnit_hash_ref->{Name});
-                        $cd=&transform_pmsi($cd,
-                               $Conveyed,$SaveMMap,
-                               $picks_from_parent);
-                        $cd=&transform_mbir($cd,
-                               $Conveyed,$MenuUnit_hash_ref,$log_handle);
-                        }
-                        $cd=~s/\$CODE\d*\s*=\s*//s;
-#print "WHAT IS CD5=$cd<==\n";<STDIN>;
-                        $test_result_loop=eval $cd;
+                        my $item=($show_banner_only)?'__FA_Banner__':$numbor;
+                        $test_result_loop=
+                           $Selected->{$MenuUnit_hash_ref}->{$item}
+                           if $Selected->{$MenuUnit_hash_ref}->{$item};
                      }
                      eval { @resu=$test_result_loop->() };
                      if ($@) {
