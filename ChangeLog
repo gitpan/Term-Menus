@@ -1,3 +1,13 @@
+2014-12-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
+        * Version 2.87
+
+        * Fixed banner menu when coming from full menu.
+  
+        * Fixed navigation when having returned from child,
+          user makes different selelction.
+
+
 2014-11-02  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
         * Version 2.86

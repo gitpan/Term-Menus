@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.86';
+our $VERSION = '2.87';
 
 
 use 5.006;
@@ -1669,13 +1669,13 @@ sub Menu
    ############################################
 
    my $cl_def=0;
-   foreach my $key (keys %{$SaveNext}) {
-      if ($FullMenu->{$key}[5] eq 'ERASE') {
-         $FullMenu->{$key}[5]='' if !exists $SavePick->{$key};
-         $cl_def=1;
-         last;
-      }
-   }
+   #foreach my $key (keys %{$SaveNext}) {
+   #   if ($FullMenu->{$key}[5] eq 'ERASE') {
+   #      $FullMenu->{$key}[5]='' if !exists $SavePick->{$key};
+   #      $cl_def=1;
+   #      last;
+   #   }
+   #}
    %default=() if defined $FullMenu->{$MenuUnit_hash_ref}[5]
       && !$cl_def;
    my $nm_=(keys %num__)?\%num__:{};
@@ -1806,7 +1806,8 @@ sub pw {
 
    ## pw [p]ad [w]alker
    #print "PWCALLER=",caller,"\n";
-   return $_[0]->{Name} if exists $_[0]->{Name};
+   return $_[0]->{Name} if ref $_[0] eq 'HASH'
+      && exists $_[0]->{Name};
    my @packages=();
    @packages=@{$_[1]} if defined $_[1] && $_[1];
    my $name='';
@@ -1908,6 +1909,9 @@ sub test_hashref {
       } elsif (exists $hashref_to_test->{Input} &&
             $hashref_to_test->{Input}) {
          return 1; 
+      } elsif (!grep { /Item_/ } keys %{$hashref_to_test} 
+            && grep { /Banner/ } keys %{$hashref_to_test}) {
+         return 1;
       } else {
          my $die="\n      FATAL ERROR! - Unable to verify Menu\n"
              ."\n      This Error is usually the result of a Menu"
@@ -5102,6 +5106,18 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $numbor=(keys %picks)[0];
                   $numbor_is_eff=1;
                }
+               if (grep { /Item_/ } keys %{$MenuUnit_hash_ref}) {
+                  my @items=();
+                  foreach my $key (keys %{$MenuUnit_hash_ref}) {
+                     next unless $key=~/Item_/;
+                     push @items, $MenuUnit_hash_ref->{$key};
+                  }
+                  if ($#items==0 && ref $items[0] eq 'HASH' &&
+                        !grep { /Item_/ } keys %{$items[0]} &&
+                        grep { /Banner/ } keys %{$items[0]}) {
+                     $show_banner_only=1;
+                  }
+               }
                if ($show_banner_only ||
                          (grep { /Item_/ } keys %{$FullMenu->{
                          $MenuUnit_hash_ref}[2]{$all_menu_items_array[
@@ -5164,7 +5180,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   chomp($numbor) if $numbor;
                   unless ($numbor_is_eff) {
                      if (exists $picks{$numbor}) {
-                        $FullMenu->{$cur_menu}[5]='ERASE';
+                        #$FullMenu->{$cur_menu}[5]='ERASE';
                         $hidedefaults=0;
                         foreach my $key (keys %{$SaveNext}) {
                            delete $SaveNext->{$key};
@@ -5181,7 +5197,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                         }
                      }
                      if ($prev_menu && $prev_menu!=$numbor) {
-                        $FullMenu->{$cur_menu}[5]='ERASE';
+                        #$FullMenu->{$cur_menu}[5]='ERASE';
                         $hidedefaults=0;
                         &delete_Selected($cur_menu,$prev_menu,
                            $Selected,$SavePick,$SaveNext,$Persists);
@@ -6435,6 +6451,10 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                   $done=1;last
                }
                return 'DONE_SUB';
+            } elsif ($return_from_child_menu &&
+                  !exists $SavePick->{$MenuUnit_hash_ref}->{$pn{$numbor}}) {
+               delete_Selected($MenuUnit_hash_ref);
+               $done=1;last;
             } else { $done=1 }
             last if !$return_from_child_menu;
          }
