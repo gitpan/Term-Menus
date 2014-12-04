@@ -1,5 +1,11 @@
 2014-12-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
 
+        * Version 2.88
+
+        * Problem with Signature on 2.87 release.
+
+2014-12-04  Brian M. Kelly  <Brian.Kelly@fullautosoftware.com>
+
         * Version 2.87
 
         * Fixed banner menu when coming from full menu.
