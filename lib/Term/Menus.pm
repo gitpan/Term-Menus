@@ -15,7 +15,7 @@ package Term::Menus;
 ## See user documentation at the end of this file.  Search for =head
 
 
-our $VERSION = '2.88';
+our $VERSION = '2.89';
 
 
 use 5.006;
@@ -1668,16 +1668,7 @@ sub Menu
    # End MenuUnit Breakdown
    ############################################
 
-   my $cl_def=0;
-   #foreach my $key (keys %{$SaveNext}) {
-   #   if ($FullMenu->{$key}[5] eq 'ERASE') {
-   #      $FullMenu->{$key}[5]='' if !exists $SavePick->{$key};
-   #      $cl_def=1;
-   #      last;
-   #   }
-   #}
-   %default=() if defined $FullMenu->{$MenuUnit_hash_ref}[5]
-      && !$cl_def;
+   %default=() if defined $FullMenu->{$MenuUnit_hash_ref}[5];
    my $nm_=(keys %num__)?\%num__:{};
 #print "MENU=",$MenuUnit_hash_ref->{Name}," and CONVEY=",keys %convey,"\n";<STDIN>;
    $FullMenu->{$MenuUnit_hash_ref}=[ $MenuUnit_hash_ref,
@@ -5341,6 +5332,7 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               $choose_num=$display_this_many_items;
                            }
                         }
+                        $show_banner_only=0;
                         next;
                      } else {
                         delete $FullMenu->{$MenuUnit_hash_ref};
@@ -5480,7 +5472,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                               }
                            }
                            if (-1<$#resu) {
-                              if ($resu[0] eq '<') { %picks=();next } 
+                              if ($resu[0] eq '<') {
+                                 %picks=();
+                                 $show_banner_only=0;
+                                 next
+                              } 
                               if (0<$#resu && wantarray && !$no_wantarray) {
                                  return @resu;
                               } else {
@@ -5606,7 +5602,11 @@ sub pick # USAGE: &pick( ref_to_choices_array,
                            }
                         }
                         if (-1<$#resu) {
-                           if ($resu[0] eq '<') { %picks=();next }
+                           if ($resu[0] eq '<') {
+                              %picks=();
+                              $show_banner_only=0;
+                              next
+                           }
                            if (0<$#resu && wantarray && !$no_wantarray) {
                               return @resu;
                            } else {
